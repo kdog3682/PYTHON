@@ -410,7 +410,7 @@ def gitInit():
         Github(key = user, repo = repo)
 
     res = SystemCommand(f"""
-        git init
+        #git init
         git add .
         git commit -m "push everything"
         git remote add originpython2 git@github.com:{user}/{repo}
