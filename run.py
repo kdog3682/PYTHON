@@ -312,7 +312,7 @@ def gitDelete(file):
 
     SystemCommand(cmd)
 
-def gitPush(file = None, message='automated git push'):
+def gitPush(file = None, dir=dir2023):
     if file:
         message = prompt(file, 'upload message: ')
         a, b = os.path.split(file)
@@ -326,17 +326,24 @@ def gitPush(file = None, message='automated git push'):
             git push
         """
     else:
+        if dir == dir2023:
+            print('cleaning dir2023')
+            cleandir(dir2023)
+            time.sleep(1)
 
-        cleandir(dir2023)
-        time.sleep(1)
+        message = gitNames(dir)
+        print({'m': message})
+
         time.sleep(1)
         mainCommand = f"""
-            cd {dir2023}
+            cd {dir}
             git add .
-            git commit -m "{gitNames(dir2023)}"
+            git commit -m "{message}"
             git push
         """
-    SystemCommand(mainCommand)
+
+    if SystemCommand(mainCommand, dir=dir).success:
+        ofile(gitUrl(dir))
 
 def gitManager(
     file=0,
@@ -392,40 +399,43 @@ env.basepyref['elf'] = 'emailLastFile'
 #files = sort(ff(pdfdir2, hours=13), mdate)
 #email(to='work', subject='Additional G4 Materials', files=files, debug=0)
 
-def gitInit():
-
-    dir = pydir
-    repo = tail(dir)
-    user = 'kdog3682'
-    gitIgnore = """
-        .gitignore
-        env.py
-        __pycache__
-    """
-
+def gitInit(dir, user=env.user):
+    assert isdir(dir)
     chdir(dir)
+    repo = tail(dir)
+    gitIgnore = env.gitIgnores.get(repo)
+
     if not isfile('.gitignore'):
         write('.gitignore', smartDedent(gitIgnore))
         from githubscript import Github
         Github(key = user, repo = repo)
 
-    res = SystemCommand(f"""
-        #git init
+    command = f"""
+        git init
         git add .
         git commit -m "push everything"
         git remote add o3 git@github.com:{user}/{repo}
         git push -u o3 master 
-    """, dir=dir)
+    """
 
-    print(res)
-    #ofile(f"https://github.com/{user}/{repo}")
+    res = SystemCommand(command, dir=dir)
+    if res.success:
+        ofile(f"https://github.com/{user}/{repo}")
 
 def gitNames(dir):
-    cmd = 'git diff --name-status'
     cmd = 'git status'
+    cmd = 'git diff --name-status'
     names = SystemCommand(cmd, dir=dir).success
     return names
 
+def gitPushPython():
+    gitPush(dir=pydir)
+
 env.basepyref['gi'] = 'gitInit'
+env.basepyref['gpy'] = 'gitPushPython'
 main()
-gitInit()
+#gitInit()
+def gitUrl(dir):
+    repo = tail(dir)
+    return f"https://github.com/{env.githubUser}/{repo}"
+
