@@ -414,7 +414,7 @@ def gitInit():
         git add .
         git commit -m "push everything"
         git remote add originpython git@github.com:{user}/{repo}
-        git push -u originpython main
+        git push originpython main
     """, dir=dir)
 
     print(res)
