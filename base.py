@@ -281,7 +281,7 @@ def toArray(x):
 
 
 def every(items, fn):
-    for item in items:
+    for item in list(items):
         if not fn(item):
             return False
     return True
@@ -5209,7 +5209,7 @@ def readjson(file, placeholder={}):
 
 def rangeFromString(s, offset=1):
     if isArray(s):
-        return s
+        return map(s, lambda x: x - 1)
 
     def f(s):
         if "-" in s:
@@ -7860,5 +7860,6 @@ def downloadImage(url, name):
 #SystemCommand('git add .\ngit show --name-only')
 #SystemCommand('git rev-list --all --count') # 34 commits
 #SystemCommand('git shortlog -s')
-#ff(text='mixed num', js=1)
+ff(text='g4stud', js=1)
 #print(tail(pydir))
+#mfile('vue-directives.js', 'vue-utils.js')

@@ -22,38 +22,37 @@ pdfdict = {
     "nn": "/home/kdog3682/PDFS/G5M Mcgraw Workbook.pdf",
     "oo": "/home/kdog3682/PDFS/G9M Exeter Workbook.pdf",
     "pp": "/home/kdog3682/PDFS/G4M BIM Workbook.pdf",
-    "qq": "/home/kdog3682/PDFS/G5M BIM Workbook.pdf"
+    "qq": "/home/kdog3682/PDFS/G5M BIM Workbook.pdf",
 }
 
 
 def createReportCards():
-     javascript('print.js', 'GXY')
-     files = ff(dir=dldir, name='^GXY')
-     mergepdf(files, dir=drivedir, outpath='Grade Reports')
+    javascript("print.js", "GXY")
+    files = ff(dir=dldir, name="^GXY")
+    mergepdf(files, dir=drivedir, outpath="Grade Reports")
+
 
 def utilGAGB(*names, **kwargs):
-    """ 
-        Used for GA and GA making python files
-        Used at f:mergeEm
+    """
+    Used for GA and GA making python files
+    Used at f:mergeEm
     """
     store = []
     assert len(names) > 0
-    for i in range(1, kwargs.get('amount', 5) + 1):
+    for i in range(1, kwargs.get("amount", 5) + 1):
         for name in names:
-            f = addExtension(name + str(i), 'pdf')
+            f = addExtension(name + str(i), "pdf")
             store.append(f)
     return store
 
+
 def mergeEm(files=0):
-    if not files: files = utilGAGB('GA', 'GB')
+    if not files:
+        files = utilGAGB("GA", "GB")
     pdf = pikeCreate(files, lambda x: x.pages)
 
 
-
-
-
 ########### OLD CREATORS ABOVE ##############
-
 
 
 def defaultBlocker(blocks, parser=0):
@@ -63,17 +62,19 @@ def defaultBlocker(blocks, parser=0):
         (int(b[0]), int(b[1]), b[4].strip()) for b in blocks
     ]
 
+
 def fitzOpen(file=0):
     if not file:
         return fitz.open()
     file = addExtension(file, "pdf")
-    assert getExtension(file) == 'pdf'
+    assert getExtension(file) == "pdf"
     return fitz.open(file)
 
 
 @recentFileCache
 def extractPages(file):
     return [page.get_text() for page in fitzOpen(file)]
+
 
 def groupConsecutive(nums):
     if not nums:
@@ -186,12 +187,14 @@ def pikeOpen(f=0):
         return Pdf.open(f, allow_overwriting_input=True)
     return f
 
+
 def fixDest(s):
     s = re.sub("g(?=\d)", "Grade ", s)
     s = re.sub(" *hw", " Homework", s)
     s = re.sub(" *q", " Quiz", s)
     s = re.sub(" *cw", " Classwork", s)
     return s
+
 
 # pikeExtract('logic', [9, 10, 11, 12], 'Grade 4 Classwork')
 # pikeExtract('g5math', [89, 90, 91, 92], 'Grade 5 Homework')
@@ -209,17 +212,19 @@ def mergepdf(files, **kwargs):
 
 
 def fitzSave(pdf, outpath, dir=0, openIt=1):
-    if not outpath: outpath = pdf.metadata['title']
     if not outpath:
-        raise Exception('no outpath')
+        outpath = pdf.metadata["title"]
+    if not outpath:
+        raise Exception("no outpath")
     outpath = addExtension(outpath, "pdf")
     pdf.save(outpath)
     if openIt:
         ofile(outpath)
 
+
 def save(pdf, outpath="test", dir=dldir, openIt=1):
 
-    isFitz = strType(pdf) == 'Document'
+    isFitz = strType(pdf) == "Document"
     if isFitz:
         return fitzSave(pdf, outpath, dir, openIt)
 
@@ -228,16 +233,19 @@ def save(pdf, outpath="test", dir=dldir, openIt=1):
     if not outpath:
         outpath = str(pdf._original_filename)
     elif outpath and not isString(outpath):
-        if objectClassName(pdf) == 'pdf':
+        if objectClassName(pdf) == "pdf":
             outpath = pdf.filename
         else:
-            raise Exception('outpath is neither string nor pdf')
+            raise Exception(
+                "outpath is neither string nor pdf"
+            )
 
     outpath = addExtension(outpath, "pdf")
     outpath = npath(dir, outpath)
 
     pdf.save(outpath)
-    if openIt: ofile(outpath)
+    if openIt:
+        ofile(outpath)
 
 
 payload = {
@@ -267,6 +275,7 @@ def deletePages(file, *indexes):
         count += 1
     return pdf
 
+
 payload = {
     "outpath": "Grade 4 Homework",
     "items": [
@@ -277,7 +286,8 @@ payload = {
     ],
 }
 
-def pikeCreate(files, f = lambda x: x.pages):
+
+def pikeCreate(files, f=lambda x: x.pages):
     pdf = Pdf.new()
     for file in files:
         src = pikeOpen(file)
@@ -305,9 +315,6 @@ def getName(s):
     return n
 
 
-
-
-
 fracfiles = [
     "/mnt/chromeos/MyFiles/Downloads/grade-4-equivalent-fractions-a.pdf",
     "/mnt/chromeos/MyFiles/Downloads/grade-4-equivalent-fractions-improper-a.pdf",
@@ -318,7 +325,6 @@ fracfiles = [
     "/mnt/chromeos/MyFiles/Downloads/grade-4-fractional-part-set-a.pdf",
     "/mnt/chromeos/MyFiles/Downloads/grade-4-subtracting-fractions-like-denominators-a.pdf",
 ]
-
 
 
 def foo():
@@ -340,9 +346,10 @@ def pikeRpw(source, f):
     f(src)
     save(src, source)
 
+
 def appendPage(source, payload, n=1):
     def f(src):
-        payload = pikeOpen(payload).pages[0: n]
+        payload = pikeOpen(payload).pages[0:n]
         src.pages.extend(payload)
 
     pikeRpw(source, f)
@@ -352,7 +359,7 @@ def compile_shsat_pdfs(file):
 
     year = search(yearRE, tail(file))
     if not year:
-        return 'ERROR - no year'
+        return "ERROR - no year"
 
     once = oncef()
     store = extractPages(file)
@@ -360,7 +367,7 @@ def compile_shsat_pdfs(file):
     answers = []
 
     if len(store) < 100:
-        return 'ERROR - invalid pdf length < 100'
+        return "ERROR - invalid pdf length < 100"
     g9index = 70
     if len(store) > 150:
         g9index = 120
@@ -371,22 +378,29 @@ def compile_shsat_pdfs(file):
         if test("answer key", text, flags=re.I):
             answers.append(i)
         if once(
-            i > g9index and test("grade 9", text, flags=re.I)
+            i > g9index
+            and test("grade 9", text, flags=re.I)
         ):
             indexes.append(i)
 
     source = pikeOpen(file)
     if len(indexes) != 5:
         pdf = pdfFromIndexes(source, indexes + answers)
-        save(pdf, 'temp.pdf', openIt=1)
-        indexes = rangeFromString(prompt(indexes, 'write new indexes:'))
-        answers = rangeFromString(prompt(answers, 'write new answer indexes:'))
+        save(pdf, "temp.pdf", openIt=1)
+        indexes = rangeFromString(
+            prompt(indexes, "write new indexes:")
+        )
+        answers = rangeFromString(
+            prompt(answers, "write new answer indexes:")
+        )
 
     else:
-        prompt(indexes, answers, 'indexes and answers')
+        prompt(indexes, answers, "indexes and answers")
 
     def lamb(i, plusAmount):
-        return list(range(indexes[i], indexes[i] + plusAmount))
+        return list(
+            range(indexes[i], indexes[i] + plusAmount)
+        )
 
     g9 = lamb(4, 3)
     v1 = lamb(0, 16)
@@ -398,12 +412,18 @@ def compile_shsat_pdfs(file):
     mkdir(dir)
 
     items = [
-        'G8 Math Exam A', m1,
-        'G8 Math Exam B', m2,
-        'G8 Verbal Exam A', v1,
-        'G8 Verbal Exam B', v2,
-        'G9 Math Exam', g9,
-        'Answer Key', answers
+        "G8 Math Exam A",
+        m1,
+        "G8 Math Exam B",
+        m2,
+        "G8 Verbal Exam A",
+        v1,
+        "G8 Verbal Exam B",
+        v2,
+        "G9 Math Exam",
+        g9,
+        "Answer Key",
+        answers,
     ]
 
     for name, indexes in partition(items):
@@ -428,9 +448,9 @@ def pdfFromIndexes(file, indexes):
 def build_homework_files(s):
     def fn(s):
         s = s.strip()
-        if test('\|', s):
-            outpath, rest = s.split(' ', maxsplit=1)
-            items = map(re.split(' *\| *', rest), splitonce)
+        if test("\|", s):
+            outpath, rest = s.split(" ", maxsplit=1)
+            items = map(re.split(" *\| *", rest), splitonce)
             outpath = fixDest(outpath)
             pdf = pikeOpen()
             for src, x in items:
@@ -438,15 +458,15 @@ def build_homework_files(s):
                 indexes = rangeFromString(x)
                 for i in indexes:
                     pdf.pages.append(src.pages[i])
-            
-            save(pdf, outpath=outpath, dir=dldir)
-            return 
 
-        elif test('  ', s):
-            outpath, s = splitonce(s, '  ')
-            src, indexes = splitonce(s, ' ')
+            save(pdf, outpath=outpath, dir=dldir)
+            return
+
+        elif test("  ", s):
+            outpath, s = splitonce(s, "  ")
+            src, indexes = splitonce(s, " ")
         else:
-            outpath, src, indexes = s.split(' ', maxsplit=2)
+            outpath, src, indexes = s.split(" ", maxsplit=2)
 
         outpath = fixDest(outpath)
         indexes = rangeFromString(indexes)
@@ -455,11 +475,12 @@ def build_homework_files(s):
 
     linegetter(s, trim=1, fn=fn)
 
+
 def build_shsat_files():
     files = mapdir(clip(1), dldir)
     results = map(files, infof(compile_shsat_pdfs))
     pprint(printDirRecursive(examdir))
-    pprint('RESULTS----------')
+    pprint("RESULTS----------")
     pprint(results)
 
 
@@ -467,30 +488,38 @@ def toPike(fn):
     def decorator(x, *args, **kwargs):
         pdf = pikeOpen(x)
         return fn(pdf, *args, **kwargs)
+
     return decorator
+
 
 def pikeMetaData(pdf):
     meta = pdf.open_metadata()
-    print(meta['dc:title'])
-    meta['dc:title'] = 'foo'
+    print(meta["dc:title"])
+    meta["dc:title"] = "foo"
 
 
 def k5learning(minutes=50):
-    group = mostRecentFileGroups(dldir, targetIndex=0, minutes=minutes)
+    group = mostRecentFileGroups(
+        dldir, targetIndex=0, minutes=minutes
+    )
     pdfs = map(group, lambda x: deletePages(x, -1))
-    mergepdf(pdfs, outpath=promptOutpath(fallback='g5cw', fn=fixDest))
+    mergepdf(
+        pdfs,
+        outpath=promptOutpath(fallback="g5cw", fn=fixDest),
+    )
 
-#build_homework_files()
-#k5learning(minutes=5)
-#build_shsat_files() # something is wrong with localdef:lamb ...
+
+# build_homework_files()
+# k5learning(minutes=5)
+# build_shsat_files() # something is wrong with localdef:lamb ...
 # the files being output arent accurate
-# need to move the stuff over 
-#pprint(build_homework_files()) # from workbooks ...
+# need to move the stuff over
+# pprint(build_homework_files()) # from workbooks ...
 
-#from fitz.utils import getColor as g
+# from fitz.utils import getColor as g
 
-WHITE = [1,1,1]
-BLACK = [0,0,0]
+WHITE = [1, 1, 1]
+BLACK = [0, 0, 0]
 
 
 def whiteTheMargin(pdf, xMargin=30, yMargin=20):
@@ -501,12 +530,7 @@ def whiteTheMargin(pdf, xMargin=30, yMargin=20):
     else:
         page = pdf[0]
 
-    r1 = fitz.Rect(
-        0, 
-        0,
-        page.rect.width,
-        yMargin
-    )
+    r1 = fitz.Rect(0, 0, page.rect.width, yMargin)
 
     r2 = fitz.Rect(
         0,
@@ -535,10 +559,10 @@ def whiteTheMargin(pdf, xMargin=30, yMargin=20):
     color = WHITE
     fill = WHITE
 
-    page.draw_rect(r1,  color=color, fill = fill, width = 10)
-    page.draw_rect(r2,  color=color, fill = fill, width = 10)
-    page.draw_rect(r3,  color=color, fill = fill, width = 10)
-    page.draw_rect(r4,  color=color, fill = fill, width = 10)
+    page.draw_rect(r1, color=color, fill=fill, width=10)
+    page.draw_rect(r2, color=color, fill=fill, width=10)
+    page.draw_rect(r3, color=color, fill=fill, width=10)
+    page.draw_rect(r4, color=color, fill=fill, width=10)
     return pdf
 
 
@@ -548,20 +572,21 @@ def fitzOpenSave(f, fn, outpath=None, openIt=0):
         value = fn(pdf)
         if value:
             fitzSave(pdf, outpath or f, openIt=openIt)
-            print('success', f)
+            print("success", f)
         return pdf
     except:
-        print(f, 'error')
+        print(f, "error")
         raise Exception()
 
+
 def colorStuff():
-    
+
     f = absdir(colordir)
-    d = colordir + 'dist/'
+    d = colordir + "dist/"
 
     for file in f:
         name = d + tail(file)
-        if not test('punch', name, flags=re.I):
+        if not test("punch", name, flags=re.I):
             continue
         pdf = fitzOpenSave(file, whiteTheMargin, name)
         pdf = pikeOpen(name)
@@ -569,20 +594,23 @@ def colorStuff():
             save(deletePages(pdf, 1), None)
 
         elif len(pdf.pages) == 4:
-            #pprint(pdf.pages)
+            # pprint(pdf.pages)
             save(deletePages(pdf, 0, 2, 3), None)
 
-#pprint(colorStuff())
+
+# pprint(colorStuff())
 def printStuff():
     items = absdir(colordistdir)
-    partitioner = Partitioner(items, 'a')
+    partitioner = Partitioner(items, "a")
     store = flat(list(partitioner.storage.store.values()))
     prompt(store)
-    outpath = prompt('outpath for this stuff?')
+    outpath = prompt("outpath for this stuff?")
     mergepdf(store, dir=dldir, outpath=outpath)
+
 
 def fitzRead(file):
     return [page.get_text() for page in fitzOpen(file)]
+
 
 def getBlankPageIndexes(file):
     store = []
@@ -591,6 +619,7 @@ def getBlankPageIndexes(file):
         if not text.strip():
             store.append(i)
     return store
+
 
 def merger(f, *files, **kwargs):
     indexes = getBlankPageIndexes(f)
@@ -601,49 +630,51 @@ def merger(f, *files, **kwargs):
     save(f, **kwargs)
 
 
-#temp = "/home/kdog3682/COLORING/dist/FC Pikachu and Friends.pdf"
-#temp2 = "/home/kdog3682/COLORING/dist/FC Pikachu & Friends 2.pdf"
-#merger(glf(), temp2, outpath=dldir + 'Grade 4 Final Exam.pdf')
+# temp = "/home/kdog3682/COLORING/dist/FC Pikachu and Friends.pdf"
+# temp2 = "/home/kdog3682/COLORING/dist/FC Pikachu & Friends 2.pdf"
+# merger(glf(), temp2, outpath=dldir + 'Grade 4 Final Exam.pdf')
 
 
-names =[
-  "Shujing",
-  "Austin",
-  "Anderson",
-  "Alexander",
-  "Mingrui",
-  "Bonnie",
-  "Stephen",
-  "Felix",
-  "Stephanie",
-  "Jayden",
-  "Ivy",
-  "Vincent",
-  "Alex",
-  "Jeffery",
-  "Sandy",
-  "Daphne",
-  "Olivia",
-  "Jamin",
-  "Leon",
-  "Raymond",
-  "Emerson"
+names = [
+    "Shujing",
+    "Austin",
+    "Anderson",
+    "Alexander",
+    "Mingrui",
+    "Bonnie",
+    "Stephen",
+    "Felix",
+    "Stephanie",
+    "Jayden",
+    "Ivy",
+    "Vincent",
+    "Alex",
+    "Jeffery",
+    "Sandy",
+    "Daphne",
+    "Olivia",
+    "Jamin",
+    "Leon",
+    "Raymond",
+    "Emerson",
 ]
-r = '|'.join(names)
-#files = ff(dldir, name='^ga\d')
+r = "|".join(names)
+# files = ff(dldir, name='^ga\d')
+
 
 def reader(file):
     s = join(fitzRead(file))
     m = search(r, s)
     return [file, m]
 
-#clip(map(files, reader))
-#clip(join(fitzRead(glf())))
 
-#def slicepdf(file):
-    #pdfOpen(f)
+# clip(map(files, reader))
+# clip(join(fitzRead(glf())))
 
-#save(pdfFromIndexes(glf(), '4-30'), outpath='G5 Practice Exam')
+# def slicepdf(file):
+# pdfOpen(f)
+
+# save(pdfFromIndexes(glf(), '4-30'), outpath='G5 Practice Exam')
 
 
 def foo(
@@ -670,14 +701,13 @@ def foo(
     ofile(outpath)
 
 
-
 def getStartEndIndexes(file, start=None, end=None):
     store = []
-    
+
     pages = fitzRead(file)
     length = len(pages)
     clip(pages)
-    #prompt('hi')
+    # prompt('hi')
     raise Exception()
 
     if start:
@@ -692,28 +722,34 @@ def getStartEndIndexes(file, start=None, end=None):
     if end:
         for i, text in reverse(list(enumerate(pages))):
             if test(end, text):
-                end = map(list(range(0, i)), lambda x: length - x - 1)
+                end = map(
+                    list(range(0, i)),
+                    lambda x: length - x - 1,
+                )
                 store.extend(end)
                 break
 
     return store
 
 
-
 def removeStartEndPages(file):
     chdir(dldir)
-    indexes = getStartEndIndexes(file, start='page *2', end='stop')
+    indexes = getStartEndIndexes(
+        file, start="page *2", end="stop"
+    )
     prompt(indexes)
     f = deletePages(file, indexes)
     save(f)
-    #save(f, outpath=file)
+    # save(f, outpath=file)
+
 
 def removeWhitePages(f):
     indexes = getBlankPageIndexes(f)
     f = deletePages(f, indexes)
     save(f, outpath=None)
 
-#removeStartEndPages('g4cw.pdf')
+
+# removeStartEndPages('g4cw.pdf')
 
 
 def sliceStartEnd(f, start, end):
@@ -729,12 +765,13 @@ def sliceStartEnd(f, start, end):
 
     pikeRpw(f, runner)
 
+
 chdir(dldir)
 
-#sliceStartEnd('g5cw.pdf', 8, 3)
-#pprint(build_homework_files())
-#that in this state ... I am not really talkative ...
-#sliceNewPdf('g4cw.pdf', 'G4 Classwork', 10)
+# sliceStartEnd('g5cw.pdf', 8, 3)
+# pprint(build_homework_files())
+# that in this state ... I am not really talkative ...
+# sliceNewPdf('g4cw.pdf', 'G4 Classwork', 10)
 # that you dont get that far.
 # What you want ... and this couldve been done much faster.
 
@@ -748,70 +785,82 @@ def sliceNewPdf(a, b, n):
     src = pikeOpen(a)
     pdf = pikeOpen()
     pdf.pages.extend(src.pages[0:n])
-    save(pdf, outpath=addExtension(b, 'pdf'))
+    save(pdf, outpath=addExtension(b, "pdf"))
 
-#removeWhitePages('WG5Q1.pdf')
+
+# removeWhitePages('WG5Q1.pdf')
 def boo():
     file = glf()
     indexes = getBlankPageIndexes(file)
     f = deletePages(file, indexes)
-    splitpdf(f, {
-        'warmup': [1,2],
-        'ews': [3,14],
-        #'ws2': [5,6],
-        #'ws3': [7,8],
-        #'ws4': [9,10],
-        #'ws5': [11,12],
-        #'ws6': [13,14],
-    })
+    splitpdf(
+        f,
+        {
+            "warmup": [1, 2],
+            "ews": [3, 14],
+            #'ws2': [5,6],
+            #'ws3': [7,8],
+            #'ws4': [9,10],
+            #'ws5': [11,12],
+            #'ws6': [13,14],
+        },
+    )
 
 
 def fixOutpath(s, grade=4):
     dict = {
-        'ews': 'Extra Classwork',
-        'ws1': 'Extra Worksheet 1',
-        'ws2': 'Extra Worksheet 2',
-        'ws3': 'Extra Worksheet 3',
-        'ws4': 'Extra Worksheet 4',
-        'ws5': 'Extra Worksheet 5',
-        'ws6': 'Extra Worksheet 6',
+        "ews": "Extra Classwork",
+        "ws1": "Extra Worksheet 1",
+        "ws2": "Extra Worksheet 2",
+        "ws3": "Extra Worksheet 3",
+        "ws4": "Extra Worksheet 4",
+        "ws5": "Extra Worksheet 5",
+        "ws6": "Extra Worksheet 6",
     }
     s = dict.get(s, s)
-    n = 'G' + str(grade) + capitalize(s)
-    n = addExtension(n, 'pdf')
+    n = "G" + str(grade) + capitalize(s)
+    n = addExtension(n, "pdf")
     return n
 
+
 def splitpdf(f, items):
-    items = [{'range': v, 'name': k} for k,v in items.items()]
+    items = [
+        {"range": v, "name": k} for k, v in items.items()
+    ]
     src = f
     for item in items:
         pdf = pikeOpen()
-        range = item.get('range')
+        range = item.get("range")
         if isNumber(range):
             pdf.pages.append(src.pages[range - 1])
         else:
-            pdf.pages.extend(src.pages[range[0] - 1: range[1]])
-        save(pdf, outpath=fixOutpath(item.get('name')))
+            pdf.pages.extend(
+                src.pages[range[0] - 1 : range[1]]
+            )
+        save(pdf, outpath=fixOutpath(item.get("name")))
 
 def splitworksheets(f):
     # ehh not so much
     pages = fitzRead(f)
     store = []
     for i, page in enumerate(pages):
-        if test('warmup|worksheet \d', page, flags=re.I):
+        if test("warmup|worksheet \d", page, flags=re.I):
             store.append(i)
 
-#boo()
+
+# boo()
+
 
 def spliter(srcFile, outpath, indexes):
-    indexes = map(split(indexes, ' '), rangeFromString)
+    indexes = map(split(indexes, " "), rangeFromString)
     source = pikeOpen(srcFile)
     for i, range in enumerate(indexes):
         pdf = pdfFromIndexes(source, range)
         path = f"{outpath} Part {str(i + 1)}"
         save(pdf, outpath=path)
 
-#spliter('g5cw.pdf', 'G5 2019 NYSE', '8-15 21-30')
+
+# spliter('g5cw.pdf', 'G5 2019 NYSE', '8-15 21-30')
 
 
 s = """
@@ -821,13 +870,55 @@ g4cw hh 7 8 15 17
 g5hw jj 149-152
 """
 
-#pprint(build_homework_files(s))
+# pprint(build_homework_files(s))
+
 
 def scrapeAndFix():
     files = scrapeLinks()
     for file in files:
-        outpath, indexes = promptSplit(tail(file), 'outpath|indexstring')
+        outpath, indexes = promptSplit(
+            tail(file), "outpath|indexstring"
+        )
         pdf = pdfFromIndexes(file, indexes)
         save(pdf, outpath=outpath)
 
-#scrapeAndFix()
+
+# scrapeAndFix()
+
+
+def get():
+    return pikeOpen(glf())
+
+
+
+
+def getSet(*args, **kwargs):
+    pdf = pikeOpen(kwargs.get('file') or glf())
+    if every(args, isNumber):
+        pdf = pdfFromIndexes(pdf, args)
+    save(pdf, outpath=kwargs.get("outpath"))
+
+#getSet(5, 6, 8, outpath="Student Letters")
+
+def manager():
+    prefix = 'G4 '
+    def replacer(s):
+        s = re.sub(' *week.+', '', s, flags=re.I)
+        s = prefix + capitalize(s)
+        return s
+
+    file = glf()
+    name = removeExtension(tail(file))
+    def namechange(file):
+        newName = changeFileName(file, replacer)
+        mfile(file, newName)
+        return newName
+
+    if test('week', name, flags=re.I):
+        return namechange(file)
+
+    if name == 'warmup':
+        file = namechange(file)
+        return removeWhitePages(file)
+
+#manager()

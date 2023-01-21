@@ -423,7 +423,6 @@ def gitInit(dir, user=env.user):
         ofile(f"https://github.com/{user}/{repo}")
 
 def gitNames(dir):
-    cmd = 'git status'
     cmd = 'git diff --name-status'
     names = SystemCommand(cmd, dir=dir).success
     return names
@@ -431,11 +430,14 @@ def gitNames(dir):
 def gitPushPython():
     gitPush(dir=pydir)
 
-env.basepyref['gi'] = 'gitInit'
-env.basepyref['gpy'] = 'gitPushPython'
-main()
-#gitInit()
+
+
 def gitUrl(dir):
     repo = tail(dir)
     return f"https://github.com/{env.githubUser}/{repo}"
 
+env.basepyref['gi'] = 'gitInit'
+env.basepyref['gpy'] = 'gitPushPython'
+main()
+#gitInit()
+#print(ofile(gitUrl(pydir)))
