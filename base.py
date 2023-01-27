@@ -1,8 +1,8 @@
-
 gunkExtensions = ['recent', 'mp3', 'ass', 'eps', 'zip', 'url', 'gz', 'backup', 'webp', 'asy', 'vcf', 'js']
 pdfdir2 = "/home/kdog3682/PDFS2/"
 archdir = "/mnt/chromeos/GoogleDrive/MyDrive/ARCHIVES/"
 sshfile = "/home/kdog3682/.ssh/id_rsa.pub"
+dir2023 =  "/home/kdog3682/2023/node_modules/"
 nodedir2023 = "/home/kdog3682/2023/node_modules/"
 githuburl = "https://github.com/"
 drivedir = "/mnt/chromeos/GoogleDrive/MyDrive/"
@@ -11,6 +11,7 @@ zipdir = "/mnt/chromeos/GoogleDrive/MyDrive/ZIP/"
 gdocdir = "/mnt/chromeos/GoogleDrive/MyDrive/GDOC/"
 backupdir = "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/"
 dropboxdir = "~/DropBox"
+
 pythondir = (
     "/home/kdog3682/.local/lib/python3.7/site-packages"
 )
@@ -32,30 +33,32 @@ productiondir = "/home/kdog3682/PRODUCTIONS/"
 lezfile = "/home/kdog3682/.npm-global/lib/node_modules/@lezer/html/dist/index.cjs"
 filelogfile = "/home/kdog3682/LOGS/today.log"
 clipdir = "/home/kdog3682/CLIPS/"
+
 lezerdir = (
     "/home/kdog3682/.npm-global/lib/node_modules/@lezer/"
 )
+
 pubnodedir = "/home/kdog3682/CWF/public/node_modules/"
 cwfnodedir = "/home/kdog3682/CWF/node_modules/"
 servernodedir = "/home/kdog3682/CWF/node_modules/"
 svgdir = "/home/kdog3682/SVG/"
+
 nodemodulesdir = (
     "/home/kdog3682/.npm-global/lib/node_modules/"
 )
+
 servedir = "/home/kdog3682/SERVER/"
 gmailsenturl = "https://mail.google.com/mail/u/0/#sent"
 gmailurl = "https://mail.google.com/mail/u/0/#inbox"
 testpdf = "/mnt/chromeos/MyFiles/Downloads/test.pdf"
+
 googleassignmentdir = (
     "/home/kdog3682/CWF/public/assignments"
 )
-ONE_MINUTE = 60
-cmd = "pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib"
 
+ONE_MINUTE = 60
 homedir = "/home/kdog3682/"
 rootdir = "/home/kdog3682/"
-dir2023 = "/home/kdog3682/2023/"
-
 dir2023images = dir2023 + 'images'
 tempappscriptfile = "/home/kdog3682/appscript.temp.json"
 tempfile = "/home/kdog3682/CWF/public/temp.json"
@@ -82,6 +85,7 @@ fontdir = "/home/kdog3682/CWF/public/fonts/"
 jchdir = "/home/kdog3682/CWF/jch/"
 pubdir = "/home/kdog3682/CWF/public/"
 budir = "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/"
+
 bucurdir = (
     "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/CURRENT/"
 )
@@ -110,11 +114,11 @@ dirdict = {
     "budir": budir,
 }
 
-
 macdirdict = {
     "drive": "/users/harfunmaterials/Google Drive/",
     "outbound": "/users/harfunmaterials/Google Drive/OUTBOUND/",
 }
+
 olddirdict = {
     "bu": "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP",
     "outbound": "/mnt/chromeos/GoogleDrive/MyDrive/OUTBOUND",
@@ -140,20 +144,23 @@ import os
 import json
 import webbrowser
 import shutil
-
-
 emptyBlockRE = "^ *(?:function )?\\w+\\(.*?\\) {\\s*},?"
 callableRE = "^[a-zA-Z.]+\\([^\\n`]+$"
+
 blockQuoteRE = (
     "^ *(?:let |)?\\w+ =\\s*(?<!\\)`[^]+?(?<!\\)`.*\\n?"
 )
+
 cwfdir = "/home/kdog3682/CWF/"
 cdir = "/home/kdog3682/CWF/"
 drivecwfdir = "/mnt/chromeos/GoogleDrive/MyDrive/CWF/"
+
 drivedir0104 = (
     "/mnt/chromeos/GoogleDrive/MyDrive/CWF/01-04-2022/"
 )
+
 BROWSER_AGENT = "Mozilla/5.0 (X11; CrOS aarch64 13310.93.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.133 Safari/537.36"
+
 utfe = [
     "",
     "txt",
@@ -171,16 +178,13 @@ utfe = [
     "vue",
     #"pdf",
 ]
+
 imge = ["jpg", "jpeg", "png", "svg"]
 fonte = ["ttf", "otf", "woff", "woff2"]
 musice = ["m4a", "mp3", "mp4", "wav"]
-a = 1
-b = 2
-c = 3
 macdir = "/users/harfunmaterials/"
 drivedir = "/mnt/chromeos/GoogleDrive/MyDrive/"
 original = print
-
 
 def exists(x):
     t = type(x)
@@ -192,44 +196,35 @@ def exists(x):
         return len(x.keys()) > 0
     return x != None
 
-
 def test(r, s, flags=0):
     if not isString(s):
         return
     return bool(re.search(r, s, flags))
-
 
 def isPublicFile(x):
     if isIgnoredFile(x):
         return 0
     return test("^[a-zA-Z]|^\d+$", tail(x))
 
-
 def isPrimitive(s):
     return isString(s) or isNumber(s)
-
 
 def isFunction(x):
     return callable(x)
 
-
 def isString(x):
     return type(x) == str
-
 
 def isNumber(x):
     if isString(x):
         return test("^\d[.,\d]*$", x)
     return type(x) == int or type(x) == float
 
-
 def isArray(x):
     return type(x) == list or type(x) == tuple
 
-
 def isObject(x):
     return type(x) == dict
-
 
 def head(f):
     return (
@@ -237,22 +232,18 @@ def head(f):
         + "/"
     )
 
-
 def tail(x):
     return re.sub("/$", "", str(x)).rsplit("/", maxsplit=1)[
         -1
     ]
 
-
 def identity(s):
     return s
-
 
 def getExtension(s):
     if "json.js" in s:
         return "json.js"
     return search("\.([a-zA-Z]+)$", s).lower()
-
 
 def unique(a, b=None):
     if b:
@@ -263,14 +254,11 @@ def unique(a, b=None):
     else:
         return list(set(a))
 
-
 def difference(a, b):
     return list(set(a).difference(b))
 
-
 def intersection(a, b):
     return list(set(a).intersection(b))
-
 
 def toArray(x):
     if isArray(x):
@@ -279,13 +267,11 @@ def toArray(x):
         return split(x, "\n")
     return [x]
 
-
 def every(items, fn):
     for item in list(items):
         if not fn(item):
             return False
     return True
-
 
 def datestamp(x=None, strife="%m-%d-%Y"):
     ref = {
@@ -307,10 +293,8 @@ def datestamp(x=None, strife="%m-%d-%Y"):
 
     return datetime.now().strftime(strife)
 
-
 def getLast(s):
     return s[-1]
-
 
 def search(regex, item, flags=0):
     match = re.search(regex, item, flags)
@@ -322,14 +306,11 @@ def search(regex, item, flags=0):
         return match.groups()
     return match.group(0)
 
-
 def toNumber(x):
     return int(x) if isNumber(x) else x
 
-
 def isUrl(s):
     return test("^http|www|\.(?:com|net|io|org)\\b", s)
-
 
 def clear(x):
     if isfile(x):
@@ -339,13 +320,11 @@ def clear(x):
     elif isdir(x):
         rmdir(x, None, True)
 
-
 def absdir(dir="."):
     if isArray(dir):
         return dir
     dir = abspath(dir)
     return [os.path.join(dir, f) for f in os.listdir(dir)]
-
 
 def caller(n=0):
     from inspect import stack
@@ -355,7 +334,6 @@ def caller(n=0):
         return stack[2][3]
     else:
         return stack[len(stack) - 2][3]
-
 
 def filter(items, f=exists, *args, **kwargs):
     if not f:
@@ -374,15 +352,12 @@ def filter(items, f=exists, *args, **kwargs):
             x for x in list(items) if f(x, *args, **kwargs)
         ]
 
-
 def isfile(f):
     return os.path.isfile(abspath(f))
-
 
 def isdir(f):
     return os.path.isdir(f)
     return os.path.isdir(os.path.expanduser(f))
-
 
 def toSeconds(
     minutes=10, hours=0, seconds=0, days=0, months=0
@@ -394,7 +369,6 @@ def toSeconds(
         + days * 3600 * 24
         + months * 3600 * 24 * 30
     )
-
 
 def isRecent(file, before=0, after=0, **kwargs):
     if isNumber(file):
@@ -412,17 +386,14 @@ def isRecent(file, before=0, after=0, **kwargs):
     delta = toSeconds(**kwargs)
     return n + delta > timestamp()
 
-
 def timestamp(x=int):
     if type(x) == datetime:
         return int(x.timestamp())
     if x == int:
         return int(datetime.now().timestamp())
 
-
 def mdate(f):
     return int(os.path.getmtime(f))
-
 
 def mostRecent(dir, n=1, reverse=0, **kwargs):
     from glob import glob
@@ -446,17 +417,14 @@ def mostRecent(dir, n=1, reverse=0, **kwargs):
         else:
             return files[-n:]
 
-
 def npath(dir=0, file=0):
     if not dir:
         return file
     return os.path.join(dir, tail(file))
 
-
 def normpath(dir, file):
     dir = abspath(dir) if isdir(dir) else head(dir)
     return os.path.join(dir, tail(file))
-
 
 def abspath(file=None):
     if file == None:
@@ -470,13 +438,10 @@ def abspath(file=None):
     else:
         return os.path.abspath(file)
 
-
 google_url = "https://google.com/"
-
 
 def ofile(f):
     return map(f, openBrowser)
-
 
 def mfiles(files, dir, fn=0):
     if isString(files):
@@ -489,17 +454,14 @@ def mfiles(files, dir, fn=0):
             dir = fn(dir + fn(tail(f)))
         mfile(f, dir)
 
-
 def cfiles(files, dir):
     mkdir(dir)
     assert isdir(dir)
     for f in files:
         mfile(f, dir, mode="copy")
 
-
 def cfile(f, t):
     mfile(f, t, mode="copy")
-
 
 def mfile(f, t, mode="move"):
     if not getExtension(t) and not isdir(t):
@@ -528,17 +490,14 @@ def mfile(f, t, mode="move"):
             return 0
             pass
 
-
 def rfile(f):
     mfile(f, "/home/kdog3682/TRASH")
-
 
 def cfile(f, t):
     if not getExtension(t):
         t = normpath(t, f)
     shutil.copy(f, t)
     print(f"copying file: {f} to {t}")
-
 
 def cdir(dir, t):
     newDir = npath(t, dir)
@@ -549,14 +508,11 @@ def cdir(dir, t):
     shutil.copytree(dir, newDir)
     print(f"copying directory: {newDir}")
 
-
 def isMacbook():
     return not os.path.exists("/mnt")
 
-
 def isCurrentDir(d):
     return abspath(os.getcwd()) == abspath(d)
-
 
 def chdir(d, force=0):
     d = dirgetter(d)
@@ -567,7 +523,6 @@ def chdir(d, force=0):
     if isdir(d) and not isCurrentDir(d):
         print(f"changing to directory: {d}")
         os.chdir(d)
-
 
 def prompt(*args, **kwargs):
     if kwargs.get("message"):
@@ -581,7 +536,6 @@ def prompt(*args, **kwargs):
     ) if isPrimitive(args[0]) else pprint(args[0])
     return input()
 
-
 def isIgnoredFile(name):
     name = tail(name)
     ignore = [
@@ -593,7 +547,6 @@ def isIgnoredFile(name):
     ignoreRE = "^(?:\W)"
     recursiveIgnoreRE = "^(?:LICNSE|README\.[mM][dD])$"
     return name in ignore or test(ignoreRE, name)
-
 
 def fileInfo(f, r=0):
     if isfile(f):
@@ -612,7 +565,6 @@ def fileInfo(f, r=0):
     else:
         print(["not a file", f])
 
-
 def dirgetter(dir=None):
     if not dir:
         return os.getcwd()
@@ -627,11 +579,9 @@ def dirgetter(dir=None):
     assert isdir(dir)
     return dir
 
-
 def number(items):
     for i, item in enumerate(items):
         print(i + 1, item)
-
 
 def askToRemove(file):
     pprint(read(file))
@@ -640,14 +590,12 @@ def askToRemove(file):
     if a:
         rfile(file)
 
-
 def openBrowser(f):
     try:
         webbrowser.open(f)
         print(f"opening file: {f}")
     except:
         print("error opening file f")
-
 
 def choose(x, mode=0, filter=0, auto=1):
     if isString(x) and isdir(x):
@@ -691,7 +639,6 @@ def choose(x, mode=0, filter=0, auto=1):
         if mode == 0:
             return unique(value)
 
-
 def find(arr, fn, mode=None, flags=0):
     if isObject(arr):
         for k, v in arr.items():
@@ -702,7 +649,6 @@ def find(arr, fn, mode=None, flags=0):
     for i, item in enumerate(list(arr)):
         if ftest(fn, item, flags=flags):
             return i if mode == int else item
-
 
 def _config(s):
     if not s:
@@ -767,7 +713,6 @@ def _config(s):
         items1["text"] = quote[0]
     return items1
 
-
 def configurable(fn):
     def wrapper(s="", **bargs):
         if s:
@@ -777,7 +722,6 @@ def configurable(fn):
         return fn(**kwargs)
 
     return wrapper
-
 
 def sort(x, f=int, reverse=0):
     if isObject(x):
@@ -792,7 +736,6 @@ def sort(x, f=int, reverse=0):
     else:
         return sorted(list(x), key=f, reverse=reverse)
 
-
 def append(f, s):
     if isObject(s):
         s = s.values()
@@ -804,7 +747,6 @@ def append(f, s):
             _.write("\n" + value)
             print(f"appending file: {f}")
 
-
 def fixUrl(s):
     s = re.sub("(?:https://)?view-source:", "", s)
     if "." not in s:
@@ -813,10 +755,8 @@ def fixUrl(s):
         s = "https://" + s
     return s
 
-
 def getDomainName(url):
     return re.sub("(?<!/)/\w.*$", "", fixUrl(url))
-
 
 def downloadWebsite(url):
     chdir(pubdir)
@@ -840,22 +780,18 @@ def downloadWebsite(url):
     s = re.sub(regex, runner, s)
     write("index.html", s, open=1)
 
-
 def toNumber(x):
     if isNumber(x):
         return int(x)
     return x
 
-
 def toString(x):
     return str(x) if isPrimitive(x) else join(x)
-
 
 def gatherArgs(args):
     if isArray(args[0]):
         return args[0]
     return args
-
 
 def join(*args, delimiter="\n"):
     if not args:
@@ -873,29 +809,23 @@ def join(*args, delimiter="\n"):
 
     return backspace(s) if delimiter else s
 
-
 def backup(f):
     shutil.copy(f, npath(dldir, f + ".backup"))
     print("backed up", f)
 
-
 def backspace(s):
     return s[:-1]
-
 
 def camelCase(s):
     s = uncapitalize(s.strip())
     s = re.sub("[- .](\w)", lambda x: x.group(1).upper(), s)
     return s
 
-
 def decode(x):
     return x.decode("utf-8")
 
-
 def node(*args):
     return system("node", *args)
-
 
 class CD:
     def __init__(self, newPath=None):
@@ -910,7 +840,6 @@ class CD:
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
 
-
 def quote(s):
     return (
         '"""\n' + s.strip() + '\n"""'
@@ -918,12 +847,10 @@ def quote(s):
         else '"' + s + '"'
     )
 
-
 def some(items, x):
     for item in items:
         if ftest(x, item):
             return True
-
 
 def addExtension(s, extension="py", force=0):
     if not s:
@@ -934,7 +861,6 @@ def addExtension(s, extension="py", force=0):
         else s + "." + extension
     )
 
-
 def ftest(f, arg, flags=0):
     if isArray(f):
         return every(f, lambda f: ftest(f, arg))
@@ -944,16 +870,13 @@ def ftest(f, arg, flags=0):
         return f(arg)
     return True
 
-
 def handleError(e):
     print([caller(), "error", str(e)])
-
 
 def rigidSort(items, order, f=identity):
     order = {k: i for k in order}
     items.sort(key=lambda x: order[f(x)])
     return items
-
 
 def breaker(n=10):
     global a
@@ -961,11 +884,9 @@ def breaker(n=10):
     if a >= n:
         raise Exception()
 
-
 def _setup_chromebook():
     os.system("clear")
     print("Install Pip Libraries")
-
 
 def _cleanup_base():
     # cleanup base.py
@@ -1034,13 +955,11 @@ def _cleanup_base():
     return s
     breaker(3)
 
-
 def testf(r, flags=0, reverse=0):
     if reverse:
         return lambda x: not test(r, x, flags)
     else:
         return lambda x: test(r, x, flags)
-
 
 def rmdir(dir, force=0, create=0):
     if (
@@ -1061,9 +980,7 @@ def rmdir(dir, force=0, create=0):
     if create:
         mkdir(dir)
 
-
 quoteRE = "(?<!\\)'.*?(?<!\\)'|(?<!\\)\".*?(?<!\\)\""
-
 
 def mkdir(dir):
     if isdir(dir):
@@ -1075,7 +992,6 @@ def mkdir(dir):
         print(f"creating new directory: {dir}")
         return True
 
-
 def write(f, s, open=0):
     try:
         _write(f, s, open)
@@ -1085,7 +1001,6 @@ def write(f, s, open=0):
         dir = head(f)
         mkdir(dir)
         _write(f, s, open)
-
 
 def _write(f, s, _open=0):
     if not exists(s):
@@ -1117,16 +1032,13 @@ def _write(f, s, _open=0):
     if _open:
         ofile(f)
 
-
 def uncapitalize(s):
     return re.sub(
         "[a-zA-Z]", lambda x: x.group(0).lower(), s, count=1
     )
 
-
 def lineCount(s):
     return len(re.findall("\n", s))
-
 
 def stringify(x):
     if type(x) == bytes:
@@ -1134,7 +1046,6 @@ def stringify(x):
     if isPrimitive(x):
         return str(x)
     return json.dumps(x, indent=4)
-
 
 def removeComments(s, e=None):
     js = "(?://|/\*[\w\W]+?\*/)"
@@ -1152,10 +1063,8 @@ def removeComments(s, e=None):
     r = start + locals().get(e, "js") + end
     return re.sub(r, "", s, flags=re.M)
 
-
 def removeExtension(s):
     return re.sub("(?:\.json)?\.\w+$", "", s)
-
 
 def createVariable(name, s, lang="py"):
     if test("^(fun|def|class)", s):
@@ -1168,12 +1077,10 @@ def createVariable(name, s, lang="py"):
     s = stringify(s)
     return prefix + name + " = " + s
 
-
 def unidecode(s):
     from unidecode import unidecode
 
     return unidecode(s)
-
 
 def wrap(a, b="()"):
     dict = {
@@ -1183,7 +1090,6 @@ def wrap(a, b="()"):
     }
     a, c = dict.get(b, [b, b])
     return f"{b}{a}{c}"
-
 
 def templater(template, ref):
 
@@ -1205,7 +1111,6 @@ def templater(template, ref):
         return parser(x.group(1))
 
     return re.sub(regex, runner, template)
-
 
 def map(items, fn, *args, filter=1, **kwargs):
     if not items:
@@ -1238,11 +1143,9 @@ def map(items, fn, *args, filter=1, **kwargs):
             store.append(value)
     return store
 
-
 def raw(f):
     with open(f, "rb") as f:
         return str(f.read())
-
 
 def read(file):
     e = getExtension(file)
@@ -1262,14 +1165,12 @@ def read(file):
                 return
                 return json.load(f)
 
-
 def snakeCase(s):
     return re.sub(
         "([a-z])([A-Z])",
         lambda x: x.group(1) + "-" + x.group(2).lower(),
         s,
     )
-
 
 def pop(x, key):
     if isNumber(key):
@@ -1279,14 +1180,11 @@ def pop(x, key):
     else:
         return x.pop(key, None)
 
-
 def parseJSON(x):
     return json.loads(x) if isJsonParsable(x) else x
 
-
 def isJsonParsable(x):
     return isString(x) and test("^[{\[]", x)
-
 
 def request(url):
     from requests import get
@@ -1294,11 +1192,9 @@ def request(url):
     r = get(fixUrl(url), {"user-agent": BROWSER_AGENT})
     return parseJSON(r.text) if r.status_code == 200 else ""
 
-
 def stringcall(fn, args):
     f = lambda x: int(x) if isNumber(x) else quote(x)
     return fn + "(" + ", ".join(map(args, f)) + ")"
-
 
 def clip(s=0, name=0):
     presetClipFiles = ["reddit", "booga"]
@@ -1322,7 +1218,6 @@ def clip(s=0, name=0):
     if s:
         write(name or clipfile, stringify(s), open=1)
 
-
 def googleYouTubeVideosFromUrl():
     url = "https://www.youtube.com/watch?v=qNgZxjJBey4&ab_channel=Mario%27sMathTutoring"
     url = re.sub(
@@ -1335,10 +1230,8 @@ def googleYouTubeVideosFromUrl():
     id = search('externalId.*?(\w.*?)"', data)
     clip(id)
 
-
 def mergefiles(s):
     return join(map(s, read))
-
 
 def removeJavascriptStuff(s):
     s = re.sub(
@@ -1348,7 +1241,6 @@ def removeJavascriptStuff(s):
         "^(class|if) [\w\W]+?\n}\n", "", s, flags=re.M
     )
     return s
-
 
 def appScript(f, data=None, use=""):
     namer = lambda f: normDirPath(addExtension(f, "js"))
@@ -1363,34 +1255,27 @@ def appScript(f, data=None, use=""):
     google_request(s)
     print("called google")
 
-
 def appScript(f, data=None):
     s = read(env.appscriptfile) + "\n\n"
     s += toCallable(f, data)
     google_request(s)
 
-
 def googlePrint(s):
     clip(s)
-
 
 def googleOpen(o):
     ofile(o)
 
-
 def googleValue(s):
     pprint(s)
 
-
 def googleLogs(s):
     pprint(s)
-
 
 def googleWrite(obj):
     file = obj.get("file")
     value = obj.get("value")
     normWrite(file, value, open=1)
-
 
 def googleCreateVariable(obj):
     file = obj.get("file")
@@ -1409,10 +1294,9 @@ def googleCreateVariable(obj):
 
     append(file, payload)
 
-
 def googleAppScript(f="", *args):
     print("starting google appscript")
-    s = read(env.appscriptfile).strip()
+    s = read(env.GOOGLE_APPSCRIPT_FILE).strip()
     r = "^(?:(?:// *|import).+)(?:\n+(?:// *|import).+)*"
     s, imports = mget(r, s, flags=re.M, mode=str)
     # gas
@@ -1502,7 +1386,6 @@ def googleTranslate(x, lang="chinese"):
     return value
     pprint(value)
 
-
 def google_request(data):
     from requests import post
 
@@ -1517,28 +1400,23 @@ def google_request(data):
     print("--------------------------------------")
     return value
 
-
 def split(s, r=" ", flags=0):
     return map(
         filter(re.split(r, s.strip(), flags=flags)), trim
     )
 
-
 def trim(s):
     return s.strip()
-
 
 def splitonce(s, r=" "):
     if isArray(s):
         return [s[0], s[1:]]
     return force(re.split(r, s, maxsplit=1))
 
-
 def force(arr, n=2):
     while len(arr) < n:
         arr.append("")
     return arr
-
 
 def _dropbox(files, push=1, pull=0):
     from dropbox import Dropbox
@@ -1572,14 +1450,11 @@ def _dropbox(files, push=1, pull=0):
             map(files, _push)
             print("Done at Posting to Dropbox")
 
-
 def _drive(files):
     map(files, cfile, drivedir)
 
-
 def fsize(f):
     return os.path.getsize(f)
-
 
 def isRemovableFile(file):
     removeRE = "\\bboo\\b|debug|dela|foo|\(|^-?\d+$"
@@ -1597,7 +1472,6 @@ def isRemovableFile(file):
         or (e == "json" and size < 1000)
     )
 
-
 def _cleandir(dir="."):
     def f(file):
         if isRemovableFile(file):
@@ -1607,13 +1481,11 @@ def _cleandir(dir="."):
 
     return filter(absdir(dir), f)
 
-
 def getArgsKwargs(s):
     r = "(\w+) *= *(\S+?)(?= |$)"
     s, kwargs = mreplace(r, s)
     args = split(s, " ")
     return args, {k: v for k, v in kwargs}
-
 
 def dategetter(s, mode=int):
     today = datetime.today()
@@ -1643,13 +1515,11 @@ def dategetter(s, mode=int):
 
     return int(value.timestamp()) if mode == int else value
 
-
 def isSameDate(date, f):
 
     fdate = datetime.fromtimestamp(mdate(f))
     date = dategetter(date, None)
     return date.day == fdate.day
-
 
 def checkpointf(
     deleteIt=0,
@@ -1811,7 +1681,6 @@ def checkpointf(
 
     return trycatch(runner)
 
-
 def trycatch(fn):
     def runner(*args, **kwargs):
         try:
@@ -1822,7 +1691,6 @@ def trycatch(fn):
             return
 
     return runner
-
 
 def mreplace(r, s, **kwargs):
     store = []
@@ -1842,7 +1710,6 @@ def mreplace(r, s, **kwargs):
     text = re.sub(r, runner, s, **kwargs).strip()
     return text.strip(), store
 
-
 def flat(items, depth=None):
     def runner(items, limit=0):
         for item in items:
@@ -1856,7 +1723,6 @@ def flat(items, depth=None):
     store = []
     runner(items)
     return store
-
 
 def changeExtension(s, e, unique=False):
     # if isArray(s):
@@ -1874,10 +1740,8 @@ def changeExtension(s, e, unique=False):
         name = incrementName(name)
     return name
 
-
 def capitalize(s):
     return s[0].upper() + s[1:]
-
 
 def getfiles(dir, recursive=0, mode=dict, sort=0, **kwargs):
 
@@ -1922,7 +1786,6 @@ def getfiles(dir, recursive=0, mode=dict, sort=0, **kwargs):
     runner(dirgetter(dir))
     return output
 
-
 def printdir(dir=None, printIt=0):
     dir = dirgetter(dir)
     files = os.listdir(dir)
@@ -1938,11 +1801,9 @@ def printdir(dir=None, printIt=0):
         clip(files)
     return files
 
-
 NCG_TEMPLATE_LIBRARY = {
     "b": "\\b(?:$1)\\b",
 }
-
 
 def ncg(template, ref):
     if not template:
@@ -1952,7 +1813,6 @@ def ncg(template, ref):
     s = "|".join(list(ref.keys()))
     r = template.replace("$1", s)
     return r
-
 
 def dreplace(s, dict, flags=0, template=None):
 
@@ -1966,7 +1826,6 @@ def dreplace(s, dict, flags=0, template=None):
         )
 
     return re.sub(regex, parser, s, flags=flags)
-
 
 def execute(s):
     if isfile(s):
@@ -1985,7 +1844,6 @@ def execute(s):
     except Exception as e:
         handleError(e)
 
-
 def toKwargs():
     ref = {
         "ds": "doubleSided",
@@ -1998,11 +1856,9 @@ def toKwargs():
     args = {k: 1 for k in map(split(s), f)}
     return args
 
-
 def runMacbook():
     kwargs = toKwargs()
     printer(**kwargs)
-
 
 def _sweep(items):
     partitioner = Partitioner(items)
@@ -2010,7 +1866,6 @@ def _sweep(items):
     store = partitioner.storage.store
     tempest(store, "sweep.json")
     log("partitioner-inputs", partitioner.inputs)
-
 
 def partitionByFunction(arr, f):
     store = [[], []]
@@ -2020,7 +1875,6 @@ def partitionByFunction(arr, f):
         else:
             store[1].append(item)
     return store
-
 
 def partition(arr, n=2):
     if isString(n):
@@ -2032,7 +1886,6 @@ def partition(arr, n=2):
     for i in range(0, len(arr), n):
         store.append(arr[i : i + n])
     return store
-
 
 class Partitioner:
     def run(self):
@@ -2106,7 +1959,6 @@ class Partitioner:
             pop(self.keys, key)
             self.storage.add(destination, key)
 
-
 class Storage:
     def toJSON(self):
         return self.store
@@ -2126,10 +1978,8 @@ class Storage:
         else:
             self.store[k] = [v]
 
-
 def includef(items):
     return lambda x: x not in items
-
 
 def _cleanup():
     ref = read("sweep.json")
@@ -2149,7 +1999,6 @@ def _cleanup():
             mkdir(dir)
             map(v, mfile, dir)
 
-
 def edit(o, fn):
     if isObject(o):
         store = {}
@@ -2165,14 +2014,12 @@ def edit(o, fn):
             o[i] = fn(o[i]) or item
         return o
 
-
 def downloadGithubFile(
     file, user="kdog3682", repo="codemirror"
 ):
     url = "https://raw.githubusercontent.com/$1/$2/main/$3"
     url = templater(url, [user, repo, file])
     write("rev.txt", request(url))
-
 
 def downloadIt(f):
     if isUrl(f):
@@ -2182,7 +2029,6 @@ def downloadIt(f):
         write(name, request(f))
         return name
     return f
-
 
 def tempest(data=0, name=0):
     f = "temp.json"
@@ -2217,13 +2063,12 @@ def tempest(data=0, name=0):
     ofile(name)
     return ""
 
-
 def self(s):
     append(sys.argv[0], createVariable("temp", s))
 
-
 def deepEqual(_v1, _v2):
-    import operator, types
+    import operator
+    import types
 
     def _deep_dict_eq(d1, d2):
         k1 = sorted(d1.keys())
@@ -2262,7 +2107,6 @@ def deepEqual(_v1, _v2):
     # print(deepEqual([{'a':1}, 1], [1, {'a': 1}]))
     # fails because of the type ordering
 
-
 def getFileDependencies(file):
     e = getExtension(file)
     if e == "js":
@@ -2285,7 +2129,6 @@ def getFileDependencies(file):
         files = map(files, lambda x: addExtension(x, "py"))
     return files
 
-
 def queryString(base="quotable.io", root="quotes", ref={}):
     def runner(ref):
         s = ""
@@ -2297,14 +2140,12 @@ def queryString(base="quotable.io", root="quotes", ref={}):
         "https://" + base + "/" + root + "?" + runner(ref)
     )
 
-
 def _gzip(file):
     import gzip
 
     with gzip.open(file, mode="rb") as f:
         data = json.loads(f.read().decode("utf-8"))
         return data
-
 
 def log(key=0, files=0, file=0):
     if files:
@@ -2321,10 +2162,8 @@ def log(key=0, files=0, file=0):
 
     append("/home/kdog3682/logs.txt", join(data))
 
-
 def isWord(s):
     return test("^[a-zA-Z]+$", s)
-
 
 def inferlang(s):
     if isString(s) and len(s) <= 4 and isWord(s):
@@ -2356,7 +2195,6 @@ def inferlang(s):
         ".": "css",
     }
     return ref.get(match)
-
 
 def jspy(lang, key):
     lang = inferlang(lang)
@@ -2418,21 +2256,17 @@ def jspy(lang, key):
     value = ref[key][indexes.index(lang)]
     return value
 
-
 def prepend(file, content):
     write(file, content + "\n\n" + read(file))
-
 
 def getFunctionName(s):
     rA = "^(?:@.+\n)*(?:(?:async )?function|def|class|const|var|let) ([\w\$]+)"
     rB = "^([\w\$]+) ="
     return search(rA, s) or search(rB, s)
 
-
 def getFunctionNames(s):
     r = "^(?:(?:async )?function|class|def) ([\w\$]+)"
     return unique(re.findall(r, textgetter(s), flags=re.M))
-
 
 def textgetter(x):
     if len(x) > 100:
@@ -2443,16 +2277,13 @@ def textgetter(x):
         return normRead(x)
     return x
 
-
 def functiongetter(x, lang=None):
     regex = jspy(lang or x, "functionRE")
     matches = re.findall(regex, textgetter(x))
     return {getFunctionName(item): item for item in matches}
 
-
 def worwo(fn, args):
     return fn(*args) if exists(args) else fn()
-
 
 def isLibraryFile(f):
     library = [
@@ -2481,7 +2312,6 @@ def isLibraryFile(f):
     name = tail(f)
     return name in library or ".min" in name
 
-
 def reduce(items, fn):
     store = {}
 
@@ -2509,22 +2339,17 @@ def reduce(items, fn):
 
     return store
 
-
 def hasLookAround(s):
     return test("\(\?\<", s)
-
 
 def btest(r, s):
     return test("\\b" + r + "\\b", s, flags=re.I)
 
-
 def curpath():
     print(abspath(os.getcwd()))
 
-
 def sendToOutboundDrive(file=None):
     return cfile(file, outdir)
-
 
 def sendEmail():
     s = read("letters.txt")
@@ -2541,7 +2366,6 @@ def sendEmail():
     """
     googleAppScript(callable)
 
-
 def filegetter(s):
     if s.endswith("files.txt"):
         try:
@@ -2551,7 +2375,6 @@ def filegetter(s):
             return files
         except Exception as e:
             return []
-
 
 def fixChromebookFilePath(s):
     if "penguin" in s:
@@ -2565,12 +2388,10 @@ def fixChromebookFilePath(s):
 # def jsonVersionOfFile(file):
 # return changeExtension(file, "json")
 
-
 def lastFile(key):
     f = mostRecent(dirgetter(key))
     assert isfile(f)
     return f
-
 
 def macPrint():
     url = macdirdict.get("drive")
@@ -2579,6 +2400,7 @@ def macPrint():
 
 
 # macPrint
+
 def printer(
     file=None, doubleSided=1, copies=1, landscape=0
 ):
@@ -2595,7 +2417,6 @@ def printer(
     print(command)
     os.system(command)
 
-
 def foo():
     f = "/home/kdog3682/CWF.files.json"
     data = read(f)
@@ -2604,7 +2425,6 @@ def foo():
         chdir(k)
         a = choose(v)
         store.append(map(a, abspath))
-
 
 def foo1():
     # files  =  temp()
@@ -2650,22 +2470,9 @@ def foo1():
     dirs = choose(trash)
     map(dirs, rmdir)
 
-
 def rmdirs(dirs):
     log("rmdir", dirs)
     map(dirs, lambda x: rmdir(x, 1))
-
-
-globalconfig = """
-user [^\w-+)({}\[\]\\n ] emoji-list
-read emoji-list.json
-finder view-source:https://jsxgraph.uni-bayreuth.de/docs/symbols/Text.html useKatex /* pretty useful website */
-
-
-
-
-"""
-
 
 def happend(file, data, open=0):
     if not data:
@@ -2673,7 +2480,6 @@ def happend(file, data, open=0):
     file = toRoot(file)
     append(file, data)
     ofile(file)
-
 
 def hwrite(file, data, open=0):
     if not data:
@@ -2683,18 +2489,15 @@ def hwrite(file, data, open=0):
     if open:
         ofile(file)
 
-
 def hread(file):
     return ofile(toRoot(file))
     return read(toRoot(file))
-
 
 def hjson(key, *args):
     data = key if isObject(key) else {key: args}
     prev = read("jspy.json") or {}
     prev.update(data)
     hwrite("jspy.json", data, open=1)
-
 
 def jspydata(lang="js"):
     ref = {"python": {}}
@@ -2706,7 +2509,6 @@ def jspydata(lang="js"):
     # return data
     # except Exception as e:
     # return
-
 
 def build_my_functions(lang):
     path = lang + ".functions.json"
@@ -2724,7 +2526,6 @@ def build_my_functions(lang):
     # "top3000words.json",
     # "paction.js",
     # "twil.js",
-
 
 temp = [
     "/home/kdog3682/CWF/08-22-2021/library.json",
@@ -2831,9 +2632,6 @@ temp = [
     "/home/kdog3682/CWF/08-22-2021/tach.json",
 ]
 
-dir08 = "/home/kdog3682/CWF/08-22-2021/"
-
-
 ignoreWords = [
     "style",
     "br",
@@ -2866,7 +2664,6 @@ ignoreWords = [
     "h6",
 ]
 
-
 def _gr(inpath, r, outpath, flags=0):
     if isNumber(r):
         r = f"\\b[a-z]{{{r}}}\\b"
@@ -2878,14 +2675,12 @@ def _gr(inpath, r, outpath, flags=0):
     write(outpath, m, open=1)
     return m
 
-
 def clipf(fn):
     def decorator(self, *args, **kwargs):
         value = fn(self, *args, **kwargs)
         clip(value)
 
     return decorator
-
 
 def earlyReturn(fn):
     def decorator(self, *args, **kwargs):
@@ -2895,7 +2690,6 @@ def earlyReturn(fn):
 
     return decorator
 
-
 def stateCache(fn):
     def decorator(self, *args, **kwargs):
         value = fn(self, *args, **kwargs)
@@ -2903,7 +2697,6 @@ def stateCache(fn):
         return value
 
     return decorator
-
 
 def getsetf(file, prepend=0, name=0, append=0):
     def wrapper(fn):
@@ -2928,7 +2721,6 @@ def getsetf(file, prepend=0, name=0, append=0):
 
     return wrapper
 
-
 def stateAction(f=0):
     def wrapper(fn):
         def decorator(self, *args, **kwargs):
@@ -2939,7 +2731,6 @@ def stateAction(f=0):
 
     return wrapper
 
-
 def logf(fn):
     def decorator(*args, **kwargs):
         value = fn(*args, **kwargs)
@@ -2947,12 +2738,10 @@ def logf(fn):
 
     return decorator
 
-
 @logf
 def glf(dir=dldir, **kwargs):
     file = mostRecent(dir, **kwargs)
     return file
-
 
 def p(k, v):
     if v < 10000:
@@ -2968,7 +2757,6 @@ def p(k, v):
         return 100_000
     if v < 1_000_000:
         return 1_000_000
-
 
 words3 = [
     "aim",
@@ -3051,9 +2839,9 @@ words2 = [
     "an",
     "ah",
 ]
+
 words1 = ["i", "a"]
 
-
 def A1(dir):
     path = (
         f"/home/kdog3682/CWF/public/{dir}.functions.json.js"
@@ -3079,7 +2867,6 @@ def A1(dir):
     data = ff(dir=dir, fn=runner, js=1)
     write(path, data, open=1)
 
-
 def A1(dir):
     path = (
         f"/home/kdog3682/CWF/public/{dir}.functions.json.js"
@@ -3104,7 +2891,6 @@ def A1(dir):
 
     data = ff(dir=dir, fn=runner, js=1)
     write(path, data, open=1)
-
 
 class RequestLimiter:
     def __init__(self, limit=10, sleep=60, maximum=100_000):
@@ -3129,7 +2915,6 @@ class RequestLimiter:
 
         return request(*args, **kwargs)
 
-
 def scrapeEmojis():
     chdir("cwf")
     request = RequestLimiter()
@@ -3149,7 +2934,6 @@ def scrapeEmojis():
     map(data, f)
     write("emojis.json", store, open=1)
 
-
 def srequest(url):
     if isRecent("request.temp.txt", minutes=20):
         print("returning recent file")
@@ -3158,7 +2942,6 @@ def srequest(url):
     s = request(url)
     write("request.temp.txt", s, open=1)
     return s
-
 
 def finder(url, term):
     s = srequest(url)
@@ -3176,14 +2959,12 @@ def finder(url, term):
             write("found.json", m, open=1)
             return m
 
-
 def rf(r, s, flags=0):
     m = re.findall(r, s, flags)
     if not m:
         return []
     f = lambda x: x not in ignoreWords and len(x) > 2
     return sort(filter(unique(m), f))
-
 
 def gr():
     # s = map(re.findall(r, globalconfig.strip(), flags = re.M), filter)
@@ -3212,7 +2993,6 @@ def gr():
             pprint(value)
             return value
 
-
 def saveas(inpath, outpath):
     if isfile(outpath) and not prompt(
         "overrwrite?", outpath
@@ -3225,7 +3005,6 @@ def saveas(inpath, outpath):
     write(outpath, read(inpath))
     clear(inpath)
 
-
 def isf(file):
     a = pubdir + file
     if isfile(a):
@@ -3237,7 +3016,6 @@ def isf(file):
         print(a)
         return
     print("not a file")
-
 
 def boo():
     """
@@ -3253,7 +3031,6 @@ def boo():
     prompt(files)
     map(files, rfile)
 
-
 def _twilio(*args):
     body = join(args)
     to = env.selfphone
@@ -3265,10 +3042,8 @@ def _twilio(*args):
     )
     print(message)
 
-
 def error():
     pass
-
 
 def incorporateCss(outpath=None):
     file = mostRecent(dldir, css=1)
@@ -3278,10 +3053,8 @@ def incorporateCss(outpath=None):
         "/home/kdog3682/CWF/public/" + outpath + ".css", s
     )
 
-
 def temp():
     return read(tempfile)
-
 
 def _addcss(file=None):
     last = mostRecent(dldir)
@@ -3289,7 +3062,6 @@ def _addcss(file=None):
         append(
             "/home/kdog3682/CWF/public/new.css", read(last)
         )
-
 
 def ldf(x):
     dir = drivedir
@@ -3306,10 +3078,8 @@ def ldf(x):
 
 #
 
-
 def namer(x):
     print(caller(-1) + ":", x)
-
 
 def _asset(name, data):
     append(
@@ -3323,7 +3093,6 @@ def _asset(name, data):
 # def email(to):
 # googleAppScript("email")
 
-
 def google_search(key, site=0):
     if key:
         url = f"https://google.com/search?q={key}"
@@ -3331,7 +3100,6 @@ def google_search(key, site=0):
         url = "https://www.reddit.com"
 
     ofile(url)
-
 
 def sendTextMessages(f):
     s = textgetter(f)
@@ -3357,7 +3125,6 @@ def sendTextMessages(f):
         return googleTranslate(s, lang)
 
     return map(map(s, fn), _twilio)
-
 
 def writeAllFunctions(key="pub", query=0):
     ref = {
@@ -3389,7 +3156,6 @@ def writeAllFunctions(key="pub", query=0):
     append("bookmarks.files.txt", name)
     write(name, reduce(files, f), open=1)
 
-
 def writeStringToCurrentFile(s):
     frame = inspect.currentframe()
     frame = inspect.getouterframes(frame)[1]
@@ -3409,7 +3175,6 @@ def writeStringToCurrentFile(s):
 
     argName = names[0]
 
-
 def currentify():
     file = glf()
     dest = "/home/kdog3682/CWF/public/current.txt"
@@ -3417,14 +3182,11 @@ def currentify():
         dest = tail(file)
     cfile(file, pubdir + dest)
 
-
 def hasNewline(s):
     return "\n" in s
 
-
 def regexjoin(*args):
     return "|".join(list(args))
-
 
 def findall(r, text):
     def parser(s):
@@ -3435,15 +3197,12 @@ def findall(r, text):
     m = re.findall(r, text)
     return [parser(x) for x in m]
 
-
 def smallify(items):
     return items[0] if len(items) == 1 else items
-
 
 RegexLib = {
     "caps": "[A-Z_]{3,}+\d*",
 }
-
 
 def mainScrape():
 
@@ -3468,12 +3227,10 @@ def mainScrape():
         s = removeComments(s)
         write("scrape.js", s, open=1)
 
-
 def getPureHtml(s):
     import bs4
 
     return bs4.BeautifulSoup(s, "html.parser").get_text()
-
 
 def regexdiv(
     tag, attrs=0, content="[\w\W]+?", after="", before=""
@@ -3482,19 +3239,8 @@ def regexdiv(
     attrs = " " + attrs + ".*?" if attrs else "[\w\W]*?"
     return f"<{tag}{attrs}>{before}{content}{after}</{tag}>"
 
-
 def parens(s):
     return f"({s})"
-
-
-superstring = """
-view-source:https://dev.to/christinamcmahon/use-backtracking-algorithm-to-solve-sudoku-270
-https://dev.to/dsasse07/generating-solving-sudoku-in-js-ruby-with-backtracking-4hm
-
-view-source:https://en.wikipedia.org/wiki/Magic_square
-currentify
-"""
-
 
 def super(s):
     # input('starting super!!!')
@@ -3510,7 +3256,6 @@ def super(s):
         r = regexdiv("table")
         m = re.findall(r, request(arg))
         # write('scrape.json', m)
-
 
 def createShellArgs(args):
     def parser(arg):
@@ -3529,7 +3274,6 @@ def createShellArgs(args):
             return wrap(arg, '"')
 
     return join(map(args, parser), delimiter=", ")
-
 
 def shellunescape(s):
     dict = {
@@ -3556,7 +3300,6 @@ def shellunescape(s):
     return parseJSON(s)
     return s
 
-
 def createGoogleSecret():
     data = {
         "web": {
@@ -3569,10 +3312,8 @@ def createGoogleSecret():
     }
     write("client_secrets.json", data)
 
-
 def isMovie(s):
     return s.endswith("MOV")
-
 
 todo = {
     "google-webscript-app.js": "d",
@@ -3857,25 +3598,20 @@ todo = {
     "TextEditor.js": "off",
 }
 
-
 def sendToDrive(file=None, n=1):
     cfile(mostRecent(dldir, n), drivedir)
-
 
 def recentPdfs(dir=dldir):
     return ff("dl pdf")
 
-
 def sortfiles(files):
     data = map(files, lambda f: (tail(f), datestamp(f)))
-
 
 def partitionByDate(files):
     files = sort(files, mdate, reverse=1)
     lastDate = timestamp()
     for file in files:
         date = mdate(file)
-
 
 def outboundData():
     chdir("pub")
@@ -3886,7 +3622,6 @@ def outboundData():
     )
     write("outbound-data.js", data)
 
-
 def inboundData():
     data = read(glf())
     store = dataFile()
@@ -3895,21 +3630,14 @@ def inboundData():
     tempest(values)
     return values
 
-
 def dataFile():
     return mostRecent(dldir, name="pdf.json$")
-
 
 def toRoot(s):
     return rootdir + tail(s)
 
-
 def itest(r, s):
     return test(r, s, flags=re.I)
-
-
-s = "\\u2013"
-
 
 def pdf0901():
     file = "/mnt/chromeos/MyFiles/Downloads/Acing the New SAT Math PDF Book.pdf.json"
@@ -3954,14 +3682,12 @@ def pdf0901():
         open=1,
     )
 
-
 def earlyExit(*args):
     for arg in args:
         print(arg)
     a = input("")
     if a:
         raise Exception("early exit")
-
 
 def saveClip():
     name = prompt("choose a save clip destination")
@@ -3973,17 +3699,14 @@ def saveClip():
     cfile("/home/kdog3682/CWF/public/.clip.js", dest1)
     cfile("/home/kdog3682/CWF/public/.clip.js", dest2)
 
-
 def openLastFile():
     ofile(glf(dldir))
-
 
 def readClip():
     v = parseJSON(
         read("/home/kdog3682/CWF/public/.clip.js")
     )
     return v
-
 
 def fixFileNameFactory(dir):
     chdir(dir)
@@ -4000,25 +3723,21 @@ def fixFileNameFactory(dir):
 
     return fixFileName
 
-
 def sortByNumber(arr):
     def f(s):
         return int(search("\d+", s))
 
     return sort(arr, f)
 
-
 def newlineIndent(x):
     s = join(x)
     return "\n" + re.sub("^", "    ", s, flags=re.M) + "\n"
-
 
 def divify(tag, content):
     if not isString(content):
         content = newlineIndent(content)
 
     return f"<{tag}>{content}</{tag}>"
-
 
 def text(*args):
     args = flat(args)
@@ -4028,7 +3747,6 @@ def text(*args):
     ofile(f)
     raise Exception()
 
-
 def toCallable(f, *args):
     if not f:
         return ""
@@ -4037,24 +3755,19 @@ def toCallable(f, *args):
     payload = ", ".join(map(filter(args), toStringArgument))
     return f + parens(payload)
 
-
 def toStringArgument(s):
     if isString(s):
         return quote(s)
     return json.dumps(s)
 
-
 def delagoogleEmail(obj):
     googleAppScript(toCallable("email4", obj))
-
 
 def listdir(x):
     return os.listdir(x)
 
-
 def python3(*args):
     system("python", *args)
-
 
 def emptydir(dir):
     if isdir(dir):
@@ -4064,12 +3777,10 @@ def emptydir(dir):
         else:
             map(files, os.remove)
 
-
 def dumpJson(payload):
     if isString(payload):
         return payload
     return json.dumps(payload)
-
 
 weekdays = [
     "Monday",
@@ -4080,7 +3791,6 @@ weekdays = [
     "Saturday",
     "Sunday",
 ]
-
 
 def mimeTypeFromFile(file):
     ref = {
@@ -4095,7 +3805,6 @@ def mimeTypeFromFile(file):
     }
     return ref[getExtension(file)]
 
-
 def upcomingDate(day, mode=0, strife="/"):
     day = capitalize(day)
     today = datetime.now()
@@ -4109,10 +3818,6 @@ def upcomingDate(day, mode=0, strife="/"):
             return datestamp(today, strife=strife)
         else:
             today = today.replace(day=today.day + 1)
-
-
-s = "/home/kdog3682/CWF/08-22-2021/stopwords.txt"
-
 
 def downloadYoutube(urls):
     import youtube_dl
@@ -4138,24 +3843,6 @@ def downloadYoutube(urls):
     with youtube_dl.YoutubeDL(options) as ydl:
         ydl.download(urls)
 
-
-s = """
-/home/kdog3682/CWF/iab.vim
-/home/kdog3682/CWF/vim-dictionaries.vim
-/home/kdog3682/.vim/ftplugin/javascript.vim
-/home/kdog3682/.vim/ftplugin/python.vim
-/home/kdog3682/.vimrc
-
-assets.js
-stylesheet.js
-color-utils.js
-css-utils.js
-ec.js
-lego.js
-ec2.css
-"""
-
-
 def consolidate(file):
     lang = getExtension(file)
     comment = jspy(lang, "superComment") + file + "\n\n"
@@ -4164,7 +3851,6 @@ def consolidate(file):
         comment + read(file) + "\n",
     )
     print("consolidated", file)
-
 
 def review(key, move=0, mode=0, **kwargs):
     files = ff(key, **kwargs)
@@ -4208,12 +3894,10 @@ def review(key, move=0, mode=0, **kwargs):
             
     pprint(removed)
 
-
 def unmove():
     mfile(getLast(absdir(trashdir)), cwfdir)
     # print(glf(trashdir))
     # mfile(glf(trashdir), cwfdir)
-
 
 def blackify(s):
     import black
@@ -4225,9 +3909,7 @@ def blackify(s):
         ),
     )
 
-
 fileListings = ["/home/kdog3682/consolidate.py"]
-
 
 def dostufff(todo):
 
@@ -4248,7 +3930,6 @@ def dostufff(todo):
             store[k] = v
 
     clip(store)
-
 
 todo = {
     "i3.js": "yes",
@@ -4313,13 +3994,11 @@ todo = {
     "examples.js": "slot example",
 }
 
-
 def dirFromFile(f):
     if f.startswith("/"):
         return f
     e = getExtension(f)
     return dirdict.get(e, pubdir)
-
 
 def mlf():
     f = glf()
@@ -4327,13 +4006,11 @@ def mlf():
     # return print(f, dir)
     return mfile(f, dir)
 
-
 def moveback():
     f = getLast(absdir(trashdir))
     d = dirFromFile(f)
     prompt(d, f)
     mfile(f, d)
-
 
 def renameQuizzes():
     chdir(dldir)
@@ -4345,21 +4022,17 @@ def renameQuizzes():
         if isfile(k):
             mfile(k, v)
 
-
 def removeDateStamp(s):
     datestampRE = "\d+[-/]\d+[-/]\d+"
     return re.sub("-?" + datestampRE, "", s)
-
 
 def autodir(file):
     dir = dirFromFile(file)
     chdir(dir)
     return dir
 
-
 def isRecentFile(f, days=1, **kwargs):
     return isfile(f) and isRecent(f, days=days, **kwargs)
-
 
 def allFiles(**kwargs):
     dirs = [rootdir, pubdir, cwfdir]
@@ -4368,14 +4041,12 @@ def allFiles(**kwargs):
         store.extend(ff(dir=dir, **kwargs))
     return store
 
-
 def recentFiles():
     dirs = [rootdir, pubdir, cwfdir]
     store = []
     for dir in dirs:
         store.extend(ff(dir=dir, days=1))
     return store
-
 
 def noDots(x):
     def runner(x):
@@ -4384,7 +4055,6 @@ def noDots(x):
     if isString(x):
         return runner(x)
     return map(x, runner)
-
 
 def deleteFiles(files, save=0, title=0):
     map(files, mfile, trashdir)
@@ -4397,7 +4067,6 @@ def deleteFiles(files, save=0, title=0):
         payload = prettyTable(info, title=title)
         happend(save, payload)
         print("Finished deleting files")
-
 
 def removeFiles(files, small=0):
     for file in files:
@@ -4413,7 +4082,6 @@ def removeFiles(files, small=0):
         files.remove(file)
 
     return files
-
 
 def prettyTable(a, title=""):
     longest = max(map(a, lambda x: len(x[0])))
@@ -4436,12 +4104,10 @@ def prettyTable(a, title=""):
         + "\n"
     )
 
-
 def review10(x):
     files = ff(x) if isString(x) else x
     for file in files:
         review11(file)
-
 
 def review11(file):
     e = getExtension(file)
@@ -4474,14 +4140,12 @@ def review11(file):
         rfile(file)
     return 1
 
-
 def sliceDict(d, n=10):
     import itertools
 
     if isObject(d):
         return dict(itertools.islice(d.items(), n))
     return d[:10]
-
 
 def changeFileName(name, newName, dir=0):
     if not newName:
@@ -4496,17 +4160,14 @@ def changeFileName(name, newName, dir=0):
         dir or head, addExtension(newName, e)
     )
 
-
 def lendir(s):
     print(len(listdir(s)))
-
 
 def runjs(a, b=""):
     if b:
         b = " " + b
     a = normDirPath(addExtension(a, "js"))
     os.system("node " + a + b)
-
 
 def fs1(s):
     """
@@ -4530,10 +4191,6 @@ def fs1(s):
         if d:
             mfile(file, d)
 
-
-env.basepyref["1"] = "uploadResumeAndCoverLetter"
-
-
 def uploadResumeAndCoverLetter():
     files = mostRecent(dldir, n=5, minutes=20)
     donecv = 0
@@ -4550,18 +4207,14 @@ def uploadResumeAndCoverLetter():
             doneres = 1
             mfile(file, normpath(dldir, resumefile))
 
-
 def isUtf(file):
     return getExtension(file) in utfe
-
 
 def isImage(file):
     return getExtension(file) in imge
 
-
 def isPrivateFile(f):
     return tail(f).startswith(".")
-
 
 def alwaysDelete(f):
     deleteList = [".clip.js", "passwords.csv"]
@@ -4582,7 +4235,6 @@ def alwaysDelete(f):
     if getExtension(f) in deleteExtensionsList:
         return True
 
-
 deleteExtensionsList = [
     "gif",
     "wav",
@@ -4593,7 +4245,6 @@ deleteExtensionsList = [
     "m4a",
 ]
 
-
 class ErrorPass:
     def __init__(self):
         self.errors = []
@@ -4602,15 +4253,12 @@ class ErrorPass:
         self.errors.append([etype, value, traceback])
         return 1
 
-
 def cleanupfiles(dir, f):
     files = filter(absdir(dir), f)
     deleteFiles(files, save="deleted-files.log.txt")
 
-
 def currentFile():
     return sys.argv[0]
-
 
 def ase(f):
     s = parseJSON(read(clipfile))
@@ -4621,18 +4269,15 @@ def ase(f):
 
     append(currentFile(), createVariable("temp", s))
 
-
 def isRemovablePdfFile(f):
     name = tail(f)[0:-4]
     if len(name) < 4 or test("sdf|asd|\(\d", name):
         return 1
 
-
 def isWebsite(url):
     from requests import get
 
     return get(url).status_code == 200
-
 
 def toLocalFile(key):
     name = localfiledict.get(key, key)
@@ -4643,10 +4288,8 @@ def toLocalFile(key):
         name,
     )
 
-
 def google(s):
     webbrowser.open(googleSearchQuery(s))
-
 
 def rnl():  # name: renameLastFile
     f = glf()
@@ -4654,10 +4297,8 @@ def rnl():  # name: renameLastFile
     s = input("new name: ")
     mfile(f, changeFileName(f, s))
 
-
 def rlf():
     pprint(read(glf()))
-
 
 def sendTwilio(body="hi from twilio", to=env.selfphone):
     from twilio.rest import Client
@@ -4667,7 +4308,6 @@ def sendTwilio(body="hi from twilio", to=env.selfphone):
         body="-\n\n\n" + body, from_=env.twiliophone, to=to
     )
     print("success", message.sid)
-
 
 def mget(r, s, flags=0, mode=dict):
     store = []
@@ -4702,10 +4342,8 @@ def mget(r, s, flags=0, mode=dict):
 
     return s, config
 
-
 def isNestedArray(x):
     return isArray(x) and exists(x[0]) and isArray(x[0])
-
 
 def smartRead(file):
     dirs = unique(list(dirdict.values()))
@@ -4717,47 +4355,8 @@ def smartRead(file):
 
 # smartRead('consolidate.js') # has a lot of stuff in it ... that ... is ... all js. but it is not the comments.
 
-
-s = """
-
-Hey Nihan,
-
-I said I was going to send you some extra HW this week, but I didnt.
-
-I'm sorry.
-
---------------------
-
-SHSAT is coming up in late October/November.
-It has some 9th grade geometry ... but it has a lot more of algebra and fractions/proportions/percentages.
-
-What do you want to do?
-
-Stay on current 9th geometry path or start switching back to 8th grade math?
-
-
-
-"""
-# sendTwilio(s)
-# mfile(jchdir + 'app2.js', jsdir)
-
-s = """
-
-Hi Charlie,
-
-If you have any teacher friends who are looking for extra work, the place i am working at wants to hire a saturday sat/shsat english teacher asap.
-
-Just thought I'd pass this message along to you.
-"""
-
-# sendTwilio(s)
-
-# downloadWebsite('view-source:http://asymptote.ualberta.ca/')
-
-
 def delta(a, b):
     return abs(a - b)
-
 
 def getFilesByTimeStamp():
     files = mostRecent(dldir, 10, js=1, css=1)
@@ -4774,10 +4373,8 @@ def getFilesByTimeStamp():
         else:
             return store
 
-
 def moveFilesByTimeStamp():
     return map(getFilesByTimeStamp(), mfile, jsdir)
-
 
 def filePicker(dir, key="open"):
     items = (
@@ -4802,7 +4399,6 @@ def filePicker(dir, key="open"):
         print(files[0])
         return files[0]
 
-
 def h(data=0):
     hfile = normpath(jsondir, "temp.json")
     if data:
@@ -4810,18 +4406,11 @@ def h(data=0):
     else:
         return read(hfile)
 
-
 def unzip(file, to):
     import zipfile
 
     with zipfile.ZipFile(file, "r") as z:
         z.extractall(to)
-
-
-env.basepyref["uz"] = "unzip"
-
-# SHSAT-2020-math.pdf
-
 
 class DrivePrep:
     def __init__(self, files, debug=0):
@@ -4845,7 +4434,6 @@ class DrivePrep:
         emptydir(self.dir)
         printdir(self.dir)
 
-
 def ranger(a):
     return list(range(a[0], a[1] + 1))
 
@@ -4854,13 +4442,11 @@ def ranger(a):
 # print(absdir(abspath(outdir)))
 # print(ranger([4,4]))
 
-
 def prompt2(x):
     os.system("clear")
     number(x)
     a = input("choose 1 based indexes or regex\n\n")
     return a
-
 
 def findFile(f):
     dirs = unique(dirdict.values())
@@ -4875,6 +4461,7 @@ def findFile(f):
 
 # filePicker('dldir', 'find')
 # print(findFile('tokens.json'))
+
 def shell(cmd):
     os.system(cmd)
 
@@ -4887,11 +4474,9 @@ def shell(cmd):
 # dir = dirFromFile(file)
 # append(normpath(dir, file), data)
 
-
 def normDirPath(file):
     dir = dirFromFile(file)
     return normpath(dir, file)
-
 
 def normFactory(fn):
     def lambdaNorm(file, *args, **kwargs):
@@ -4899,12 +4484,10 @@ def normFactory(fn):
 
     return lambdaNorm
 
-
 normOpen = normFactory(openBrowser)
 normWrite = normFactory(write)
 normRead = normFactory(read)
 normAppend = normFactory(append)
-
 
 def moveToAppropiateDir(name=0):
     file = glf()
@@ -4918,9 +4501,7 @@ def moveToAppropiateDir(name=0):
 
 htmlRE = "(?:[\"']|&quot;)(https.*?)(?:\"|&quot;|')"
 urlRE = "http.+"
-# regex = htmlRE
-# url = input('url: ')
-# clip(re.findall(regex, request(url)))
+
 def plf():
     write(".foooooo", glf(), open=1)
 
@@ -4933,10 +4514,6 @@ def plf():
 # printdir(outdir)
 # mfile('qs.py', 'ga.py')
 
-
-r = "Practice Book *Use anytime after Bridges.+\s+(.+)"
-
-
 def extracter(r):
     store = []
     for item in h():
@@ -4945,25 +4522,27 @@ def extracter(r):
             store.append(name.strip())
     clip(store)
 
-
 localfiledict = {}
 localfiledict["t2"] = "test2.html"
 localfiledict["tt"] = "temp.html"
 urldict = {}
+
 urldict[
     "cle"
 ] = "https://newyork.craigslist.org/search/edu#search=1~list~0~0"
+
 urldict[
     "cwt"
 ] = "https://docs.google.com/spreadsheets/d/1Y3KRa7m3Nc8Z9ZGnKDFflGl5mldGBcosY1XIBYMF_Uo/edit#gid=1470853595"
+
 urldict[
     "wea"
 ] = "https://www.google.com/search?q=weather&rlz=1CACCBQ_enUS943US943&oq=weather&aqs=chrome.0.69i59j35i39j46i131i199i433i465i512j0i131i433i512j0i67i131i433i457j0i402l2j69i61.541j1j7&sourceid=chrome&ie=UTF-8"
+
 urldict["r"] = "reddit"
 urldict["mc"] = "https://www.mathcha.io/editor"
 urldict["gmail"] = "gmail.com"
 urldict["red"] = "reddit"
-
 
 def vimFileOpener(arg=0, cf=0):
     file = cf
@@ -4979,20 +4558,12 @@ def vimFileOpener(arg=0, cf=0):
         file = googleSearchQuery(arg)
     openBrowser(file)
 
-
 def isPdf(s):
     return isString(s) and getExtension(s) == "pdf"
-
 
 def googleSearchQuery(s):
     s = s.replace(" ", "+")
     return f"https://google.com/search?q={s}"
-
-
-env.basepyref["ms"] = "mainScrape"
-# print(normRead('scrape.js'))
-# mkdir(mathdir)
-
 
 def getGithubFile():
     def githubUrlToUserContent(s):
@@ -5005,14 +4576,12 @@ def getGithubFile():
     name = tail(a)
     write(name, request(a), open=1)
 
-
 def revertFile():
     print("getting file from budir", budir)
     file = mostRecent(budir)
     d = dirdict.get(getExtension(file))
     prompt(fileInfo(file, r=1), d)
     cfile(file, d)
-
 
 def revert(file=0, vim=0, increment=0, dir=0, ask=0):
     if not file:
@@ -5037,12 +4606,10 @@ def revert(file=0, vim=0, increment=0, dir=0, ask=0):
         appendVim("filedict", outpath)
     cfile(file, outpath)
 
-
 def writeBuffer(name, data):
     with open(name, "wb") as f:
         f.write(data)
     print("writing name", name)
-
 
 def parseGoogleDate(s):
     return s[5:10] + "-" + s[0:4]
@@ -5054,7 +4621,6 @@ def parseGoogleDate(s):
 # uploadMathHomework()
 # findFile('g5math.pdf')
 
-
 def unescapeHtml(s):
     import html
 
@@ -5065,19 +4631,18 @@ def unescapeHtml(s):
 # r = '<pre(?: .*)?><code(?: .*)?>([\w\W]+?)</code></pre>'
 # clip(unescapeHtml(join(re.findall(r, s))))
 
-
 def javascript(file, *args):
     file = npath(jsdir, addExtension(file, "js"))
     response = SystemCommand("node", file, *args)
     if response.error:
         return -1
 
-
 def isJson(f):
     return getExtension(f) == "json"
 
 
 # javascript('node-pdfgen.js', 'hi')
+
 def changeLastJsonFileToJavascriptAsset():
     name = glf()
     assert isJson(name)
@@ -5089,7 +4654,6 @@ def changeLastJsonFileToJavascriptAsset():
 
 # pprint(changeLastJsonFileToJavascriptAsset())
 # ff('html text=nerdamer')
-
 
 def linegetter(s, trim=1, fn=0, filter=0, u=0):
     s = splitOnWord(s, "breaker")
@@ -5104,7 +4668,6 @@ def linegetter(s, trim=1, fn=0, filter=0, u=0):
     if u:
         lines = unique(lines)
     return lines
-
 
 def smartDedent(s):
     s = re.sub("^ *\n*|\n *$", "", s)
@@ -5126,10 +4689,8 @@ def smartDedent(s):
 
 # normWrite('corpus.json', linegetter(glf()))
 
-
 def lowerCase(s):
     return s.lower()
-
 
 def filterTwice(items, ref):
     a = []
@@ -5140,7 +4701,6 @@ def filterTwice(items, ref):
         else:
             b.append(item)
     return [a, b]
-
 
 def addWordsToDictionaryf(s, corpus=None):
     known = normRead("known.json") or []
@@ -5173,7 +4733,6 @@ def addWordsToDictionaryf(s, corpus=None):
 
 # pprint(addWordsToDictionaryf('base.py'))
 
-
 def appendjson(file, data):
     if not data:
         return
@@ -5188,7 +4747,6 @@ def appendjson(file, data):
         store.update(data)
 
     write(file, store, open=1)
-
 
 def readjson(file, placeholder={}):
     item = ""
@@ -5206,10 +4764,9 @@ def readjson(file, placeholder={}):
 # name = changeFileName(file, lambda x: 'Review ' + x + ' ' + datestamp())
 # cfile(file, name)
 
-
 def rangeFromString(s, offset=1):
     if isArray(s):
-        return map(s, lambda x: x - 1)
+        return s
 
     def f(s):
         if "-" in s:
@@ -5225,29 +4782,23 @@ def rangeFromString(s, offset=1):
 
     return flat(map(split(s, ", *| +(?=\w)"), f, filter=0))
 
-
 def zulustamp(date):
     return date.strftime("%Y-%m-%dT%H:%M:%SZ")
-
 
 def hms():
     return datetime.now().strftime("%c")
     return datetime.now().strftime("%H:%M:%S")
-
 
 def flatdir(dir):
     files = getfiles(dir, recursive=1, mode=list)
     map(files, mfile, dldir)
     rmdir(dir)
 
-
 def dread(name):
     return read(dldir + addExtension(name, "json"))
 
-
 def dwrite(name, data):
     write(dldir + addExtension(name, "json"), data, open=1)
-
 
 def getPokemonData():
     store = []
@@ -5270,12 +4821,10 @@ def getPokemonData():
     print(len(store))
     dwrite("pokemon", store)
 
-
 def toVariable(a, b):
     return a + " = " + dumpJson(b)
     prefix = "var"
     return prefix + " " + a + " = " + dumpJson(b)
-
 
 def createPokemonTemplateComponents(amount=1):
     data = dread("pokemon")
@@ -5333,18 +4882,12 @@ def createPokemonTemplateComponents(amount=1):
 # clip(map(dread('pokemon'), lambda x: x.get('name')))
 # print(camelCase('nido-f'))
 
-
 def renameClipFile():
     f = input("rename clip file as?")
     mfile(
         normDirPath(clipfile),
         normDirPath(addExtension(f, "js")),
     )
-
-
-rcf = renameClipFile
-# vue-pokemon.js
-
 
 def downloadPdfsFromUrl(url=None):
     if not url:
@@ -5367,11 +4910,7 @@ def downloadPdfsFromUrl(url=None):
             print("error", name)
             pass
 
-
 dpdf = downloadPdfsFromUrl
-
-# map(filter(absdir(examdir), lambda f: fsize(f) < 500), rfile)
-
 
 def googleId(s):
     return search("d/(.*?)/", s) or s
@@ -5380,7 +4919,6 @@ def googleId(s):
 # view-source:https://mathkangaroo.org/mks/practice/free-question-samples/
 # string = datestamp(upcomingDate('saturday', datetime), '/')
 # print(string)
-
 
 def upcomingDateObject(s):
     date = upcomingDate(s, datetime)
@@ -5417,13 +4955,11 @@ def upcomingDateObject(s):
         "scheduledTime": scheduledTime,
     }
 
-
 def cleanupFileName(fileName, date=0, prepend=0):
     if prepend:
         fileName = prependFilePath(tail(fileName), prepend)
     fileName = appendFileName(fileName, date)
     return removeExtension(fileName)
-
 
 def appendFileName(file, payload=""):
     if not payload:
@@ -5439,7 +4975,6 @@ def appendFileName(file, payload=""):
     else:
         s = file + space + payload
     return s
-
 
 def prependFilePath(file, payload):
     if payload:
@@ -5458,14 +4993,6 @@ def prependFilePath(file, payload):
 # printdir('/home/kdog3682/.config/chromium/Crash Reports')
 # mkdir(servedir)
 
-s = "/home/kdog3682/.npm-global/lib/node_modules/nodemon/bin"
-# printdir(s)
-# s = "/usr/local/lib/node_modules" # nope
-# npm ls -g --depth=0
-# s = "/home/kdog3682/.npm-global/lib/node_modules/node-fetch/src/index.js"
-# ofile(s)
-
-
 def nodemon():
     chdir(servedir)
     s = nodedir + "nodemon/bin/nodemon.js"
@@ -5473,20 +5000,14 @@ def nodemon():
 
 
 # nodemon()
-path = "/home/kdog3682/CWF/public/notes.txt"
-# openBrowser(path)
 
+path = "/home/kdog3682/CWF/public/notes.txt"
 
 def hrefRE(s, e=0):
     if e:
         s += "\." + e
     r = "href=['\"]?" + parens(s)
     return r
-
-
-s = "https://developers.google.com/identity/protocols/oauth2/scopes"
-r = "http.*?auth/[\w\.]+"
-
 
 def foo():
     chdir(dldir)
@@ -5508,7 +5029,6 @@ def foo():
 
 # rfile('vosk.py')
 
-
 class NewYear:
     def __init__(self):
         print("Running Python New Year")
@@ -5524,7 +5044,6 @@ class NewYear:
             renamedir(dir, appendFileName(dir, "." + year))
             mkdir(dir)
 
-
 def rnc(s):
     month = datetime.now().strftime("%B").lower()
     s = addExtension(s, "json")
@@ -5533,11 +5052,9 @@ def rnc(s):
     cfile(clipfile, s)
     ofile(s)
 
-
 def clips():
     files = ff(dir=jsondir, name="\.clip")
     chooseAndOpen(files)
-
 
 def chooseAndOpen(files):
     files = choose(files)
@@ -5557,11 +5074,9 @@ files = [
     "Grade 5 Midterm Exam",
 ]
 
-
 def activityLog(name=0, oncePerDay=0):
     data = normRead("activities.log")
     date = datestamp()
-
 
 def toFactory(lang):
     def runner(x):
@@ -5569,17 +5084,8 @@ def toFactory(lang):
 
     return runner
 
-
 toPdf = toFactory("pdf")
-# d=upcomingDateObject('saturday')
-# name = cleanupFileName('sam cleaner s', d.get('string'), prepend='Math')
-# pprint(name)
 
-
-# pprint(cwtBuildNecessaryFiles())
-# chdir('Javascript-DFS-Maze')
-# printdir('Javascript-DFS-Maze')
-# ofile('index.html')
 class SystemCommand:
     def __init__(self, *args, dir=dir2023, **kwargs):
         chdir(dir)
@@ -5620,7 +5126,6 @@ class SystemCommand:
             }
         )
 
-
 def gitCloner(url):
     chdir(jsdir)
     name = tail(url)
@@ -5633,9 +5138,9 @@ def gitCloner(url):
 
 # pprint(getPokemonData())
 # google_request(2)
+
 def temp(s):
     write("temp.js", s, open=1)
-
 
 def inferKeyFromText(s):
     ref = {
@@ -5649,7 +5154,6 @@ def inferKeyFromText(s):
             return k
 
     raise Exception("no key found")
-
 
 class TextAnalysis:
     def __init__(self, s, key=0):
@@ -5705,7 +5209,6 @@ class TextAnalysis:
         clip(sorted(value))
         return value
 
-
 def htmlBodyParser(s):
     import bs4
     import html
@@ -5717,7 +5220,6 @@ def htmlBodyParser(s):
         s.append(text)
     return s
 
-
 def liParser(s):
     import bs4
     import html
@@ -5727,12 +5229,12 @@ def liParser(s):
     s = s.replace(r"\r", "")
     return s
 
-
 def getFirstWord(s):
     return search("[a-zA-Z]+", s)
 
 
 # @getsetf(clipfile, prepend='mc.js', name='HttpScriptLibrary')
+
 def foo(s):
     return map(
         s,
@@ -5745,12 +5247,14 @@ def foo(s):
 # foo()
 
 # @getsetf(clipfile, prepend='mc.js', name='RegexLibrary')
+
 def foo(s):
     return ref
 
 
 # ff(dir=jchdir, js=1, text='SVGArtist')
 # pprint(mainScrape())
+
 def olf():
     ofile(glf())
 
@@ -5764,14 +5268,13 @@ def olf():
 # print(cwtBuildNecessaryFiles())
 # flat(list({'a': [1,2}).values())
 # pprint(upcomingDateObject('saturday'))
+
 def findInDir(dir, key):
     files = printdir(dir)
     return find(files, testf(key))
 
-
 def xsplit(s, r=" "):
     return split(s, r) if isString(s) else s
-
 
 def objectf(s):
     keys = xsplit(s)
@@ -5781,10 +5284,8 @@ def objectf(s):
 
     return runner
 
-
 def doYesterday():
     files = unique(xsplit(textgetter(filelogfile), "\n+"))
-
 
 def evaljs(s):
     file = "temp.js.txt"
@@ -5809,7 +5310,6 @@ def evaljs(s):
     # evaljs(s)
     # the response is not easy to manage
     # creating a grammar file
-
 
 def ff(
     dir=".",
@@ -5898,7 +5398,6 @@ def ff(
         print(len(files))
         return files
 
-
 def openOrPrint(x, dir=0, r="index.cjs"):
     with CD(dir):
         if isfile(x):
@@ -5910,7 +5409,6 @@ def openOrPrint(x, dir=0, r="index.cjs"):
                 ofile(os.path.join(x, target))
             else:
                 pprint(files)
-
 
 def makeEmojis():
     items = read(dldir + "emoji.json").get("emojis")
@@ -5929,15 +5427,10 @@ def makeEmojis():
     # build the links perhaps
     ################################################
 
-
 def changeFileName2(file, dir=pubdir):
     return dir + addExtension(
         prompt("name?"), getExtension(file)
     )
-
-
-env.basepyref["olg"] = "openLastGoogleDoc"
-
 
 def gfn():
     def dateSearch(s):
@@ -5947,12 +5440,10 @@ def gfn():
         dateSearch(normRead("class.js"))
     )
 
-
 def abrev(s):
     r = "\W|(\d)"
     items = filter(re.split(r, s))
     return "".join(map(items, lambda x: x[0])).lower()
-
 
 def appendVariable(x, name="temp", outpath=0, str=0):
     if isfile(x):
@@ -5966,17 +5457,14 @@ def appendVariable(x, name="temp", outpath=0, str=0):
 
     append(outpath or currentFile(), s)
 
-
 def mostRecentDirectoryFiles(key, e="pdf", amount=10):
     v = ff(dirgetter(key), sort=1, e=e)[-amount:]
     os.system("clear")
     pprint(v)
     return v
 
-
 def openLastGoogleDoc():
     return openBrowser(read("google-doc-file.txt").strip())
-
 
 if __name__ == "__main__":
     print("hi from main")
@@ -5999,7 +5487,6 @@ if __name__ == "__main__":
 
 # TextAnalysis('https://developer.mozilla.org/en-US/docs/Web/SVG/Element')
 
-
 def readMathcha(file):
     with open(file, "rb") as f:
         s = f.read()[314:-672].decode()
@@ -6009,22 +5496,18 @@ def readMathcha(file):
 # print(readMathcha(glf()))
 # print('\u00f7')
 
-
 def editMathcha(f="", fn=0):
     text = fn(byteRead(f))
     byteWrite(f, text)
-
 
 def byteRead(file):
     with open(file, "rb") as f:
         return f.read()
 
-
 def byteWrite(file, value):
     with open(file, "wb") as f:
         f.write(value)
         print("successfully wrote byte file!", file)
-
 
 def mathchaReplace(s):
     prompt(s)
@@ -6037,7 +5520,6 @@ def mathchaReplace(s):
         "QRKQRK": "booper"
     }
     return byteReplace(s, dict, "b")
-
 
 def byteReplace(s, dict, template="b", flags=0):
     regex = str.encode(ncg(template, dict))
@@ -6056,7 +5538,6 @@ def byteReplace(s, dict, template="b", flags=0):
 # editMathcha(glf(e='mathcha'), mathchaReplace)
 # findDir(pydir, 'shsat')
 
-
 def depfindFile(root, name):
     def runner(dir):
         files = absdir(dir)
@@ -6073,7 +5554,6 @@ def depfindFile(root, name):
                     runner(f)
 
     return runner(root)
-
 
 def depfindDir(root, name):
     def runner(dir):
@@ -6092,10 +5572,8 @@ def depfindDir(root, name):
 
     return runner(root)
 
-
 def isVeryRecentFile(f):
     return isRecentFile(f, minutes=4000)
-
 
 def printIt(fn):
     def decorator(*args, **kwargs):
@@ -6113,7 +5591,6 @@ def printIt(fn):
 
 # printdir(examdir)
 
-
 def mdir(f, t):
     assert isdir(f)
     a, b = re.sub("/ *$", "", f).rsplit("/", maxsplit=1)
@@ -6121,18 +5598,12 @@ def mdir(f, t):
     prompt("moving", "from", f, "to", dest)
     shutil.move(f, dest)
 
-
-a = [1, 2, 3]
-# print(a[0:-1])
-
-
 def getLastPdf(name=""):
     file = glf(name=name, e="pdf")
     return file
 
 
 # pprint(getLastPdf('shsat'))
-
 
 def scrapeOrdering():
     def f(s):
@@ -6148,7 +5619,6 @@ def scrapeOrdering():
     )
     return list(reversed(s))
 
-
 def choosefiles(dir=dldir, key="", groups=3):
     files = choose(
         map(
@@ -6162,15 +5632,12 @@ def choosefiles(dir=dldir, key="", groups=3):
 
 # mergeEm('G4 & G5 Online Report Cards')
 
-
 def arrayToObject(a, f):
     return {f(x): x for x in a}
-
 
 def mergeFirstPageOfEachFile(files):
     f = lambda x: x.pages[0:1]
     return pdfCreate(files, f)
-
 
 def printDirRecursive(dir, **kwargs):
 
@@ -6199,19 +5666,15 @@ def printDirRecursive(dir, **kwargs):
 
     return runner(dir)
 
-
 def getLastNumber(s):
     n = search("(\d+) *(?:\.\w+)?$", s)
     return int(n)
-
 
 def pdfIt(f):
     name = changeExtension(f, "pdf")
     mfile(f, name)
 
-
 cantfind = "Acing the New SAT Math PDF Book.pdf.json"
-
 
 def recentFileCache(fn):
     def decorator(file, *args, **kwargs):
@@ -6227,11 +5690,9 @@ def recentFileCache(fn):
 
     return decorator
 
-
 def choosePDFS():
     files = choose(mostRecentDirectoryFiles(dldir))
     return files
-
 
 def oncef():
     go = True
@@ -6244,14 +5705,12 @@ def oncef():
 
     return lamb
 
-
 def infof(f):
     def lamb(file, *args):
         value = f(file, *args)
         return {"file": tail(file), "value": value}
 
     return lamb
-
 
 def mapdir(files, dir):
     return map(files, lambda x: normpath(dir, x))
@@ -6260,7 +5719,6 @@ def mapdir(files, dir):
 # pprint(rangeFromString('2 4 x 5 6'))
 # print([1] + 4)
 
-
 def objectClassName(x):
     s = str(type(x))
     return search("<\w+ '(?:__main__\.|base\.)?(\w+)", s)
@@ -6268,7 +5726,6 @@ def objectClassName(x):
 
 # ofile(mapdir(choosefiles(clipdir), clipdir))
 # ff(jsdir, name='october')
-
 
 class PageStorage:
     def __init__(self):
@@ -6284,16 +5741,13 @@ class PageStorage:
     def __len__(self):
         return len(self.store)
 
-
 def toJSON(x):
     name = objectClassName(x)
     if test("Storage$", name):
         return x.store
 
-
 def getTime():
     return int(datetime.timestamp(datetime.now()))
-
 
 def mostRecentFileGroups(dir, targetIndex=3, minutes=50):
     storage = PageStorage()
@@ -6322,7 +5776,6 @@ def mostRecentFileGroups(dir, targetIndex=3, minutes=50):
     return payload
     return payload[targetIndex][1]
 
-
 def promptOutpath(s=0, fallback="", fn=0):
     out = s or prompt("outpath?") or fallback
     if fn:
@@ -6338,7 +5791,6 @@ def promptOutpath(s=0, fallback="", fn=0):
 # printdir(nodedir)
 # pprint(printDirRecursive(nodedir + 'acorn/dist/acorn.js'))
 
-
 def getNodeFile(name):
     files = [
         f"{nodedir}{name}/dist/{name}.js",
@@ -6353,7 +5805,6 @@ def getNodeFile(name):
 
 # store = [getNodeFile(n) for n in printdir(nodedir)]
 # pprint(store)
-
 
 def versionControl(f, revert=0):
     f = normDirPath(f)
@@ -6388,17 +5839,14 @@ def versionControl(f, revert=0):
 
 # pprint(upcomingDateObject('saturday'))
 
-
 def pickFiles(dir="dldir"):
     a = prompt(f"choose files. directory = {dir}")
     dir = dirdict.get(dir, None)
     assert dir
     return mapdir(xsplit(a), dir)
 
-
 def STOP():
     raise Exception("STOP!!!")
-
 
 def findCssFile():
     files = ff(dldir, css=1, text="mult")
@@ -6409,7 +5857,6 @@ def findCssFile():
 # printdir(budir)
 # pprint(isfile('jshint.js'))
 
-
 def splitOnWord(s, word):
     if test("\\b" + word + "\\b", s):
         s = getLast(re.split(word + ".*", s))
@@ -6417,7 +5864,6 @@ def splitOnWord(s, word):
 
 
 # pprint(isRecent('class.js', days=1))
-
 
 def tabular(data):
     store = []
@@ -6428,13 +5874,11 @@ def tabular(data):
 
 # ff('js', js=1, mode='clipinfo')
 
-
 def foo():
     store = {}
     for a, b, c in partition(re.findall("\S+", clip()), 3):
         store[a] = [b, c]
     clip(oneLine(s))
-
 
 def oneLine(s):
     s = json.dumps(s, indent=4)
@@ -6446,7 +5890,6 @@ def oneLine(s):
 
 # clip(oneLine(clip()))
 
-
 def finfo(file):
     text = read(file)
     return {
@@ -6454,7 +5897,6 @@ def finfo(file):
         "lines": lineCount(text),
         "size": len(text),
     }
-
 
 def trackProgress():
     # let text = search(r, lastQuarter(read(file)))
@@ -6464,7 +5906,6 @@ def trackProgress():
     # console.log(s)
     normAppend("daily-code-progress.log", s)
 
-
 def moveFilesToDriveTodoDir(dir):
     s = mostRecentFileGroups(dldir, minutes=5)[0][1]
     prompt(s, "move these files?")
@@ -6472,7 +5913,6 @@ def moveFilesToDriveTodoDir(dir):
     dir = tododir + dir
     mkdir(dir)
     map(s, mfile, dir)
-
 
 def imageToText(img):
     # sudo apt install tesseract-ocr
@@ -6510,12 +5950,6 @@ def imageToText(img):
         text = pytesseract.image_to_string(img)
         return text
 
-
-r = '<td style="background:(\w+)">\s+<td style="background:#(\w+)">'
-# TextAnalysis('https://www.w3.org/TR/css-color-4', r)
-# writeVclip()
-# ff(jsondir)
-# ff(jsdir, js=1)
 def cleanup(dir, r):
     with CD(dir):
         for f in os.listdir(dir):
@@ -6527,14 +5961,11 @@ def cleanup(dir, r):
 # cleanup(dldir, 'untitled|dela|\.mathcha')
 # map(ff(dldir, name='^FC'), mfile, colordir)
 
-
 def getWords(s):
     return re.findall("[a-zA-Z]{3,}", s)
 
-
 def getLastWord(s):
     return getWords(s)[-1]
-
 
 def strType(x):
     return getLastWord(str(type(x)))
@@ -6543,7 +5974,6 @@ def strType(x):
 # ff(txtdir, week=1, text='bagel', mode='o')
 # dl()
 
-
 def download(url, name=0):
     if not name:
         name = addExtension(
@@ -6551,21 +5981,12 @@ def download(url, name=0):
         )
     write(dldir + name, request(url))
 
-
-env.basepyref["dlx"] = "download"
-env.basepyref["bua"] = "backup1206"
-env.basepyref["scrape"] = "scrape"
-env.basepyref["sh"] = "scrapeHTML"
-env.basepyref["sr"] = "seeRecent"
-
-
 def stringInfo(*args):
     items = partition(args)
     s = ""
     for a, b in items:
         s += a + ": " + str(b) + "\n"
     return s.strip()
-
 
 def backup1206(*files):
     date = datestamp()
@@ -6589,7 +6010,6 @@ def backup1206(*files):
     payload = join(info, files, linebreak)
     normAppend("files.log", payload)
 
-
 def scrapeHTML(url):
     s = join(
         map(
@@ -6601,11 +6021,9 @@ def scrapeHTML(url):
     )
     normWrite("scrape.html", s)
 
-
 def scrape(url, key=0):
     prompt(url, key)
     TextAnalysis(url, key)
-
 
 def prePostParser(items):
     s = filter(items, "^\s*<")
@@ -6617,7 +6035,6 @@ def prePostParser(items):
         print(s)
         print("not done yet")
 
-
 def chooseIndex(items):
     i = len(items)
     if i == 1:
@@ -6627,10 +6044,8 @@ def chooseIndex(items):
     )
     return smallify([items[int(i) - 1] for i in a])
 
-
 def dirName(s):
     return os.path.split(re.sub("/*$", "", s))[1]
-
 
 def zipToDir(dir):
     # clip(getfiles(dir, recursive=1))
@@ -6656,13 +6071,13 @@ def zipToDir(dir):
 
 # zipToDir(swiftdir)
 # pprint(normRead('scrape.html').replace('\n','s'))
+
 def rpw(file, f):
     normWrite(file, f(normRead(file)))
 
 
 # rpw('scrape.html', lambda s: re.sub('\n', '\n', s))
 # cfile(jsdir + 'scrape.html', swiftdir)
-
 
 def foo():
     dir = swiftdir
@@ -6678,7 +6093,6 @@ def foo():
 # getNodeFile('marked')
 
 # appendVariable(absdir(pydir))
-
 
 def craig():
     from craigslist import CraigslistJobs
@@ -6699,34 +6113,12 @@ def craig():
     for result in jobs.get_results():
         print(result)
 
-
 def rfiles(files):
     map(files, rfile)
 
 
 # c = checkpointf(extensions=['js', 'lang'])
 # rfiles(filter(filter(temp, isfile), alwaysDelete))
-s = "/home/kdog3682/CWF/helpers2.js"
-# appendVariable(getFunctionNames(s))
-# appendVariable(getFunctionNames(s))
-# s="/home/kdog3682/CWF/asd"
-# print(read(s))
-
-# appendVariable(ff(pydir, isf=1))
-
-
-a = "/home/kdog3682/CWF/spring2021.js.json"
-b = "master.js.spring.2021.json"
-a = "/home/kdog3682/CWF/sample.jpg"
-# mfile(a, colordir + 'happy-pikachu.jpg')
-
-
-# f = filter(absdir(pydir), lambda x: isfile(x) and (x not in temp or alwaysDelete(x)))
-# pprint(f)
-# rfiles(f)
-
-# appendVariable(ff(rootdir, isf=1, isp=1))
-
 
 temp = [
     "/home/kdog3682/TEACHING/SAT Grammar Test 4.pdf",
@@ -6830,21 +6222,10 @@ DELETED = [
     "/home/kdog3682/consolidate.py",
     "/home/kdog3682/pip.logs.txt",
 ]
-# rfiles(DELETED)
-
 
 def undo(dir=trashdir):
     mfiles(ff(dir, minutes=10)[-8:], teachdir)
 
-
-d = "/home/kdog3682/NOTES"
-d = "/home/kdog3682/PICS"
-# d = "/home/kdog3682/PYTHON"
-# printdir(d)
-# mfiles(d, , lambda x: 'notes.' + x)
-# mkdir(d)
-
-# filter(rootdir, isfile)
 temp = [
     # "/home/kdog3682/CWF/history_data.csv",
     "/home/kdog3682/CWF/snip.vim",
@@ -6896,7 +6277,6 @@ temp = [
     "/home/kdog3682/CWF/base.py",
 ]
 
-
 def mover(extensions, dir):
     inpath = pydir
     c = checkpointf(
@@ -6907,23 +6287,11 @@ def mover(extensions, dir):
     mkdir(dir)
     mfiles(files, dir)
 
-
 def removeCache():
     rmdir(pydir + "__pycache__", force=1)
 
 
 # mover('vim sh', 'vim & sh')
-d = pydir + "todo/SAT"
-# f=ff(d, r='sat-practice-test')
-# f=ff(d, r='\d+-[A-E]\.|essay')
-
-
-# rfiles(f)
-# for file in f:
-# name = re.sub('sat-practice-test-', 'SAT EXAM ', file)
-# mfile(file, name)
-# f=ff(rootdir + 'CWD')
-# appendVariable(f)
 
 temp = [
     # "/home/kdog3682/CWD/tempest.json",
@@ -7006,14 +6374,11 @@ temp = [
     "/home/kdog3682/CWD/nodehelpers.js",
 ]
 
-# rmdir('vosk-api', force=1)
 pdir = "/home/kdog3682/PYTHON/"
 jdir = "/home/kdog3682/JAVASCRIPT/"
 
-
 def odir(dir):
     ofile(absdir(dir))
-
 
 def backup(directories):
     import shutil
@@ -7025,7 +6390,6 @@ def backup(directories):
         )
         print("making zip directory", dir)
         shutil.make_archive(outpath, "zip", dir)
-
 
 def zipCheck(outpath=0, file=0):
     # outpath = budir / datestamp / SERVER.zip / myFile.js
@@ -7052,23 +6416,14 @@ def zipCheck(outpath=0, file=0):
 # def sum(a, b):
 # return a + b
 
-s = '"hiyaaabb"'
-t = """
-
-[2:-1]
-"""
-
-
 def testsuite(items):
     return map(items, lambda x: [x, eval(x)])
 
 
 # pprint(testsuite(linegetter(t, fn=lambda x: s + x)))
 
-
 def choosepdf():
     ofile(choose(mostRecent(dldir, 10, reverse=1)))
-
 
 def seeRecent():
     e = prompt("extension?")
@@ -7081,12 +6436,12 @@ def seeRecent():
 
 # requireUrl ='/home/kdog3682/.npm-global/lib/node_modules/'
 # print(nodedir == requireUrl)
+
 def n2char(n):
     return chr(n + 97)
 
 
 # ofile(choose(pdfdir))
-
 
 def create_pdfdict_from_pdf_files():
     files = ff(pdfdir, name="^G\d|math")
@@ -7099,13 +6454,11 @@ def create_pdfdict_from_pdf_files():
 
 # pprint(create_pdfdict_from_pdf_files())
 
-
 def normFileToDir(file, name=0):
     if not name:
         name = prompt(file, "name?")
     e = getExtension(file)
     return dirdict.get(e) + addExtension(name, e)
-
 
 def move_last_file_and_name_it():
     file = glf()
@@ -7113,30 +6466,7 @@ def move_last_file_and_name_it():
     prompt("is this the correct outpath?", out)
     mfile(file, out)
 
-
-def google_app_controller():
-    s = promptInterface(env.gac)
-
-    if test("Action", s):
-        template = s
-    else:
-        fnKey, argString = filter(re.split("\((.*)\)", s))
-        template = f"Action2('{fnKey}', {argString})"
-
-    googleAppScript(template)
-
-
 # pprint(google_app_controller())
-env.basepyref["gac"] = "google_app_controller"
-
-
-def promptInterface(ref, fallback=0):
-    key = (
-        prompt(ref, "choose a key from the ref") or fallback
-    )
-    data = ref.get(key)
-    assert data
-    return data
 
 
 # ff(dldir, name='ga')
@@ -7151,6 +6481,7 @@ def promptSplit(*args):
 
 # ff(dldir, css=1, mode='d')
 # pprint(absdir(budir + 'CURRENT'))
+
 def saveToDrive(file, outpath):
     cfile(file, drivedir + outpath)
 
@@ -7158,14 +6489,12 @@ def saveToDrive(file, outpath):
 # saveToDrive('clip3.js', 'cwt_scores_autumn2022.json')
 # printdir(fontdir)
 
-
 def emptyTrash(dir=trashdir):
     prompt(os.listdir(trashdir))
     assert isdir(dir)
     rmdir(dir, force=1)
     mkdir(dir)
     printdir(dir)
-
 
 def keepOrDelete(file):
     a = prompt(file)
@@ -7183,7 +6512,6 @@ def keepOrDelete(file):
 # pprint(toJSON(Partitioner(ff(dldir, e='pdf'))))
 # ff(jsondir)
 
-
 def cleanupRawText(s):
     def f(x):
         n = x.group(0)
@@ -7199,7 +6527,6 @@ def cleanupRawText(s):
     s = re.sub("[”’“]", f, s)
     return s.strip()
 
-
 def normMove(src, to):
     outpath = dirFromFile(to) + tail(to)
     mfile(src, outpath)
@@ -7208,9 +6535,8 @@ def normMove(src, to):
 # normMove(clipfile, 'educated.book.txt')
 
 # sentenceRE = '(?:(?<!Mr|Miss|Ms)\. "?|\n *)(\S+)'
-sentenceRE = "(?:\. \"?|\n)([A-Z]\w*(?:'\w+)?)"
-# clip(unique(findall(sentenceRE, normRead('educated.book.txt'))))
 
+sentenceRE = "(?:\. \"?|\n)([A-Z]\w*(?:'\w+)?)"
 
 def backupMostPopular():
     files = [
@@ -7221,7 +6547,6 @@ def backupMostPopular():
         "/home/kdog3682/CWF/public/print.js",
     ]
     cfiles(files, bucurdir)
-
 
 def fixWrongPaths():
     baseFiles = map(files, lambda x: normpath(drivedir, x))
@@ -7235,7 +6560,6 @@ def fixWrongPaths():
 # backupMostPopular()
 # ff(jsdir)
 # mkdir(dir2023)
-
 
 def writeGitIgnore(dir2023):
     s = """
@@ -7253,7 +6577,6 @@ def writeGitIgnore(dir2023):
 
 
 # writeGitIgnore(dir2023)
-
 
 def gitRemote(repo, username="kdog3682", message=0):
     chdir(rootdir + repo)
@@ -7279,11 +6602,7 @@ def gitRemote(repo, username="kdog3682", message=0):
     # s = 'ssh -vvv git@github.com'
     # it creates a prompt which may ask something
 
-    mainCommand = f"""
-        git add .
-        git commit -a -m "{message or 'pythonTest'}"
-        git push
-    """
+    mainCommand = f"git add .\ngit commit -a -m \"{message or 'pythonTest'}\"\ngit push"
     response = SystemCommand(mainCommand)
 
     if response.error == "sdfgsdfg":
@@ -7306,14 +6625,12 @@ def gitRemote(repo, username="kdog3682", message=0):
 
     return
 
-
 def changelog(s=0, mode="add"):
     changelogfile = "/home/kdog3682/2023/changelog.md"
     if not s:
         s = hms()
     payload = "+ " + s
     append(changelogfile, payload)
-
 
 def writeNpmInit(name):
 
@@ -7336,7 +6653,6 @@ def writeNpmInit(name):
     }
     write(outpath, data)
 
-
 def gitUrl(file, repo, user="kdog3682"):
     url = "https://raw.githubusercontent.com/$1/$2/main/$3"
     url = templater(url, [user, repo, file])
@@ -7345,7 +6661,6 @@ def gitUrl(file, repo, user="kdog3682"):
 
 
 # pprint(hms())
-
 
 def npmInstall(s):
     dev = test("nodemon|jest|grunt", s, flags=re.I)
@@ -7373,10 +6688,8 @@ def npmInstall(s):
 # tthrtrhggggg
 # scrape('https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects')
 
-
 def text():
     return normRead("scrape.txt")
-
 
 def foo():
     a = linegetter(text(), fn="(^[a-z]\w+)\(", u=1)
@@ -7385,7 +6698,6 @@ def foo():
         "builtInFunctions": a,
         "builtInClasses": b,
     }
-
 
 def normClear(file):
     file = normDirPath(file)
@@ -7405,7 +6717,6 @@ def normClear(file):
 # npmInstall('acorn')
 # npmInstall('@lezer/javascript')
 
-
 def publishScratchpad():
     with CD(dir2023):
         outpath = addExtension(
@@ -7416,23 +6727,7 @@ def publishScratchpad():
         )
         mfile("scratchpad.js", outpath)
 
-
-env.basepyref["ps"] = "publishScratchpad"
-# printdir(dir2023)
-# printdir(nodedir2023)
-
-
-# scrape('view-source:https://www.nysedregents.org/ei/ei-math.html', 'href')
-
 base = "https://www.nysedregents.org/ei"
-# files = map(filter(filter(clip(), 'english'), lambda x: not test('anno|ccmath|guide', x)), lambda x: os.path.join(base, x))
-# pprint(files)
-# ofile(files[0])
-
-# srequest('https://newyork.craigslist.org/search/edu#search=1~list~0~0')
-# ff(jsdir, js=1, text='statecontext', month=1)
-# ff(dir2023, mode='print')
-
 
 def getLinks(folders, q):
     store = []
@@ -7444,7 +6739,6 @@ def getLinks(folders, q):
     files = choose(store)
     map(files, revert, dir=jsdir, increment=1, vim=1)
 
-
 def incrementName(file):
     count = 1
     a, b = mget("(?:\.\w+)+$", file, mode=str)
@@ -7452,7 +6746,6 @@ def incrementName(file):
         count += 1
         file = a + str(count) + b
     return file
-
 
 def appendVim(type, arg):
     b = arg
@@ -7471,10 +6764,8 @@ def appendVim(type, arg):
 # printdir(pdfdir2)
 # files = rfiles(ff(pdfdir2, name='\)'))
 
-
 def removeFileParens(s):
     return re.sub(" *\(.*?\) *", "", s)
-
 
 def overrideFile():
     f = glf()
@@ -7484,10 +6775,8 @@ def overrideFile():
 # overrideFile()
 # rfile(glf())
 
-
 def isEmptyDir(dir):
     return isdir(dir) and not os.listdir(dir)
-
 
 def renameFiles():
     for file in ff(dldir, reverse=1):
@@ -7508,9 +6797,6 @@ def renameFiles():
 
 
 # renameFiles()
-env.basepyref["scrape"] = "scrape"
-# request('view-source:https://www.nysedregents.org/ei/ei-math.html')
-
 
 def fixUrls(source, links):
     url = fixUrl(source)
@@ -7524,7 +6810,6 @@ def fixUrls(source, links):
             base = url
 
     return map(links, lambda x: os.path.join(base, x))
-
 
 def downloadPDF(url, name=0):
     if not name:
@@ -7543,7 +6828,6 @@ def downloadPDF(url, name=0):
 
     ofile(outpath)
     return outpath
-
 
 def scrapeLinks(source=0):
     source = "https://www.nysedregents.org/ei/"
@@ -7565,7 +6849,6 @@ def scrapeLinks(source=0):
 
     return map(items, downloader)
 
-
 def reverse(x):
     return list(reversed(x))
 
@@ -7573,15 +6856,6 @@ def reverse(x):
 # scrapeLinks()
 # mkdir(archdir)
 # pprint(glf(amount=2))
-
-a = [1, 2, 3, 4, 5]
-# print(a[-3:])
-# pprint(glf(n=2))
-# print(reverse(a))
-# pprint(list(range(-3, 0)))
-
-# printdir(dir2023)
-
 
 def to2023(*files):
     def runner(file):
@@ -7596,7 +6870,6 @@ def to2023(*files):
 
 
 # printdir(dir2023)
-
 
 def tagdir(dir, history={}):
     items = {}
@@ -7618,7 +6891,6 @@ def tagdir(dir, history={}):
 
         items[name] = value
     appendVariable(store)
-
 
 tagdirdict = {
     "dir": "/home/kdog3682/2023/",
@@ -7675,16 +6947,6 @@ tagdirdict = {
     },
 }
 
-# tagdir(dir2023)
-# npmInstall('node-fetch')
-# npmInstall('katex')
-# npmInstall('mathjax')
-# npmInstall('puppeteer')
-# error = SystemCommand('node server.js').error
-# appendVariable(error)
-# search('from \s*(.+)')
-
-
 def npmResetNode():
 
     s = """
@@ -7701,7 +6963,6 @@ def npmResetNode():
         npm version
     """
     )
-
 
 def readjs(*args):
     dir = jsdir
@@ -7720,7 +6981,6 @@ def readjs(*args):
 # appendVariable(glf())
 # cdir(fontdir, dir2023)
 
-
 def cleandir(dir):
     map(filter(absdir(dir), alwaysDelete), rfile)
 
@@ -7728,7 +6988,6 @@ def cleandir(dir):
 
 def renameLastFile(file = 'Extra Worksheet'):
     mfile(glf(), npath(dldir, addExtension(file, 'pdf')))
-
 
 def resumeIt():
     renameLastFile('Kevin Lee Resume')
@@ -7791,7 +7050,6 @@ def isGunk(file):
 def makeRootDir(s):
     mkdir(rootdir + s.upper())
 
-
 def antichoose(items):
     a = prompt2(items)
     indexes = [int(n) - 1 for n in a.strip().split(" ")]
@@ -7808,7 +7066,6 @@ def seeVersions():
         npm -v
         node -v
     """)
-    
 
 def renameLastFile():
     f = glf()
@@ -7817,20 +7074,9 @@ def renameLastFile():
 #mkdir(dir2023 + 'images')
 #mfiles(antichoose(ff(dldir, pdf=1)), 'trash')
 #printdir(dldir)
-env.basepyref['mrd'] = 'makeRootDir'
-#foo()
-
-#print(promptSplit('asdf  d'))
-
-env.basepyref['rnlf'] = 'renameLastFile'
-#review(dldir, mode='open')
-#emptyTrash()
 
 def pickFileFromDir(dir=dldir):
     ofile(choose(absdir(dir)))
-
-env.basepyref['pf'] = 'pickFileFromDir'
-
 
 pokemonJsonSample = [
   {
@@ -7860,6 +7106,7 @@ def downloadImage(url, name):
 #SystemCommand('git add .\ngit show --name-only')
 #SystemCommand('git rev-list --all --count') # 34 commits
 #SystemCommand('git shortlog -s')
-ff(text='g4stud', js=1)
+#ff(text='g4stud', js=1)
 #print(tail(pydir))
 #mfile('vue-directives.js', 'vue-utils.js')
+

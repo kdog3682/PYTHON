@@ -17,6 +17,7 @@ pdfdict = {
     "ii": "/home/kdog3682/PDFS/Hugel Math - Fractions.pdf",
     "jj": "/home/kdog3682/PDFS/G4M Workbook 2.pdf",
     "kk": "/home/kdog3682/PDFS/G3M BIM Workbook.pdf",
+    "bim3": "/home/kdog3682/PDFS/G3M BIM Workbook.pdf",
     "ll": "/home/kdog3682/PDFS/Olenych Math 1 - Number Sense.pdf",
     "mm": "/home/kdog3682/PDFS/G4M Mcgraw Workbook.pdf",
     "nn": "/home/kdog3682/PDFS/G5M Mcgraw Workbook.pdf",
@@ -208,6 +209,7 @@ def fixDest(s):
 
 def mergepdf(files, **kwargs):
     pdf = pikeCreate(files)
+    prompt(len(pdf.pages), kwargs, len(files))
     save(pdf, **kwargs)
 
 
@@ -240,6 +242,7 @@ def save(pdf, outpath="test", dir=dldir, openIt=1):
                 "outpath is neither string nor pdf"
             )
 
+    outpath = fixDest(outpath)
     outpath = addExtension(outpath, "pdf")
     outpath = npath(dir, outpath)
 
@@ -271,7 +274,7 @@ def deletePages(file, *indexes):
     indexes = flat(list(indexes))
     indexes.sort()
     for i in indexes:
-        pdf.pages.remove(p=i - count)
+        del pdf.pages[i]
         count += 1
     return pdf
 
@@ -291,7 +294,8 @@ def pikeCreate(files, f=lambda x: x.pages):
     pdf = Pdf.new()
     for file in files:
         src = pikeOpen(file)
-        pdf.pages.extend(f(src))
+        value = f(src)
+        pdf.pages.extend(value)
     return pdf
 
 
@@ -434,10 +438,10 @@ def compile_shsat_pdfs(file):
 
 
 def pdfFromIndexes(file, indexes):
+    indexes = rangeFromString(indexes)
     pdf = pikeOpen()
     src = pikeOpen(file)
 
-    indexes = rangeFromString(indexes)
 
     for i in indexes:
         pdf.pages.append(src.pages[i])
@@ -446,6 +450,7 @@ def pdfFromIndexes(file, indexes):
 
 
 def build_homework_files(s):
+    s = removeComments(s)
     def fn(s):
         s = s.strip()
         if test("\|", s):
@@ -499,13 +504,11 @@ def pikeMetaData(pdf):
 
 
 def k5learning(minutes=50):
-    group = mostRecentFileGroups(
-        dldir, targetIndex=0, minutes=minutes
-    )
-    pdfs = map(group, lambda x: deletePages(x, -1))
+    group = mostRecentFileGroups()
+    pdfs = map(group, sliceStartEnd, end=1)
     mergepdf(
         pdfs,
-        outpath=promptOutpath(fallback="g5cw", fn=fixDest),
+        outpath=fixDest('g5cw'),
     )
 
 
@@ -752,23 +755,29 @@ def removeWhitePages(f):
 # removeStartEndPages('g4cw.pdf')
 
 
-def sliceStartEnd(f, start, end):
-    def runner(src):
-        length = len(src.pages) - 1
+def sliceStartEnd(src, start=0, end=0, get=0):
+    src = pikeOpen(src)
+    if get:
+        out = pikeOpen()
+        a = 0
+        b = get
+        if isArray(b):
+            a = b[0] - 1
+            b = b[1]
+        out.pages.extend(src.pages[a:b])
+        return out
+    if start:
+        for i in range(start):
+            del src.pages[0]
+    if end:
+        for i in range(end):
+            del src.pages[-1]
 
-        if start:
-            for i in range(start):
-                src.pages.remove(p=1)
-        if end:
-            for i in range(end):
-                src.pages.remove(p=len(src.pages))
-
-    pikeRpw(f, runner)
+    return src
 
 
 chdir(dldir)
 
-# sliceStartEnd('g5cw.pdf', 8, 3)
 # pprint(build_homework_files())
 # that in this state ... I am not really talkative ...
 # sliceNewPdf('g4cw.pdf', 'G4 Classwork', 10)
@@ -837,7 +846,7 @@ def splitpdf(f, items):
             pdf.pages.extend(
                 src.pages[range[0] - 1 : range[1]]
             )
-        save(pdf, outpath=fixOutpath(item.get("name")))
+        save(pdf, outpath=item.get("name"))
 
 def splitworksheets(f):
     # ehh not so much
@@ -864,13 +873,14 @@ def spliter(srcFile, outpath, indexes):
 
 
 s = """
-g4hw ll 25 | hh 9 | ii 16-17
-g4cw hh 7 8 15 17
+#g4hw ll 25 | hh 9 | ii 16-17
+#g4cw hh 7 8 15 17
 
-g5hw jj 149-152
+#g5hw jj 149-152
+g4hw pp 145 149
 """
 
-# pprint(build_homework_files(s))
+#pprint(build_homework_files(removeComments(s)))
 
 
 def scrapeAndFix():
@@ -922,3 +932,43 @@ def manager():
         return removeWhitePages(file)
 
 #manager()
+#rfile(glf(n=-1))
+#mfile(glf(trashdir), dldir)
+#rfile(glf())
+#k5learning()
+
+
+#f = "G5 2021 NYSE.pdf"
+#f = sliceStartEnd(pikeOpen(f), get=4)
+#save(f, outpath='g5cw')
+
+
+def groupAction(f):
+    group = mostRecentFileGroups()
+    prompt(group, 'is this the group?')
+    map(group, f)
+
+#groupAction(removeWhitePages)
+
+
+#To give a genuine amount.
+
+s='''
+g4hw bim3 139 145-147
+#g5hw bim3 160 161 163 165
+'''
+#build_homework_files(s)
+
+
+#print(glf())
+
+names = [
+    "G4 Extra Handout 1",
+    "G4 Extra Handout 2",
+    "G4 Extra Handout 3",
+]
+f = pikeOpen(glf())
+for i, name in enumerate(names):
+    g = pikeOpen()
+    g.pages.append(f.pages[i])
+    save(g, outpath=name)
