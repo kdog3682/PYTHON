@@ -15,6 +15,7 @@ pdfdict = {
     "gg": "/home/kdog3682/PDFS/G6M 501 Word Problems.pdf",
     "hh": "/home/kdog3682/PDFS/Olenych Math 2 - Fractions.pdf",
     "ii": "/home/kdog3682/PDFS/Hugel Math - Fractions.pdf",
+    "hugel": "/home/kdog3682/PDFS/Hugel Math - Fractions.pdf",
     "jj": "/home/kdog3682/PDFS/G4M Workbook 2.pdf",
     "kk": "/home/kdog3682/PDFS/G3M BIM Workbook.pdf",
     "bim3": "/home/kdog3682/PDFS/G3M BIM Workbook.pdf",
@@ -23,7 +24,9 @@ pdfdict = {
     "nn": "/home/kdog3682/PDFS/G5M Mcgraw Workbook.pdf",
     "oo": "/home/kdog3682/PDFS/G9M Exeter Workbook.pdf",
     "pp": "/home/kdog3682/PDFS/G4M BIM Workbook.pdf",
+    "bim4": "/home/kdog3682/PDFS/G4M BIM Workbook.pdf",
     "qq": "/home/kdog3682/PDFS/G5M BIM Workbook.pdf",
+    "bim5": "/home/kdog3682/PDFS/G5M BIM Workbook.pdf",
 }
 
 
@@ -184,13 +187,14 @@ def pikeOpen(f=0):
     if not f:
         return Pdf.new()
     if isString(f):
-        f = pdfdict.get(f, f)
+        f = pdfdict.get(f, addExtension(f, 'pdf'))
         return Pdf.open(f, allow_overwriting_input=True)
     return f
 
 
 def fixDest(s):
     s = re.sub("g(?=\d)", "Grade ", s)
+    s = re.sub(" *ehw", " Extra Homework", s)
     s = re.sub(" *hw", " Homework", s)
     s = re.sub(" *q", " Quiz", s)
     s = re.sub(" *cw", " Classwork", s)
@@ -473,12 +477,15 @@ def build_homework_files(s):
         else:
             outpath, src, indexes = s.split(" ", maxsplit=2)
 
-        outpath = fixDest(outpath)
         indexes = rangeFromString(indexes)
         pdf = pdfFromIndexes(src, indexes)
+
+        if outpath.startswith('x'):
+            return pdf
+        outpath = fixDest(outpath)
         save(pdf, outpath, dir=dldir)
 
-    linegetter(s, trim=1, fn=fn)
+    return smallify(linegetter(s, trim=1, fn=fn))
 
 
 def build_shsat_files():
@@ -836,16 +843,19 @@ def splitpdf(f, items):
     items = [
         {"range": v, "name": k} for k, v in items.items()
     ]
-    src = f
+    src = pikeOpen(pikeOpen(f))
     for item in items:
         pdf = pikeOpen()
         range = item.get("range")
         if isNumber(range):
             pdf.pages.append(src.pages[range - 1])
-        else:
+        elif isArray(range):
             pdf.pages.extend(
                 src.pages[range[0] - 1 : range[1]]
             )
+        else:
+            for i in rangeFromString(range):
+                pdf.pages.append(src.pages[i])
         save(pdf, outpath=item.get("name"))
 
 def splitworksheets(f):
@@ -954,21 +964,34 @@ def groupAction(f):
 #To give a genuine amount.
 
 s='''
-g4hw bim3 139 145-147
+#g4hw bim3 139 145-147
 #g5hw bim3 160 161 163 165
+#g4ehw bim5 122 124 127 130
+#g4hw bim4 77 78 80 91 93 95
+x hugel 35 40
 '''
-#build_homework_files(s)
-
+pdf = build_homework_files(s)
+a = pikeOpen(npath(dldir, 'asdasd'))
+a.pages.extend(pdf.pages)
+save(a, 'G4 Classwork')
 
 #print(glf())
 
-names = [
-    "G4 Extra Handout 1",
-    "G4 Extra Handout 2",
-    "G4 Extra Handout 3",
-]
-f = pikeOpen(glf())
-for i, name in enumerate(names):
-    g = pikeOpen()
-    g.pages.append(f.pages[i])
-    save(g, outpath=name)
+def boop():
+    names = [
+        "G4 & G5 Extra Handout 1",
+        "G4 & G5 Extra Handout 2",
+        "G4 Extra Handout",
+        "Student Letters",
+    ]
+    f = pikeOpen(glf())
+    for i, name in enumerate(names):
+        g = pikeOpen()
+        g.pages.append(f.pages[i])
+        save(g, outpath=name)
+
+#splitpdf("G5 2021 NYSE", {
+    #'G5 Classwork': '7-11',
+    #'G5 Homework': '1-6',
+#})
+

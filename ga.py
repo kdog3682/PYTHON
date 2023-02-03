@@ -27,19 +27,17 @@ import requests
 import shutil
 
 
-
 def relaxTokenScope():
     os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+
 
 relaxTokenScope()
 creds = None
 
 
 class GoogleSearch:
-    def __init__(
-        self, **kwargs
-    ):
-        service = getService("search", tokenfile='token2')
+    def __init__(self, **kwargs):
+        service = getService("search", tokenfile="token2")
         self.cse = service.cse()
         self.results = self.search(**kwargs)
 
@@ -48,9 +46,9 @@ class GoogleSearch:
             return
 
         kwargs = {}
-        if image: 
-            kwargs['searchType'] = 'image'
-            kwargs['fileType'] = 'png,jpg,svg'
+        if image:
+            kwargs["searchType"] = "image"
+            kwargs["fileType"] = "png,jpg,svg"
 
         def runner(cse, start, num):
             return cse.list(
@@ -63,12 +61,12 @@ class GoogleSearch:
             ).execute()
 
         store = []
-        getter = objectf('title link snippet')
+        getter = objectf("title link snippet")
         for i in range(0, amount, 10):
             num = min(amount, 10)
             response = runner(self.cse, i, num)
             if response:
-                items = response.get('items')
+                items = response.get("items")
                 items = map(items, getter)
                 store.extend(items)
             else:
@@ -79,15 +77,17 @@ class GoogleSearch:
         else:
             return store
 
+
 def downloadImage(url, name):
     r = requests.get(url)
     if r.status_code == 200:
-        with open(name,'wb') as f:
+        with open(name, "wb") as f:
             f.write(r.content)
-            print('Image sucessfully Downloaded: ',name)
+            print("Image sucessfully Downloaded: ", name)
             return name
     else:
-        print('Image Couldn\'t be retreived', name) 
+        print("Image Couldn't be retreived", name)
+
 
 class GoogleDocument:
     def __init__(
@@ -100,7 +100,9 @@ class GoogleDocument:
         return self.document.get(documentId=id).execute()
 
 
-def getService(key="classroom", reset=0, tokenfile='token.json'):
+def getService(
+    key="classroom", reset=0, tokenfile="token.json"
+):
     global creds
     versionRef = {
         "classroom": {"version": "v1"},
@@ -113,35 +115,14 @@ def getService(key="classroom", reset=0, tokenfile='token.json'):
 
     ref = versionRef.get(key)
     version = ref.get("version")
-    if ref.get('name'): key = ref.get('name')
+    if ref.get("name"):
+        key = ref.get("name")
     creds = getCreds(tokenfile)
     service = build(key, version, credentials=creds)
-    print('Service success: returning service for ', key)
+    print("Service success: returning service for ", key)
     return service
 
 
-ClassroomRef = {
-    "g4": {
-        "name": "Fall G4 Math",
-        "id": "393537361391",
-        "code": "uahp72j",
-        "subject": "math",
-        "classWorkLink": "https://classroom.google.com/u/0/w/MzkzNTM3MzYxMzkx/t/all",
-    },
-    "g5": {
-        "name": "Fall G5 Math",
-        "subject": "math",
-        "id": "393537361428",
-        "code": "3o6n3n5",
-        "classWorkLink": "https://classroom.google.com/u/0/w/MzkzNTM3MzYxNDI4/t/all",
-    },
-    "emc": {
-        "name": "EMC Learning Center",
-        "id": "28537084847",
-        "subject": "math",
-        "code": "vf27xdu",
-    },
-}
 
 
 def superIsFile(file):
@@ -161,6 +142,53 @@ def queryHelper(key, mode=0):
 
 
 class GoogleDrive:
+    def downloadFile(self, q):
+        fileName, q = self.findFile(q=q)
+        r = self.files.export(
+            fileId=fileId, mimeType="application/pdf"
+        )
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, r)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            print(
+                "Download %d%%"
+                % int(status.progress() * 100)
+            )
+        fh.seek(0)
+        with open(fileName, "wb") as f:
+            shutil.copyfileobj(fh, f, length=131072)
+        ofile(fileName)
+
+    def getFiles2(self, folder=0, name=0, r=0, e=0, n=1):
+        if folder:
+            q = f"mimeType = 'application/vnd.google-apps.folder' and name = '{folder}'"
+            folders = driveGetter(self, q=q, pageSize=1)
+            folder = folders[0]
+        else:
+            folder = self.files.get(fileId="root").execute()
+
+        q = createq(folder=folder)
+        if e:
+            q += f" and mimeType = {getMime(e)}"
+        if r:
+            results = filter(
+                results, lambda x: test(r, x.get("name"))
+            )
+
+        results = driveGetter(self, q=q, pageSize=n)
+        dprint(
+            results=results, lengthMatch=len(results) == n
+        )
+        return results
+
+    def downloadFiles(self, **kwargs):
+        files = self.getFiles2(**kwargs)
+        for file in files:
+            f = googleDriveDownloadFile(self, file)
+            ofile(f)
+
     def searchFile(self, query):
         pageToken = None
 
@@ -272,7 +300,6 @@ class GoogleDrive:
 
 
 class GoogleClassroom:
-
     def createResource(self, file, fileId=None):
         if not fileId:
             fileId = self.drive.uploadFile(file)
@@ -463,7 +490,7 @@ class GoogleClassroom:
             print("successful grading")
 
         except Exception as e:
-            print("skip", studentSubmissionId)
+            print("skip", studentSubmissionId, str(e))
 
     def printStudentInfo(self):
         students = (
@@ -484,13 +511,15 @@ class GoogleClassroom:
         ).execute()
         return data.get("name").get("fullName")
 
+    def openLink(self):
+        ofile(self.classWorkLink)
+
     def loadClass(self, classKey):
-        ref = ClassroomRef.get(
-            classKey, ClassroomRef.get("g" + classKey)
-        )
+        ref = env.ClassroomRef.get("g" + classKey)
         self.classWorkLink = ref.get("classWorkLink")
         self.courseName = ref.get("name", classKey)
         self.courseSubject = capitalize(ref.get("subject"))
+        self.onlineStudents = ref.get("onlineStudents")
         self.courseId = ref.get("id")
         print(
             "initializing self.courseName", self.courseName
@@ -513,8 +542,6 @@ class GoogleClassroom:
             courseWork.studentSubmissions()
         )
         self.drive = GoogleDrive()
-
-        print("initializing self.drive")
         print("initializing self.courses()")
         print("GoogleClassroom successfully initialized")
         print("------------------------------")
@@ -571,12 +598,20 @@ class GoogleClassroom:
         return self.assignmentIds
 
     def getStudents(self):
-        return (
+        students = (
             self.courses.students()
             .list(courseId=self.courseId)
             .execute()
             .get("students")
         )
+
+        def f(student):
+            name = getStudentInfo(student).get("name")
+            if name in self.onlineStudents:
+                return True
+
+        students = filter(students, f)
+        return students
 
     def getStudentSubmissions(self, assignmentId):
         return (
@@ -681,27 +716,27 @@ def createMaterials(fileId):
     return materials
 
 
-
 def getCreds(tokenfile, reset=0):
     global creds
     tokenfile = jsondir + tokenfile
-    #print(tokenfile)
-    #raise Exception()
+    # print(tokenfile)
+    # raise Exception()
     googleScopes = env.googleScopes
-    #googleScopes = env.customsearchScopes
-    #googleScopes = env.youtubeScopes
+    # googleScopes = env.customsearchScopes
+    # googleScopes = env.youtubeScopes
     debug = 0
-    #debug = 1
-    #reset = 1
+    # debug = 1
+    # reset = 1
 
     def get_creds(f):
         if isfile(f):
-            print('returning existing token file', f)
+            print("returning existing token file", f)
             return Credentials.from_authorized_user_file(
                 f, googleScopes
             )
         else:
-            if debug: input('creating oauth flow credentials')
+            if debug:
+                input("creating oauth flow credentials")
             flow = (
                 InstalledAppFlow.from_client_secrets_file(
                     env.credentialfile, googleScopes
@@ -712,14 +747,18 @@ def getCreds(tokenfile, reset=0):
             writeCreds(f, creds)
             return creds
 
-    tokenfile = jsondir + addExtension(tail(tokenfile), 'json')
+    tokenfile = jsondir + addExtension(
+        tail(tokenfile), "json"
+    )
 
     if creds:
         if creds.expired:
-            if debug: input('the credentials are expired')
+            if debug:
+                input("the credentials are expired")
             creds.refresh(Request())
         elif isfile(tokenfile):
-            if debug: input('returning existing credentials')
+            if debug:
+                input("returning existing credentials")
             return get_creds(tokenfile)
         else:
             return make_creds(tokenfile)
@@ -728,24 +767,24 @@ def getCreds(tokenfile, reset=0):
     else:
         return get_creds(tokenfile)
 
+
 def writeCreds(file, creds):
     with open(file, "w") as f:
-        f.write(
-            creds.to_json().replace(
-                '"2022', '"2023'
-            )
-        )
-
+        f.write(creds.to_json().replace('"2022', '"2023'))
 
 
 def downloadImages(store, q):
     chdir(dldir)
     names = []
-    links = map(store, lambda x: x.get('link')) if isObject(store[0]) else store
+    links = (
+        map(store, lambda x: x.get("link"))
+        if isObject(store[0])
+        else store
+    )
     for i, link in enumerate(links):
-        e = search('\\b(?:jpg|png|svg)\\b', link)
+        e = search("\\b(?:jpg|png|svg)\\b", link)
         if not e:
-            print('error couldnt find extension', link)
+            print("error couldnt find extension", link)
             continue
 
         name = addExtension(q + str(i + 1), e)
@@ -753,7 +792,7 @@ def downloadImages(store, q):
             downloadImage(link, name)
             names.push(name)
         except Exception as e:
-            print('error', link, e)
+            print("error", link, e)
 
     return names
 
@@ -762,18 +801,19 @@ def openYoutube(id):
     s = "http://www.youtube.com/watch?v=" + id
     return ofile(s)
 
+
 def foo():
-# doesnt need to be here
+    # doesnt need to be here
     tokenfile = jsondir + env.tokenfile
 
     if not creds and not reset and isfile(tokenfile):
-        print('getting credentials')
+        print("getting credentials")
         creds = Credentials.from_authorized_user_file(
             tokenfile, env.googleScopes
         )
-    
+
     if not creds or not creds.valid:
-        print('getting credentials')
+        print("getting credentials")
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
@@ -794,115 +834,144 @@ def foo():
 
 
 class GoogleYoutubeSearch:
-    def __init__(
-        self, **kwargs
-    ):
+    def __init__(self, **kwargs):
 
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-        service = getService("youtube", tokenfile='token3')
+        service = getService("youtube", tokenfile="token3")
         self.openYoutubeUrl = 0
         self.youtube = service.search()
         self.video = service.videos()
         self.results = self.search(**kwargs)
 
     def parse(self, item):
-        id = item.get('id').get('videoId')
-        kwargs = dict(part='statistics', id=id)
+        id = item.get("id").get("videoId")
+        kwargs = dict(part="statistics", id=id)
         response = self.video.list(**kwargs).execute()
 
         if self.openYoutubeUrl:
             openYoutube(id)
 
-        statistics = response.get('items')[0].get('statistics')
-        snippet = item.get('snippet')
+        statistics = response.get("items")[0].get(
+            "statistics"
+        )
+        snippet = item.get("snippet")
         return {
             **statistics,
             **snippet,
         }
-    
+
     def search(self, q=None, amount=50):
-            kwargs = {
-                'q': q,
-                'part': 'snippet',
-                'maxResults': amount,
-            }
-            response = self.youtube.list(**kwargs).execute()
-            items = response.get('items')
-            return [self.parse(item) for item in items]
+        kwargs = {
+            "q": q,
+            "part": "snippet",
+            "maxResults": amount,
+        }
+        response = self.youtube.list(**kwargs).execute()
+        items = response.get("items")
+        return [self.parse(item) for item in items]
 
 
-#def fastEmail():
-    #from ga import GoogleEmail
-    #GoogleEmail.
-
+# def fastEmail():
+# from ga import GoogleEmail
+# GoogleEmail.
 
 
 class GoogleEmail:
     def __init__(self):
-        service = getService('gmail')
+        service = getService("gmail")
         self.users = service.users()
         self.messages = self.users.messages()
 
-    def createFilter(self, sender=0, labelName='trash', size=0, subject=0, query=0):
-# starred important
+    def createFilter(
+        self,
+        sender=0,
+        labelName="trash",
+        size=0,
+        subject=0,
+        query=0,
+    ):
+        # starred important
         body = {
-            'criteria': {},
-            'action': {
-                'addLabelIds': [labelName.upper()],
-                'removeLabelIds': ['INBOX']
-            }
+            "criteria": {},
+            "action": {
+                "addLabelIds": [labelName.upper()],
+                "removeLabelIds": ["INBOX"],
+            },
         }
-        if size: filter['criteria']['size'] = size
-        if subject: filter['criteria']['subject'] = subject
-        if query: filter['criteria']['query'] = query
-        if sender: filter['criteria']['from'] = sender
+        if size:
+            filter["criteria"]["size"] = size
+        if subject:
+            filter["criteria"]["subject"] = subject
+        if query:
+            filter["criteria"]["query"] = query
+        if sender:
+            filter["criteria"]["from"] = sender
 
-        result = self.users.settings().filters().create(
-            userId='me', body=body).execute()
+        result = (
+            self.users.settings()
+            .filters()
+            .create(userId="me", body=body)
+            .execute()
+        )
 
-        print(F'Created filter with id: {result.get("id")}')
-    
+        print(f'Created filter with id: {result.get("id")}')
+
     def testing():
-        print('not completing working right now')
+        print("not completing working right now")
         for m in self.getMessages():
             self.getMessage(m)
             break
 
     def getMessage(self, m):
         data = {}
-        id = m.get('id')
-        message = self.messages.get(userId='me', id=id).execute()
+        id = m.get("id")
+        message = self.messages.get(
+            userId="me", id=id
+        ).execute()
         return pprint(message)
-        print('not working at the moment because of scope problem')
-        payload = message['payload']
-        headers = payload['headers']
+        print(
+            "not working at the moment because of scope problem"
+        )
+        payload = message["payload"]
+        headers = payload["headers"]
 
         for h in headers:
-            if h['name'] == 'Subject':
-                data['subject'] = h['value'] 
+            if h["name"] == "Subject":
+                data["subject"] = h["value"]
 
-            elif h['name'] == 'Date':
-                data['date'] = h['value'] 
+            elif h["name"] == "Date":
+                data["date"] = h["value"]
 
-            elif h['name'] == 'From':
-                data['from'] = h['value'] 
+            elif h["name"] == "From":
+                data["from"] = h["value"]
 
-        data['snippet'] = message['snippet']
+        data["snippet"] = message["snippet"]
         return data
-    
-    def getMessages(self, labels = ['INBOX', 'UNREAD']):
-        return self.messages.list(userId='me', labelIds=labels).execute().get('messages')
-    
+
+    def getMessages(self, labels=["INBOX", "UNREAD"]):
+        return (
+            self.messages.list(userId="me", labelIds=labels)
+            .execute()
+            .get("messages")
+        )
+
     def test(self, *files):
-        a = jsdir + 'test.pdf'
+        a = jsdir + "test.pdf"
         return self.emailFiles([a, a])
 
-        body = messageWithAttachment(env.kdogEmail, env.myEmail, 'test', '', '<p style="color:red">hi</p>', jsdir + 'test.pdf')
+        body = messageWithAttachment(
+            env.kdogEmail,
+            env.myEmail,
+            "test",
+            "",
+            '<p style="color:red">hi</p>',
+            jsdir + "test.pdf",
+        )
 
         kwargs = dict(userId="me", body=body)
         response = self.messages.send(**kwargs).execute()
         pprint(response)
-        
+
     def emailFiles(self, files):
         drive = GoogleDrive()
         ids = map(files, drive.uploadFile)
@@ -910,17 +979,20 @@ class GoogleEmail:
 
     def email(self):
         message = EmailMessage()
-        message.set_content('This is automated draft mail')
-        message['From'] = env.kdogEmail
-        message['To'] = env.myEmail
-        message['Subject'] = 'Automated draft'
-        em = base64.urlsafe_b64encode(message.as_bytes()).decode()
-        body = { 'raw': em}
+        message.set_content("This is automated draft mail")
+        message["From"] = env.kdogEmail
+        message["To"] = env.myEmail
+        message["Subject"] = "Automated draft"
+        em = base64.urlsafe_b64encode(
+            message.as_bytes()
+        ).decode()
+        body = {"raw": em}
         kwargs = dict(userId="me", body=body)
         response = self.messages.send(**kwargs).execute()
         return response
 
-def google(q='dogs', amount=5, youtube=0):
+
+def google(q="dogs", amount=5, youtube=0):
     if youtube:
         gs = GoogleYoutubeSearch(q=q, amount=amount)
     else:
@@ -929,5 +1001,179 @@ def google(q='dogs', amount=5, youtube=0):
     if gs.results:
         pprint(gs.results)
 
-    #todo https://developers.google.com/youtube/v3/guides/uploading_a_video #helpnotes
+    # todo https://developers.google.com/youtube/v3/guides/uploading_a_video #helpnotes
 
+
+def driveGetter(self, q, pageSize=3, get=1):
+    fields = "nextPageToken, files(id, name)"
+    items = self.files.list(
+        q=q, pageSize=pageSize, fields=fields
+    ).execute()
+    if get:
+        return items.get("files", [])
+    else:
+        return items
+
+
+def getMime(s):
+    e = getExtension(s)
+    return (
+        env.mimedict.get(s)
+        or env.mimedict.get(e)
+        or "application/pdf"
+    )
+
+
+def googleDriveDownloadFile(self, file):
+    prompt(file)
+    fileId = file.get("id")
+    name = file.get("name")
+    mimeType = "application/pdf"
+    outpath = npath(dldir, addExtension(name, "pdf"))
+    print(outpath)
+    fh = io.FileIO(outpath, "wb")
+    done = False
+    try:
+        request = self.files.export_media(
+            fileId=fileId, mimeType=mimeType
+        )
+        downloader = MediaIoBaseDownload(fh, request)
+        while done is False:
+            status, done = downloader.next_chunk()
+    except:
+        print("errrror")
+        return
+        raise Exception("it is not working")
+        request = self.files.get_media(fileId=fileId)
+        downloader = MediaIoBaseDownload(fh, request)
+        while done is False:
+            status, done = downloader.next_chunk()
+
+    return outpath
+
+
+# googleDriveDownloadFile(self, fileId):
+
+
+def googleDriveGetFiles(self, folderId):
+    folder = self.files.get(fileId=folderId).execute()
+    files = driveGetter(
+        self, q=createq(folder), pageSize=1000
+    )
+    return files
+
+
+def googleDriveGetFolders(self, folder=0):
+    q = "mimeType = 'application/vnd.google-apps.folder'"
+    if folder:
+        pageSize = 1
+    else:
+        pageSize = 1000
+    if folder:
+        q += f" and name = '{folder}'"
+    return driveGetter(self, q=q, pageSize=pageSize)
+
+
+# GoogleDrive().downloadFiles(n=2)
+
+# GoogleDrive()
+# print(googleDriveGetFolders(GoogleDrive()))
+def createq(folder=0, id=0):
+    q = 0
+    if folder:
+        id = folder.get("id")
+    if id:
+        q = "'" + id + "' in parents"
+    return q
+
+
+# gd = GoogleDrive()
+# ofile(googleDriveDownloadFile(gd, googleDriveGetFiles(gd, '1N5AjWhyNclXRsjUVMG4OcnkRzILb-7aJmNV_XpYJ9G5bRpYeuI00IKkdLWNqqOwEkwfHUxmA')[0]))
+
+# pprint(students)
+
+
+def getStudentInfo(student):
+    profile = student.get("profile")
+    emailAddress = profile.get("emailAddress")
+    id = profile.get("id")
+    name = profile.get("name").get("fullName")
+    return {
+        "id": id,
+        "name": name,
+        "emailAddress": emailAddress,
+    }
+
+
+def appendStudentStuff():
+    data = googleAppController('getCourses')
+    service = getService(key="classroom", reset=0)
+    courses = service.courses()
+    # Some how, this is the classroom ref.
+    #for id in data:
+        #courses.get(id)
+    room = GoogleClassroom("5")
+    students = room.getStudents()
+    appendVariable(map(students, getStudentInfo))
+
+
+
+def getTitle(item):
+    return (
+        item.get("assignmentSubmission")
+        .get("attachments")[0]
+        .get("driveFile")
+        .get("title")
+    )
+
+
+def grader(room=0, grade=100):
+    if not room:
+        keys = ['4', '5']
+        for key in keys:
+            room = GoogleClassroom("4")
+            grader(room)
+        return 
+
+    students = room.getStudents()
+    for student in students:
+        subs = (
+            room.studentSubmissions.list(
+                courseId=room.courseId,
+                courseWorkId="-",
+                userId=student.get("userId"),
+                states="TURNED_IN",
+            )
+            .execute()
+            .get("studentSubmissions")
+        )
+
+        #subs = getUntil(subs, isRecentSubmission)
+        pprint(subs)
+
+        for data in subs[0:3]:
+            if data.get("associatedWithDeveloper"):
+                if test("quiz|exam|test", getTitle(data)):
+                    print("hand grade quiz exam test")
+                    pass
+                else:
+                    result = room.gradeSubmission(
+                        data.get("courseWorkId"),
+                        data.get("id"),
+                        grade,
+                    )
+                    pprint(result)
+            else:
+                print("not made from console bypass")
+
+
+def isRecentSubmission(s):
+    if not s.get("associatedWithDeveloper"):
+        return False
+    n = s.get("creationTime")[0:11]
+    year, month, day = getNumbers(n)
+    date = datetime(year, month, day)
+    today = datetime.now()
+    delta = today - date
+    if delta.days > 15:
+        return False

@@ -132,6 +132,36 @@ def python(override=0):
     )
 
 
+
+def buildFiles():
+    files = Partitioner2(ff(dldir, week=1))()
+    storage = Storage()
+
+    for file in files:
+        k = search('g(?:rade)? *(\d+)', file, flags=re.I)
+        if not k: k = prompt(file, 'key? Choose G4 or G5')
+        storage.add(k, file)
+
+    store = []
+    for k,v in storage.toJSON().items():
+        store.append({
+            'key': k,
+            'files': v,
+        })
+    return store
+
+def uploadAssignments():
+    from ga import GoogleClassroom, GoogleDrive
+    data = buildFiles()
+    prompt(data)
+
+    for item in data:
+        key = item.get('key')
+        files = item.get('files')
+        room = GoogleClassroom(key)
+        map(files, room.uploadAssignment)
+        room.openLink()
+
 def uploadMaterials(official=1, dontEmail=0):
     from ga import GoogleClassroom, GoogleDrive
 
@@ -327,7 +357,9 @@ def gitDelete(file):
 
 def gitPush(file=None, dir=dir2023):
     if file:
-        message = prompt(file, "upload message: ")
+        if getExtension(file) == 'py':
+            dir = pydir
+        message = prompt(pydir, file, "upload message: ")
         a, b = os.path.split(file)
         if not a or len(a) < 2:
             a = dir2023
@@ -492,6 +524,8 @@ uploadMaterialURLS = [
 
 
 def astFunctions(file):
+    # cute but not necessary
+
     import ast
     def getFunctions(body):
         return (f for f in body if isinstance(f, ast.FunctionDef))
@@ -499,10 +533,4 @@ def astFunctions(file):
     return unique([f.name for f in getFunctions(tree.body)])
 
 #PythonController()
-
-
-def googleAppController():
-    s = dollarPrompt(env.gac)
-    googleAppScript(s)
-
-
+#uploadAssignments()

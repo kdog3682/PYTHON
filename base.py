@@ -2,7 +2,7 @@ gunkExtensions = ['recent', 'mp3', 'ass', 'eps', 'zip', 'url', 'gz', 'backup', '
 pdfdir2 = "/home/kdog3682/PDFS2/"
 archdir = "/mnt/chromeos/GoogleDrive/MyDrive/ARCHIVES/"
 sshfile = "/home/kdog3682/.ssh/id_rsa.pub"
-dir2023 =  "/home/kdog3682/2023/node_modules/"
+dir2023 =  "/home/kdog3682/2023/"
 nodedir2023 = "/home/kdog3682/2023/node_modules/"
 githuburl = "https://github.com/"
 drivedir = "/mnt/chromeos/GoogleDrive/MyDrive/"
@@ -75,6 +75,7 @@ pydir = "/home/kdog3682/PYTHON/"
 pdfdir = "/home/kdog3682/PDFS/"
 logdir = "/home/kdog3682/LOGS/"
 txtdir = "/home/kdog3682/TEXTS/"
+txtdir = "/home/kdog3682/2023/TEXTS/"
 jsondir = "/home/kdog3682/JSONS/"
 mathdir = "/home/kdog3682/MATH/"
 picdir = "/home/kdog3682/PICS/"
@@ -525,15 +526,11 @@ def chdir(d, force=0):
         os.chdir(d)
 
 def prompt(*args, **kwargs):
-    if kwargs.get("message"):
-        pass
-        # message = MessageRef.get(caller(-1))
-        # if message: args.append(message)
-    if not args:
-        return input()
-    pprint(args) if len(args) > 1 else print(
-        args[0]
-    ) if isPrimitive(args[0]) else pprint(args[0])
+    for arg in args:
+        if arg:
+            pprint(arg)
+    if kwargs:
+        pprint(kwargs)
     return input()
 
 def isIgnoredFile(name):
@@ -1526,6 +1523,7 @@ def checkpointf(
     include="",
     image=0,
     today=0,
+    flags=re.I,
     files=0,
     gif=0,
     week=0,
@@ -1669,7 +1667,7 @@ def checkpointf(
             return False
         if ignoreRE and test(ignoreRE, filename):
             return False
-        if text and not test(text, read(f), flags=re.I):
+        if text and not test(text, read(f), flags=flags):
             return False
         if date and not isSameDate(date, f):
             return False
@@ -2385,9 +2383,6 @@ def fixChromebookFilePath(s):
     return s
 
 
-# def jsonVersionOfFile(file):
-# return changeExtension(file, "json")
-
 def lastFile(key):
     f = mostRecent(dirgetter(key))
     assert isfile(f)
@@ -2398,8 +2393,6 @@ def macPrint():
     cmd = "lp -o sides=two-sided-long-edge " + url
     os.system(cmd)
 
-
-# macPrint
 
 def printer(
     file=None, doubleSided=1, copies=1, landscape=0
@@ -3076,8 +3069,6 @@ def ldf(x):
     return recent
 
 
-#
-
 def namer(x):
     print(caller(-1) + ":", x)
 
@@ -3089,9 +3080,6 @@ def _asset(name, data):
         ),
     )
 
-
-# def email(to):
-# googleAppScript("email")
 
 def google_search(key, site=0):
     if key:
@@ -3931,68 +3919,6 @@ def dostufff(todo):
 
     clip(store)
 
-todo = {
-    "i3.js": "yes",
-    "index.js": "io",
-    # "math-transform.js": "latex transformers",
-    "jshint-messages.js": "keep",
-    "file-builder.js": "useful",
-    "keyrefs.js": "dunno, maybe codemirror",
-    "cm3.js": "kinda uf",
-    "jsparser.js": "the parser object for js codemirror",
-    "cmparser.js": "cm",
-    "xx.js": "js input handler for cm",
-    "todo2.js": "uh ... has a dumb vpa function in it",
-    "cmtxt.js": "cm archive",
-    "codemirror-component.js": "cma",
-    "socket-action.js": "pretty nice",
-    "r3.js": "spent alot of time on this",
-    "r2.js": "not too sure what this is",
-    "voice-recorder.js": "voice recorder vue component and class",
-    "ju3.js": "jxg init extract maybe",
-    "t6components.js": "i think it is done because math-components ate it",
-    "r5.js": "spent a lot of time on this ... also has a generatorplugin class",
-    "example.js": "it is another prosemirror thing d",
-    "voice-utils.js": "cm",
-    # "story.js": "rn coding-story-for-kids.txt",
-    "refs.js": "might be useful but not sure",
-    "tile-match.js": "tilematch comp",
-    "t6.js": "this is actually kind of legit. i spent about a month on it. dont throw it away. it does the layering of components one at a time.",
-    "html-edit.js": "i feel like it is simlar to html-parser.js...",
-    "input-handlers.js": "cm",
-    "voice-callbacks.js": "cm",
-    "v.js": "i think this represents the old math.js",
-    "snippet-manager.js": "cm",
-    # "math-packages.js": "interesting",
-    "more-refs.js": "used in cm app",
-    "string-utils.js": "i feel llike this file should be combined elsewhere",
-    "code-runner.js": "vue cm coderunner",
-    "cm.js": "cm.js",
-    "r3c.js": "r3c.js",
-    "server.js": "main server",
-    "math-games.js": "far in the future",
-    "base-icon.js": "ok",
-    "colors.js": "ok it is an asset of nested colors",
-    "vuetify.js": "some sort of vuetify thing ",
-    "math-levels.js": "driller levels array",
-    "driller-methods.js": "ok",
-    "lezer-js.js": "ok",
-    "lud.js": "ok",
-    "html-transform.js": "another html transformer....",
-    "lrgen.js": "ok",
-    "cm-utils.js": "pl",
-    "asd.js": "coding-assignment future",
-    "r6a.js": "this was def used somewhere. it has a new style() which is like divify()",
-    "ju2.js": "jxg stuff",
-    "g.js": "another lezer thing",
-    # "4nums.js": "the javascript game of 24",
-    "utility-components.js": "more components ... should be merged into smth",
-    "my-strings.js": "math raw strings",
-    "h.js": "old vue math",
-    "question-generator.js": "d because the new worksheet kind of supercedes it. the new worksheet has a built in generator",
-    "t5.js": "old vue math",
-    "examples.js": "slot example",
-}
 
 def dirFromFile(f):
     if f.startswith("/"):
@@ -4353,8 +4279,6 @@ def smartRead(file):
             return pprint(read(f))
 
 
-# smartRead('consolidate.js') # has a lot of stuff in it ... that ... is ... all js. but it is not the comments.
-
 def delta(a, b):
     return abs(a - b)
 
@@ -4438,10 +4362,6 @@ def ranger(a):
     return list(range(a[0], a[1] + 1))
 
 
-# email('Math Homework.pdf')
-# print(absdir(abspath(outdir)))
-# print(ranger([4,4]))
-
 def prompt2(x):
     os.system("clear")
     number(x)
@@ -4459,20 +4379,9 @@ def findFile(f):
             return file
 
 
-# filePicker('dldir', 'find')
-# print(findFile('tokens.json'))
-
 def shell(cmd):
     os.system(cmd)
 
-
-# def normRead(file):
-# dir = dirFromFile(file)
-# return read(normpath(dir, file))
-
-# def normAppend(file, data):
-# dir = dirFromFile(file)
-# append(normpath(dir, file), data)
 
 def normDirPath(file):
     dir = dirFromFile(file)
@@ -4496,23 +4405,12 @@ def moveToAppropiateDir(name=0):
     mfile(file, path)
 
 
-# moveToAppropiateDir('token.json')
-# filePicker('pdf')
-
 htmlRE = "(?:[\"']|&quot;)(https.*?)(?:\"|&quot;|')"
 urlRE = "http.+"
 
 def plf():
     write(".foooooo", glf(), open=1)
 
-
-# plf()
-
-
-# clip(re.findall(urlRE, s))
-# cfile('utils.js', outdir)
-# printdir(outdir)
-# mfile('qs.py', 'ga.py')
 
 def extracter(r):
     store = []
@@ -4615,21 +4513,11 @@ def parseGoogleDate(s):
     return s[5:10] + "-" + s[0:4]
 
 
-# s = "/home/kdog3682/CWF/08-22-2021/10958.json"
-# mfile(s, jsondir)
-# srequest('https://jsfiddle.net/Lt7cso3m/2/')
-# uploadMathHomework()
-# findFile('g5math.pdf')
-
 def unescapeHtml(s):
     import html
 
     return html.unescape(s)
 
-
-# s = srequest('https://stackoverflow.com/questions/44791182/vue-js-how-to-add-modify-css-class-inside-slot-from-parent')
-# r = '<pre(?: .*)?><code(?: .*)?>([\w\W]+?)</code></pre>'
-# clip(unescapeHtml(join(re.findall(r, s))))
 
 def javascript(file, *args):
     file = npath(jsdir, addExtension(file, "js"))
@@ -4641,8 +4529,6 @@ def isJson(f):
     return getExtension(f) == "json"
 
 
-# javascript('node-pdfgen.js', 'hi')
-
 def changeLastJsonFileToJavascriptAsset():
     name = glf()
     assert isJson(name)
@@ -4651,9 +4537,6 @@ def changeLastJsonFileToJavascriptAsset():
     s = "var " + name + " = " + data
     normAppend("json.js", s)
 
-
-# pprint(changeLastJsonFileToJavascriptAsset())
-# ff('html text=nerdamer')
 
 def linegetter(s, trim=1, fn=0, filter=0, u=0):
     s = splitOnWord(s, "breaker")
@@ -4686,8 +4569,6 @@ def smartDedent(s):
 
     return re.sub("^" + spaces, "", s, flags=re.M).strip()
 
-
-# normWrite('corpus.json', linegetter(glf()))
 
 def lowerCase(s):
     return s.lower()
@@ -4731,8 +4612,6 @@ def addWordsToDictionaryf(s, corpus=None):
     )
 
 
-# pprint(addWordsToDictionaryf('base.py'))
-
 def appendjson(file, data):
     if not data:
         return
@@ -4758,11 +4637,6 @@ def readjson(file, placeholder={}):
     except:
         return placeholder
 
-
-# files = ff(dir=dldir, name='G(?:rade) *\d')
-# for file in files:
-# name = changeFileName(file, lambda x: 'Review ' + x + ' ' + datestamp())
-# cfile(file, name)
 
 def rangeFromString(s, offset=1):
     if isArray(s):
@@ -4878,10 +4752,6 @@ def createPokemonTemplateComponents(amount=1):
     clip(join(store))
 
 
-# pprint(createPokemonTemplateComponents(150))
-# clip(map(dread('pokemon'), lambda x: x.get('name')))
-# print(camelCase('nido-f'))
-
 def renameClipFile():
     f = input("rename clip file as?")
     mfile(
@@ -4915,10 +4785,6 @@ dpdf = downloadPdfsFromUrl
 def googleId(s):
     return search("d/(.*?)/", s) or s
 
-
-# view-source:https://mathkangaroo.org/mks/practice/free-question-samples/
-# string = datestamp(upcomingDate('saturday', datetime), '/')
-# print(string)
 
 def upcomingDateObject(s):
     date = upcomingDate(s, datetime)
@@ -4988,18 +4854,11 @@ def prependFilePath(file, payload):
     return os.path.join(head, payload + name)
 
 
-# print(cleanupFileName('sdf.pdf', ss.get('string')))
-# pprint(prependFilePath('Grade 4 asdf.pdf', 'hi'))
-# printdir('/home/kdog3682/.config/chromium/Crash Reports')
-# mkdir(servedir)
-
 def nodemon():
     chdir(servedir)
     s = nodedir + "nodemon/bin/nodemon.js"
     runjs(s + " " + "server.js")
 
-
-# nodemon()
 
 path = "/home/kdog3682/CWF/public/notes.txt"
 
@@ -5024,10 +4883,6 @@ def foo():
         except Exception as e:
             print("error", name)
 
-
-# foo()
-
-# rfile('vosk.py')
 
 class NewYear:
     def __init__(self):
@@ -5060,12 +4915,6 @@ def chooseAndOpen(files):
     files = choose(files)
     ofile(files)
 
-
-# pawn 1 knight 3 bishop 3 rook 5 queen 5
-# Graphical Interpretations
-# mkdir('/home/kdog3682/SVG')
-# files = filter(absdir(dldir), isRecent, hours=5)
-# map(files, mfile, svgdir)
 
 files = [
     "Grade 4 Homework",
@@ -5135,9 +4984,6 @@ def gitCloner(url):
 
     dir = normpath(jsdir, name)
 
-
-# pprint(getPokemonData())
-# google_request(2)
 
 def temp(s):
     write("temp.js", s, open=1)
@@ -5233,8 +5079,6 @@ def getFirstWord(s):
     return search("[a-zA-Z]+", s)
 
 
-# @getsetf(clipfile, prepend='mc.js', name='HttpScriptLibrary')
-
 def foo(s):
     return map(
         s,
@@ -5244,30 +5088,13 @@ def foo(s):
     )
 
 
-# foo()
-
-# @getsetf(clipfile, prepend='mc.js', name='RegexLibrary')
-
 def foo(s):
     return ref
 
 
-# ff(dir=jchdir, js=1, text='SVGArtist')
-# pprint(mainScrape())
-
 def olf():
     ofile(glf())
 
-
-# olf()
-
-# ana = TextAnalysis('mc.js', 'htmlstr')
-# print(normRead('functions.log'))
-# printdir(logdir)
-# ana = TextAnalysis('view-source:https://the-teacher-next-door.com/100-report-card-comments-you-can-use-now/')
-# print(cwtBuildNecessaryFiles())
-# flat(list({'a': [1,2}).values())
-# pprint(upcomingDateObject('saturday'))
 
 def findInDir(dir, key):
     files = printdir(dir)
@@ -5342,8 +5169,9 @@ def ff(
 
     elif mode == "print":
         sort = True
-
-    rawFiles = absdir(dirgetter(dir))
+    dir = dirgetter(dir)
+    #raise Exception(dir)
+    rawFiles = absdir(dir)
     checkpoint = checkpointf(**kwargs)
     if once:
         return find(rawFiles, checkpoint)
@@ -5427,9 +5255,9 @@ def makeEmojis():
     # build the links perhaps
     ################################################
 
-def changeFileName2(file, dir=pubdir):
+def changeFileName2(file, dir=pubdir, newName=0):
     return dir + addExtension(
-        prompt("name?"), getExtension(file)
+        newName or prompt("name?"), getExtension(file)
     )
 
 def gfn():
@@ -5446,7 +5274,7 @@ def abrev(s):
     return "".join(map(items, lambda x: x[0])).lower()
 
 def appendVariable(x, name="temp", outpath=0, str=0):
-    if isfile(x):
+    if isString(x) and isfile(x):
         name = camelCase(removeExtension(x))
         x = read(x)
         outpath = dir2023 + "variables.js"
@@ -5465,36 +5293,6 @@ def mostRecentDirectoryFiles(key, e="pdf", amount=10):
 
 def openLastGoogleDoc():
     return openBrowser(read("google-doc-file.txt").strip())
-
-if __name__ == "__main__":
-    print("hi from main")
-    # printdir(nodedir)
-    # it is so weird that you have to do the require hack
-    # nodedir = "/home/kdog3682/.npm-global/lib/node_modules/"
-    # printdir(nodedir + 'jshint/dist/jshint.js')
-    # google_request('2 + 2')
-    # googleAppScript()
-    # print(toCallable())
-    # pprint(toCallable("Action", "courseWork", [{'a': 1}]))
-    # ff(dldir, image=1, mode='moveToWorkSpace', sort=1)
-    # appendVariable(ff(dldir, pdf=1, name='report cards'))
-    # ff(dldir, pdf=1, today=1, mode='label')
-    # ff(pdfdir, 'label')
-    # print(isCurrentDir(dirgetter('js')))
-    # mfile(rootdir + 'learning.logs.txt', txtdir + 'code.learning.txt')
-# mkdir(productiondir)
-# printdir(productiondir)
-
-# TextAnalysis('https://developer.mozilla.org/en-US/docs/Web/SVG/Element')
-
-def readMathcha(file):
-    with open(file, "rb") as f:
-        s = f.read()[314:-672].decode()
-        return json.loads(s)
-
-
-# print(readMathcha(glf()))
-# print('\u00f7')
 
 def editMathcha(f="", fn=0):
     text = fn(byteRead(f))
@@ -5534,9 +5332,6 @@ def byteReplace(s, dict, template="b", flags=0):
 
     return re.sub(regex, parser, s, flags=flags)
 
-
-# editMathcha(glf(e='mathcha'), mathchaReplace)
-# findDir(pydir, 'shsat')
 
 def depfindFile(root, name):
     def runner(dir):
@@ -5589,8 +5384,6 @@ def printIt(fn):
     return decorator
 
 
-# printdir(examdir)
-
 def mdir(f, t):
     assert isdir(f)
     a, b = re.sub("/ *$", "", f).rsplit("/", maxsplit=1)
@@ -5602,8 +5395,6 @@ def getLastPdf(name=""):
     file = glf(name=name, e="pdf")
     return file
 
-
-# pprint(getLastPdf('shsat'))
 
 def scrapeOrdering():
     def f(s):
@@ -5629,8 +5420,6 @@ def choosefiles(dir=dldir, key="", groups=3):
     pprint(files)
     return files
 
-
-# mergeEm('G4 & G5 Online Report Cards')
 
 def arrayToObject(a, f):
     return {f(x): x for x in a}
@@ -5716,16 +5505,10 @@ def mapdir(files, dir):
     return map(files, lambda x: normpath(dir, x))
 
 
-# pprint(rangeFromString('2 4 x 5 6'))
-# print([1] + 4)
-
 def objectClassName(x):
     s = str(type(x))
     return search("<\w+ '(?:__main__\.|base\.)?(\w+)", s)
 
-
-# ofile(mapdir(choosefiles(clipdir), clipdir))
-# ff(jsdir, name='october')
 
 class PageStorage:
     def __init__(self):
@@ -5783,14 +5566,6 @@ def promptOutpath(s=0, fallback="", fn=0):
     return npath(dldir, out)
 
 
-# TextAnalysis('scrape.html.txt', '\\b[a-zA-Z]{3,}\\b')
-
-
-# javascript('run-node.js')
-# print(isfile('readline.js'))
-# printdir(nodedir)
-# pprint(printDirRecursive(nodedir + 'acorn/dist/acorn.js'))
-
 def getNodeFile(name):
     files = [
         f"{nodedir}{name}/dist/{name}.js",
@@ -5802,9 +5577,6 @@ def getNodeFile(name):
     else:
         prompt(printDirRecursive(nodedir + name))
 
-
-# store = [getNodeFile(n) for n in printdir(nodedir)]
-# pprint(store)
 
 def versionControl(f, revert=0):
     f = normDirPath(f)
@@ -5837,8 +5609,6 @@ def versionControl(f, revert=0):
         print("successful control to budir!")
 
 
-# pprint(upcomingDateObject('saturday'))
-
 def pickFiles(dir="dldir"):
     a = prompt(f"choose files. directory = {dir}")
     dir = dirdict.get(dir, None)
@@ -5852,18 +5622,11 @@ def findCssFile():
     files = ff(dldir, css=1, text="mult")
 
 
-# findCssFile()
-# versionControl('grades.txt', revert=1)
-# printdir(budir)
-# pprint(isfile('jshint.js'))
-
 def splitOnWord(s, word):
     if test("\\b" + word + "\\b", s):
         s = getLast(re.split(word + ".*", s))
     return s
 
-
-# pprint(isRecent('class.js', days=1))
 
 def tabular(data):
     store = []
@@ -5871,8 +5634,6 @@ def tabular(data):
         store.append("{: >25} {: >25} {: >25}".format(*row))
     return join(store)
 
-
-# ff('js', js=1, mode='clipinfo')
 
 def foo():
     store = {}
@@ -5887,8 +5648,6 @@ def oneLine(s):
     s = re.sub(r'"\s+\]', '"]', s)
     return s
 
-
-# clip(oneLine(clip()))
 
 def finfo(file):
     text = read(file)
@@ -5957,10 +5716,6 @@ def cleanup(dir, r):
                 rfile(f)
 
 
-# mkdir(colordir)
-# cleanup(dldir, 'untitled|dela|\.mathcha')
-# map(ff(dldir, name='^FC'), mfile, colordir)
-
 def getWords(s):
     return re.findall("[a-zA-Z]{3,}", s)
 
@@ -5970,9 +5725,6 @@ def getLastWord(s):
 def strType(x):
     return getLastWord(str(type(x)))
 
-
-# ff(txtdir, week=1, text='bagel', mode='o')
-# dl()
 
 def download(url, name=0):
     if not name:
@@ -6069,15 +5821,9 @@ def zipToDir(dir):
     pprint(os.listdir(dir))
 
 
-# zipToDir(swiftdir)
-# pprint(normRead('scrape.html').replace('\n','s'))
-
 def rpw(file, f):
     normWrite(file, f(normRead(file)))
 
-
-# rpw('scrape.html', lambda s: re.sub('\n', '\n', s))
-# cfile(jsdir + 'scrape.html', swiftdir)
 
 def foo():
     dir = swiftdir
@@ -6086,13 +5832,6 @@ def foo():
         for file in files:
             mfile(file, swiftdir)
 
-
-# ofile(swiftdir + 'scrape.html')
-# swifthtml = "/home/kdog3682/SWIFT-LATEX/scrape.html"
-
-# getNodeFile('marked')
-
-# appendVariable(absdir(pydir))
 
 def craig():
     from craigslist import CraigslistJobs
@@ -6116,9 +5855,6 @@ def craig():
 def rfiles(files):
     map(files, rfile)
 
-
-# c = checkpointf(extensions=['js', 'lang'])
-# rfiles(filter(filter(temp, isfile), alwaysDelete))
 
 temp = [
     "/home/kdog3682/TEACHING/SAT Grammar Test 4.pdf",
@@ -6291,8 +6027,6 @@ def removeCache():
     rmdir(pydir + "__pycache__", force=1)
 
 
-# mover('vim sh', 'vim & sh')
-
 temp = [
     # "/home/kdog3682/CWD/tempest.json",
     # "/home/kdog3682/CWD/animations.js",
@@ -6409,18 +6143,9 @@ def zipCheck(outpath=0, file=0):
             return map(z.filelist, lambda x: x.filename)
 
 
-# appendVariable(choose(colordistdir))
-
-# a = [1]
-# b = [2]
-# def sum(a, b):
-# return a + b
-
 def testsuite(items):
     return map(items, lambda x: [x, eval(x)])
 
-
-# pprint(testsuite(linegetter(t, fn=lambda x: s + x)))
 
 def choosepdf():
     ofile(choose(mostRecent(dldir, 10, reverse=1)))
@@ -6431,17 +6156,9 @@ def seeRecent():
     ff(**kwargs)
 
 
-# seeRecent()
-# printdir(nodedir + 'chroma-js')
-
-# requireUrl ='/home/kdog3682/.npm-global/lib/node_modules/'
-# print(nodedir == requireUrl)
-
 def n2char(n):
     return chr(n + 97)
 
-
-# ofile(choose(pdfdir))
 
 def create_pdfdict_from_pdf_files():
     files = ff(pdfdir, name="^G\d|math")
@@ -6451,8 +6168,6 @@ def create_pdfdict_from_pdf_files():
     }
     appendVariable(d, outpath="pdf.py", name="pdfdict")
 
-
-# pprint(create_pdfdict_from_pdf_files())
 
 def normFileToDir(file, name=0):
     if not name:
@@ -6466,28 +6181,15 @@ def move_last_file_and_name_it():
     prompt("is this the correct outpath?", out)
     mfile(file, out)
 
-# pprint(google_app_controller())
-
-
-# ff(dldir, name='ga')
-# revertFile() i believe u can use "rev" with it.
-# appendVariable(glf()) creates something like temp = "/mnt/chromeos/MyFiles/Downloads/12_17_2022 (7).css"
-
 def promptSplit(*args):
     r = "\||\.\.|\\\\|  +"
     a = prompt(*args)
     return re.split(r, a.strip())
 
 
-# ff(dldir, css=1, mode='d')
-# pprint(absdir(budir + 'CURRENT'))
-
 def saveToDrive(file, outpath):
     cfile(file, drivedir + outpath)
 
-
-# saveToDrive('clip3.js', 'cwt_scores_autumn2022.json')
-# printdir(fontdir)
 
 def emptyTrash(dir=trashdir):
     prompt(os.listdir(trashdir))
@@ -6505,12 +6207,6 @@ def keepOrDelete(file):
         if e == "zip":
             unzip(file, to=unzipdir)
 
-
-# map(ff(dldir, e='zip'), keepOrDelete)
-#
-
-# pprint(toJSON(Partitioner(ff(dldir, e='pdf'))))
-# ff(jsondir)
 
 def cleanupRawText(s):
     def f(x):
@@ -6531,10 +6227,6 @@ def normMove(src, to):
     outpath = dirFromFile(to) + tail(to)
     mfile(src, outpath)
 
-
-# normMove(clipfile, 'educated.book.txt')
-
-# sentenceRE = '(?:(?<!Mr|Miss|Ms)\. "?|\n *)(\S+)'
 
 sentenceRE = "(?:\. \"?|\n)([A-Z]\w*(?:'\w+)?)"
 
@@ -6557,10 +6249,6 @@ def fixWrongPaths():
         mfile(baseFile, file)
 
 
-# backupMostPopular()
-# ff(jsdir)
-# mkdir(dir2023)
-
 def writeGitIgnore(dir2023):
     s = """
         *.zip
@@ -6575,8 +6263,6 @@ def writeGitIgnore(dir2023):
     """
     write(dir + ".gitignore", smartDedent(s), open=1)
 
-
-# writeGitIgnore(dir2023)
 
 def gitRemote(repo, username="kdog3682", message=0):
     chdir(rootdir + repo)
@@ -6660,33 +6346,12 @@ def gitUrl(file, repo, user="kdog3682"):
     return url
 
 
-# pprint(hms())
-
 def npmInstall(s):
     dev = test("nodemon|jest|grunt", s, flags=re.I)
     SystemCommand(
         "npm i " + s + (" --save-dev" if dev else "")
     )
 
-
-# pprint(request(gitUrl('changelog.md', '2023'))) # doesnt appear to be done yet
-# changelog()
-# gitPush()
-# pprint(request(gitUrl('changelog.md', '2023')))
-
-# with CD(dir2023):
-# npmInstall('open')
-
-# L
-# The
-# Thssdfiosdfsd
-# sdafsdfasdf
-# asdfasdf
-# Monday ... Tuesday
-# 1230 to 6PM
-# pingjun ... abc-def-ghi-asdf
-# tthrtrhggggg
-# scrape('https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects')
 
 def text():
     return normRead("scrape.txt")
@@ -6704,18 +6369,6 @@ def normClear(file):
     print(file)
     clear(file)
 
-
-# normClear('variables.master.json')
-
-# appendjson('variables.master.json', data)
-# printdir(dir2023)
-# SystemCommand('ls')
-# SystemCommand('npm -v')
-
-# npmInstall('jshint')
-# npmInstall('prettier')
-# npmInstall('acorn')
-# npmInstall('@lezer/javascript')
 
 def publishScratchpad():
     with CD(dir2023):
@@ -6755,15 +6408,6 @@ def appendVim(type, arg):
     append("/home/kdog3682/.vimrc", s)
 
 
-# revert('/home/kdog3682/CWF/public/class4.js', increment=1, vim=1)
-
-# folders = ff(budir, isdir=1, reverse=1)
-# clip(getLinks(folders, q='class.js'))
-# mkdir(pdfdir2)
-# mfiles(ff(dldir, pdf=1), pdfdir2)
-# printdir(pdfdir2)
-# files = rfiles(ff(pdfdir2, name='\)'))
-
 def removeFileParens(s):
     return re.sub(" *\(.*?\) *", "", s)
 
@@ -6771,9 +6415,6 @@ def overrideFile():
     f = glf()
     mfile(f, removeFileParens(f))
 
-
-# overrideFile()
-# rfile(glf())
 
 def isEmptyDir(dir):
     return isdir(dir) and not os.listdir(dir)
@@ -6795,8 +6436,6 @@ def renameFiles():
         else:
             break
 
-
-# renameFiles()
 
 def fixUrls(source, links):
     url = fixUrl(source)
@@ -6830,7 +6469,10 @@ def downloadPDF(url, name=0):
     return outpath
 
 def scrapeLinks(source=0):
+    #write('request.temp.txt', request('https://www.nysedregents.org/ei/ei-math.html'))
+    #return
     source = "https://www.nysedregents.org/ei/"
+    #srequest(source)
     items = filter(
         re.findall(
             env.scrapeRef.get("href"),
@@ -6853,10 +6495,6 @@ def reverse(x):
     return list(reversed(x))
 
 
-# scrapeLinks()
-# mkdir(archdir)
-# pprint(glf(amount=2))
-
 def to2023(*files):
     def runner(file):
         a = jsdir + file
@@ -6868,8 +6506,6 @@ def to2023(*files):
 
     map(files, runner)
 
-
-# printdir(dir2023)
 
 def tagdir(dir, history={}):
     items = {}
@@ -6975,16 +6611,8 @@ def readjs(*args):
     return filter(map(args, runner))
 
 
-# to2023('katex.min.js', 'katex.min.css')
-# to2023('vue.js')
-# to2023('vue.min.js')
-# appendVariable(glf())
-# cdir(fontdir, dir2023)
-
 def cleandir(dir):
     map(filter(absdir(dir), alwaysDelete), rfile)
-
-#npmInstall('fuzzysort')
 
 def renameLastFile(file = 'Extra Worksheet'):
     mfile(glf(), npath(dldir, addExtension(file, 'pdf')))
@@ -6992,20 +6620,6 @@ def renameLastFile(file = 'Extra Worksheet'):
 def resumeIt():
     renameLastFile('Kevin Lee Resume')
     
-
-#ofile(ff(jsdir, name='cm'))
-
-#scrapeLinks()
-
-#indexes = '8-19 21-30'
-#indexes = rangeFromString(indexes)
-#print(indexes)
-#alist = [1,2,3,4,5,6]
-#pprint(mostRecent(dldir, n=5))
-
-
-#chdir(dldir)
-#cfile("G5 2019 NYSE Part 2.pdf", 'Grade 5 Classwork.pdf')
 
 def uploadDirectoryToExcel(dir='dldir'):
     files = absdir(dirdict[dir])
@@ -7034,8 +6648,6 @@ def googleAction(obj):
     template = f"Action2({dumpJson(obj)})"
     googleAppScript(template)
 
-
-#uploadDirectoryToExcel()
 
 def downloadDirectoryFromExcel(dir):
     data = googleAction({
@@ -7071,10 +6683,6 @@ def renameLastFile():
     f = glf()
     mfile(f, changeFileName(f, prompt(f)))
 
-#mkdir(dir2023 + 'images')
-#mfiles(antichoose(ff(dldir, pdf=1)), 'trash')
-#printdir(dldir)
-
 def pickFileFromDir(dir=dldir):
     ofile(choose(absdir(dir)))
 
@@ -7099,14 +6707,171 @@ def downloadImage(url, name):
     else:
         print('Image Couldn\'t be retreived', name) 
 
-#seeVersions()
-#pprint(list(read(dldir + 'emoji.json').keys()))
-#SystemCommand('npm update')
-#SystemCommand('git show --name-only')
-#SystemCommand('git add .\ngit show --name-only')
-#SystemCommand('git rev-list --all --count') # 34 commits
-#SystemCommand('git shortlog -s')
-#ff(text='g4stud', js=1)
-#print(tail(pydir))
-#mfile('vue-directives.js', 'vue-utils.js')
+def sub(r, f, s, **kwargs):
+    def g(x):
+        if isString(f):
+            return f
+        if x.groups():
+            return f(*x.groups())
+        else:
+            return f(x.group())
+    return re.sub(r, g, s, **kwargs)
 
+def memoize(fn):
+  store = {}
+  def wrapper(*args):
+    if args in store:
+      return store[args]
+    else:
+      value = fn(*args)
+      store[args] = value
+      return value
+  return wrapper
+
+def dollarPrompt(x):
+    if isArray(x):
+        item = choose(x, mode=1)
+    elif isObject(x):
+        item = choose(list(x.values()), mode=1)
+    else:
+        item = x
+
+    @memoize
+    def f(x):
+        return prompt(item=item, fallback=x) or x
+
+    @memoize
+    def g(x):
+        return prompt(item, 'input:')
+
+    r = '\$([a-zA-Z]\w*)'
+    while True:
+        if test(r, item):
+            item = sub(r, f, item, count=1)
+        else:
+            break
+        
+    n = 0
+    while True:
+        n += 1
+        r = '\$' + str(n)
+        if test(r, item):
+            item = sub(r, g, item)
+        else:
+            break
+    return item
+
+
+def getNameArgsKwargs(s):
+    name, s = search('(\w+)\((.*?)\)', s)
+    s, kwargs = mget('(\w+) *= *([^\s,]+)', s)
+    args = split(s, ', *| +')
+    return name, args, kwargs
+
+def stringCall(fn, *args):
+    #prompt(args)
+    items = map(args, dumpJson)
+    #prompt(items)
+    argString = ', '.join(items)
+    return f"{fn}({argString})"
+
+def googleAppController():
+    s = dollarPrompt(env.gac)
+    name, args, kwargs = getNameArgsKwargs(s)
+    command = stringCall('Action2', quote(name), kwargs, *args)
+    pprint(dict(command=command))
+    return googleAppScript(command)
+    return stringCall(name, kwargs, *args)
+
+
+
+
+def dprint(*variables, **kwargs):
+    import inspect
+    store = ['DPRINT:']
+
+    for v in variables:
+        vars = inspect.currentframe().f_back.f_locals.items()
+        name = [v_name for v_name, v_val in vars if v_val is v][0]
+        store.append([name, v])
+
+    for a,b in kwargs.items():
+        store.append([a, b])
+
+    pprint(store)
+
+
+
+def newdir():
+    dir = dir2023 + input('new dir name:')
+    assert not isdir(dir)
+    mkdir(dir)
+
+
+
+
+#ff(dir=dir2023, js=1, text='^(?:import|}).*?[\'\"]\.\/node-utils', flags=re.M)
+env.basepyref['rnlf'] = 'rnl'
+env.basepyref['nd'] = 'newdir'
+
+def arrToDict(a):
+    return {i + 1: v for i, v in enumerate(a)}
+
+class Partitioner2:
+    def run(self):
+        while True:
+            done = self.partition()
+            if done:
+                return unique(list(self.store.values()))
+
+    def __call__(self):
+        return self.run()
+
+    def __init__(self, items):
+        self.items = items
+        self.store = {}
+
+    def partition(self):
+        number(map(self.items, tail))
+        pprint(self.store)
+        a = input('')
+        if a == '':
+            return True
+        m = search('rn *(\d+) *(.+)', a)
+        if m:
+            old = self.store[int(m[0]) - 1]
+            self.store[int(m[0]) - 1] = changeFileName2(old, newName=m[1])
+            return 
+
+        m = search('d *(.+)', a)
+        if m:
+            indexes = rangeFromString(m)
+            for i in indexes:
+                self.store.pop(i + 1)
+            return 
+
+        if test(a, '^\d'):
+            indexes = rangeFromString(a)
+            for i in indexes:
+                index = len(self.store) + 1
+                self.store[index] = self.items[i]
+        else:
+            items = filter(self.items, lambda x: test(a, tail(str(x)), flags=re.I))
+            for item in items:
+                index = len(self.store) + 1
+                self.store[index] = item
+
+def getNumbers(s):
+    return map(re.findall('\d+', s), int)
+
+def getUntil(items, checkpoint):
+    store = []
+    for item in items:
+        if checkpoint(item):
+            store.append(item)
+        else:
+            break
+    return store
+
+#files = Partitioner2(ff(dldir, week=1))()
+#print(files)
