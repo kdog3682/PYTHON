@@ -212,7 +212,6 @@ def uploadMaterials(official=1, dontEmail=0):
     googleAppScript("Action", "courseWork", payload)
     ofile(uploadMaterialURLS)
 
-
 def cwtBuildNecessaryFiles(grades=[4, 5]):
 
     extraFiles = [
@@ -354,6 +353,28 @@ def gitDelete(file):
 
     SystemCommand(cmd)
 
+
+def gitPushObject(obj):
+    if obj['ext'] != 'js':
+        print('only pushing js at the moment')
+        return 
+
+    message = obj['line'].strip()
+    dir = dir2023
+    mainCommand = f"""
+        cd {dir}
+        git add .
+        git commit -m "{message}"
+        git push
+    """
+
+    success = SystemCommand(mainCommand, dir=dir).success
+    if success and not test('nothing to commit', success, flags=re.I):
+        ofile(gitUrl(dir))
+
+
+
+    print(obj)
 
 def gitPush(file=None, dir=dir2023):
     if file:
@@ -516,13 +537,6 @@ main()
 # print(ofile(gitUrl(pydir)))
 # print(isRecent(glf(), days=1))
 
-uploadMaterialURLS = [
-    # "https://classroom.google.com/u/0/w/MzkzNTM3MzYxNDI4/t/all",
-    # "https://classroom.google.com/u/0/w/MzkzNTM3MzYxMzkx/t/all",
-    # "https://mail.google.com/mail/u/0/#sent",
-]
-
-
 def astFunctions(file):
     # cute but not necessary
 
@@ -534,3 +548,19 @@ def astFunctions(file):
 
 #PythonController()
 #uploadAssignments()
+
+def smartManager():
+    file = glf()
+    name = removeExtension(file)
+    e = getExtension(file)
+    if False:
+        pass
+
+    elif name == 'online-document':
+        unzip(file, mathchadir)
+    elif e == 'zip':
+        unzip(file, name)
+    elif test('resume', name, flags=re.I):
+        mfile(file, 'Kevin Lee resume.pdf')
+
+#smartManager()

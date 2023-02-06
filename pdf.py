@@ -274,12 +274,10 @@ payload = {
 
 def deletePages(file, *indexes):
     pdf = pikeOpen(file)
-    count = -1
-    indexes = flat(list(indexes))
-    indexes.sort()
+    indexes = sorted(flat(list(indexes)), reverse=True)
+
     for i in indexes:
         del pdf.pages[i]
-        count += 1
     return pdf
 
 
@@ -963,18 +961,24 @@ def groupAction(f):
 
 #To give a genuine amount.
 
-s='''
-#g4hw bim3 139 145-147
-#g5hw bim3 160 161 163 165
-#g4ehw bim5 122 124 127 130
-#g4hw bim4 77 78 80 91 93 95
-x hugel 35 40
-'''
-pdf = build_homework_files(s)
-a = pikeOpen(npath(dldir, 'asdasd'))
-a.pages.extend(pdf.pages)
-save(a, 'G4 Classwork')
 
+def buildGrade4Classwork():
+    s='''
+        #g4hw bim3 139 145-147
+        #g5hw bim3 160 161 163 165
+        #g4ehw bim5 122 124 127 130
+        #g4hw bim4 77 78 80 91 93 95
+        x hugel 36 37 42
+    '''
+    f = glf()
+    a = pikeOpen(f)
+    indexes = getBlankPageIndexes(f)
+    a = deletePages(a, indexes)
+
+    pdf = build_homework_files(s)
+    a.pages.extend(pdf.pages)
+    save(a, 'g4cw')
+buildGrade4Classwork()
 #print(glf())
 
 def boop():
@@ -994,4 +998,19 @@ def boop():
     #'G5 Classwork': '7-11',
     #'G5 Homework': '1-6',
 #})
+
+def grade5ClassworkHomework():
+    file = glf()
+    assert getExtension(file) == 'pdf'
+    s = prompt('the pdf being used is the last file pdf of dldir. This will automatically create a classwork and homework via split of | creating 2 rangeIndexes.')
+    a, b = split(s, '\|')
+
+    pdf = pdfFromIndexes(file, a)
+    save(pdf, 'g5cw')
+
+    pdf = pdfFromIndexes(file, b)
+    save(pdf, 'g5hw')
+
+
+#pprint(grade5ClassworkHomework())
 

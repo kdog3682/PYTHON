@@ -4,6 +4,7 @@ archdir = "/mnt/chromeos/GoogleDrive/MyDrive/ARCHIVES/"
 sshfile = "/home/kdog3682/.ssh/id_rsa.pub"
 dir2023 =  "/home/kdog3682/2023/"
 nodedir2023 = "/home/kdog3682/2023/node_modules/"
+mathchadir = dir2023 + 'mathcha'
 githuburl = "https://github.com/"
 drivedir = "/mnt/chromeos/GoogleDrive/MyDrive/"
 outdir = "/mnt/chromeos/GoogleDrive/MyDrive/OUTBOUND/"
@@ -3267,6 +3268,8 @@ def shellunescape(s):
     dict = {
         "newline": "\\n",
         "sq": "'",
+        "rcb": "}",
+        "lcb": "{",
         "lt": "<",
         "gt": ">",
         "dollar": "$",
@@ -3282,11 +3285,8 @@ def shellunescape(s):
         "exc": "!",
         "nl": "\n",
     }
-
     s = dreplace(s, dict, template="zz($1)")
-    print(s)
     return parseJSON(s)
-    return s
 
 def createGoogleSecret():
     data = {
@@ -6759,10 +6759,13 @@ def dollarPrompt(x):
             item = sub(r, g, item)
         else:
             break
-    return item
+
+    return re.sub('\w+=(?=\W)', '', item)
 
 
 def getNameArgsKwargs(s):
+    if test('^\w+$', s):
+        return [s, [], {}]
     name, s = search('(\w+)\((.*?)\)', s)
     s, kwargs = mget('(\w+) *= *([^\s,]+)', s)
     args = split(s, ', *| +')
@@ -6875,3 +6878,12 @@ def getUntil(items, checkpoint):
 
 #files = Partitioner2(ff(dldir, week=1))()
 #print(files)
+#mdir(glf(), mathchadir)
+
+def watchMovie():
+    s = prompt('movie name from 123movies?').replace(' ', '+')
+    f = f"https://ww1.123moviesfree.net/search-query2/?q={s}"
+    ofile(f)
+
+
+env.basepyref['wm'] = 'watchMovie'
