@@ -114,6 +114,7 @@ dirdict = {
     "fonts": fontdir,
     "dldir": dldir,
     "budir": budir,
+    "current": dir2023,
 }
 
 macdirdict = {
@@ -1339,6 +1340,7 @@ def googleAppScript(f="", *args):
         "clip": googlePrint,
         "clip": googlePrint,
         "value": googleValue,
+        "vim": googleVim,
         "logs": googleLogs,
         "createVariable": googleCreateVariable,
     }
@@ -1353,6 +1355,9 @@ def googleAppScript(f="", *args):
                         'PYTHON_ERROR_MESSAGE': str(e),
                         'k': k,
                     })
+
+def googleVim(s):
+    appendVim("filedict", s)
 
 def googleTranslate(x, lang="chinese"):
     dict = {"chinese": "Chinese", "spanish": "Spanish"}
@@ -1640,6 +1645,9 @@ def checkpointf(
             return False
 
         e = getExtension(filename)
+
+        if text and e == 'pdf':
+            return False
 
         if extensions and e not in extensions:
             return False
@@ -4372,10 +4380,12 @@ def findFile(f):
     dirs = unique(dirdict.values())
     store = []
     for dir in dirs:
-        file = normpath(dir, f)
+        file = npath(dir, f)
         print(file)
         if isfile(file):
             print(file, "FOUND")
+            if fsize(file) > 10:
+                print('valid')
             return file
 
 
@@ -5532,9 +5542,10 @@ def toJSON(x):
 def getTime():
     return int(datetime.timestamp(datetime.now()))
 
-def mostRecentFileGroups(dir, targetIndex=3, minutes=50):
-    storage = PageStorage()
+def mostRecentFileGroups(dir=dldir, targetIndex=3, minutes=10):
+    #storage = PageStorage()
     files = ff(dir, sort=1, reverse=1)
+    store = []
 
     ignoreRE = "(Class|home)work"
     lastDate = 0
@@ -5545,19 +5556,15 @@ def mostRecentFileGroups(dir, targetIndex=3, minutes=50):
         if test(ignoreRE, name):
             continue
         d = delta(date, lastDate)
-        if d < toSeconds(minutes=minutes):
-            storage.add(file)
+        limit = toSeconds(minutes=minutes)
+        passes = d < limit or lastDate == 0
+        dprint(name, d, limit, passes)
+        if passes:
+            store.append(file)
         else:
-            break
-            if len(storage) == targetIndex + 1:
-                break
-            storage.reset(date, file)
+            return store
 
         lastDate = date
-
-    payload = toJSON(storage)
-    return payload
-    return payload[targetIndex][1]
 
 def promptOutpath(s=0, fallback="", fn=0):
     out = s or prompt("outpath?") or fallback
@@ -6728,7 +6735,7 @@ def memoize(fn):
       return value
   return wrapper
 
-def dollarPrompt(x):
+def dollarPrompt(x, python=0):
     if isArray(x):
         item = choose(x, mode=1)
     elif isObject(x):
@@ -6760,6 +6767,7 @@ def dollarPrompt(x):
         else:
             break
 
+    if python: return item
     return re.sub('\w+=(?=\W)', '', item)
 
 
@@ -6777,17 +6785,6 @@ def stringCall(fn, *args):
     #prompt(items)
     argString = ', '.join(items)
     return f"{fn}({argString})"
-
-def googleAppController():
-    s = dollarPrompt(env.gac)
-    name, args, kwargs = getNameArgsKwargs(s)
-    command = stringCall('Action2', quote(name), kwargs, *args)
-    pprint(dict(command=command))
-    return googleAppScript(command)
-    return stringCall(name, kwargs, *args)
-
-
-
 
 def dprint(*variables, **kwargs):
     import inspect
@@ -6840,22 +6837,28 @@ class Partitioner2:
         a = input('')
         if a == '':
             return True
-        m = search('rn *(\d+) *(.+)', a)
+
+        m = search('^o *(\d+)', a)
+        if m:
+            ofile(self.items[int(m[0]) - 1])
+            return 
+        m = search('^rn *(\d+) *(.+)', a)
         if m:
             old = self.store[int(m[0]) - 1]
             self.store[int(m[0]) - 1] = changeFileName2(old, newName=m[1])
             return 
 
-        m = search('d *(.+)', a)
+        m = search('^d *(.+)', a)
         if m:
             indexes = rangeFromString(m)
             for i in indexes:
                 self.store.pop(i + 1)
             return 
 
-        if test(a, '^\d'):
+        if test('^\d', a):
             indexes = rangeFromString(a)
             for i in indexes:
+                print(i)
                 index = len(self.store) + 1
                 self.store[index] = self.items[i]
         else:
@@ -6876,8 +6879,6 @@ def getUntil(items, checkpoint):
             break
     return store
 
-#files = Partitioner2(ff(dldir, week=1))()
-#print(files)
 #mdir(glf(), mathchadir)
 
 def watchMovie():
@@ -6887,3 +6888,23 @@ def watchMovie():
 
 
 env.basepyref['wm'] = 'watchMovie'
+
+
+#findFile('python.log')
+#pprint(ff(dir2023, sort=1, reverse=1, text='kyrie', once=1))
+def renameLocalClipFile(a=0):
+    name = a or prompt('new name for clip file?')
+    mfile('clip.js', addExtension(name, 'js'))
+env.basepyref['rlcf'] = 'renameLocalClipFile'
+def check(x):
+    prompt(x)
+    return x
+
+#rfile(check(glf()))
+
+#pprint(map(mostRecentFileGroups(), tail))
+def revertFromTrash():
+    file = glf(trashdir)
+    ofile(file)
+    print(file)
+    mfile(file, dldir)

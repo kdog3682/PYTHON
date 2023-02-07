@@ -4,6 +4,37 @@ import github
 from base import *
 
 class Github:
+
+    def __init__(
+        self,
+        key='kdog3682',
+        repo=0,
+        private=0,
+        upload=0,
+        info=0,
+    ):
+        ref = env.REPOS[key]
+        self.token = ref.get('token')
+        self.github = github.Github(self.token)
+        self.user = ref.get('user')
+        self.ref = ref.get('ref', 'main')
+        self.setRepo(repo or ref.get('repo'))
+        self.private = private
+        self.isFirstTime = False
+
+        if upload:
+            self.upload(upload)
+        if self.isFirstTime:
+            pprint(self.getInfo())
+
+    def getInfo(self):
+        print('Getting Repository Info')
+        user = self.User
+        f = lambda x: not x.fork
+        repos = filter(list(user.get_repos()), f)
+        return map(repos, lambda x: x.name)
+
+
     def main(self, sourceFile = 0):
 
         def isMyScriptFile(file, githubFiles = 0):
@@ -17,16 +48,16 @@ class Github:
             return name not in env.jslibraries
 
         def getHtmlSourceFile():
-            f = mostRecent(pubdir, name = '\w{2,}\.html')
+            f = mostRecent(dir2023, name = '\w{2,}\.html')
             prompt(f)
             return f
 
-        chdir(pubdir)
+        chdir(dir2023)
         if not sourceFile:
             sourceFile = getHtmlSourceFile()
         files = getFileDependencies(sourceFile)
         files = filter(files, isMyScriptFile, self.Files)
-        prompt(files)
+        prompt('files for upload', files)
         pprint(self.upload(files))
 
     def __str__(self):
@@ -34,23 +65,6 @@ class Github:
         a = self.user
         b = self.repo
         return stringify({ 'user': a, 'repo': b })
-
-    def __init__(
-        self,
-        key='kdog3682',
-        repo=0,
-        private=0,
-        upload=0,
-    ):
-        ref = env.REPOS[key]
-        self.token = ref.get('token')
-        self.github = github.Github(self.token)
-        self.user = ref.get('user')
-        self.ref = ref.get('ref', 'main')
-        self.setRepo(repo or ref.get('repo'))
-        self.private = private
-        if upload:
-            self.upload(upload)
 
     @property
     def Service(self):
@@ -97,6 +111,7 @@ class Github:
         except Exception as e:
             handleError(e)
             try:
+                self.isFirstTime = True
                 return self.User.create_repo(
                     repo, private=self.private
                 )
@@ -125,6 +140,11 @@ class Github:
         if not content:
             print('no content')
             return 
+
+        if name == 'clip.html':
+            name = prompt('Choose a file name. fallback=index.html')
+            name = addExtension(name, 'html')
+
 
         try:
             server = self.Service.get_contents(
@@ -242,25 +262,3 @@ def printGithub(deleteForks=0):
         runner(contents, name)
 
     print(parent)
-
-def uploadPersonalProject(file = 't2.html', name=0):
-    # in-progress
-
-    #if not name:
-        #name = prompt('Take a look at $open($file)')
-    #updateProjects(name, file)
-    
-    ref = {
-         name: file,
-        'index.html': 'projects.html'
-    }
-
-    ref.update(additionalFiles)
-    Github(key = 'me', repo = 'projects', upload=ref)
-
-#g = Github(key = 'brooklyn', repo = '', upload={'bkl.html': 'index.html', 'percents.html': 'percents.html'})
-#printGithub()
-#uploadProject('test2', 'test2.html')
-
-
-#g = Github(key = 'kdog3682', repo = 'october2022', upload='test2.html')

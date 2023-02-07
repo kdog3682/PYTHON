@@ -508,12 +508,12 @@ def pikeMetaData(pdf):
     meta["dc:title"] = "foo"
 
 
-def k5learning(minutes=50):
+def k5learning(grade=5):
     group = mostRecentFileGroups()
     pdfs = map(group, sliceStartEnd, end=1)
     mergepdf(
         pdfs,
-        outpath=fixDest('g5cw'),
+        outpath=fixDest(f"g{str(grade)}cw"),
     )
 
 
@@ -754,7 +754,7 @@ def removeStartEndPages(file):
 def removeWhitePages(f):
     indexes = getBlankPageIndexes(f)
     f = deletePages(f, indexes)
-    save(f, outpath=None)
+    return f
 
 
 # removeStartEndPages('g4cw.pdf')
@@ -978,7 +978,7 @@ def buildGrade4Classwork():
     pdf = build_homework_files(s)
     a.pages.extend(pdf.pages)
     save(a, 'g4cw')
-buildGrade4Classwork()
+#buildGrade4Classwork()
 #print(glf())
 
 def boop():
@@ -1014,3 +1014,8 @@ def grade5ClassworkHomework():
 
 #pprint(grade5ClassworkHomework())
 
+#pprint(k5learning(grade=4))
+
+#pdfa = removeWhitePages(glf())
+#pdfb = sliceStartEnd('Grade 4 Classwork', start=2)
+#mergepdf([pdfa, pdfb], outpath='g4cw')

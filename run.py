@@ -3,6 +3,7 @@ import time
 import inspect
 import env
 import apps
+from githubscript import Github
 
 APPS = []
 APPS.append(
@@ -227,6 +228,7 @@ def cwtBuildNecessaryFiles(grades=[4, 5]):
         "Exam",
         "Final Exam",
         "Practice Exam",
+        "Extra Homework",
         "Homework",
         "Classwork",
         "Quiz",
@@ -380,7 +382,8 @@ def gitPush(file=None, dir=dir2023):
     if file:
         if getExtension(file) == 'py':
             dir = pydir
-        message = prompt(pydir, file, "upload message: ")
+        message = prompt('running gitPush', pydir, file, "upload message: ")
+
         a, b = os.path.split(file)
         if not a or len(a) < 2:
             a = dir2023
@@ -532,7 +535,6 @@ def PythonController(**kwargs):
     fn()
 
 env.basepyref['gpa'] = 'gitPushAll'
-main()
 # gitInit()
 # print(ofile(gitUrl(pydir)))
 # print(isRecent(glf(), days=1))
@@ -564,3 +566,29 @@ def smartManager():
         mfile(file, 'Kevin Lee resume.pdf')
 
 #smartManager()
+
+
+def pipInstall(s):
+    cmd = 'abc ' + s
+    print(cmd)
+
+def pythonAppController(state=0):
+    s = dollarPrompt(env.pac, python=True)
+    exec(s)
+
+def googleAppController():
+    s = dollarPrompt(env.gac)
+    name, args, kwargs = getNameArgsKwargs(s)
+    command = stringCall('Action2', quote(name), kwargs, *args)
+    pprint(dict(command=command))
+    return googleAppScript(command)
+    return stringCall(name, kwargs, *args)
+
+
+
+#env.g
+
+
+env.basepyref['pac'] = 'pythonAppController'
+main()
+
