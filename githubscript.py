@@ -10,8 +10,7 @@ class Github:
         key='kdog3682',
         repo=0,
         private=0,
-        upload=0,
-        info=0,
+        **kwargs
     ):
         ref = env.REPOS[key]
         self.token = ref.get('token')
@@ -22,8 +21,14 @@ class Github:
         self.private = private
         self.isFirstTime = False
 
-        if upload:
-            self.upload(upload)
+        if kwargs:
+            pprint(kwargs)
+            for k,v in kwargs.items():
+                m = getattr(self, k)
+                if m:
+                    m(v)
+                    break
+
         if self.isFirstTime:
             pprint(self.getInfo())
 
@@ -192,7 +197,8 @@ class Github:
 
     def deleteRepo(self, repo=0):
         repo = self.getRepo(repo)
-        if "github.io" in repo.name:
+        r = 'github.io|kdog3682|2023'
+        if test(r, repo.name):
             print(f"Forbidden Deletion: {repo.name}")
             return
 
@@ -262,3 +268,4 @@ def printGithub(deleteForks=0):
         runner(contents, name)
 
     print(parent)
+

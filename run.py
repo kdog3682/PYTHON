@@ -2,32 +2,8 @@ from base import *
 import time
 import inspect
 import env
-import apps
-from githubscript import Github
-
-APPS = []
-APPS.append(
-    {
-        "name": "k5learning",
-        "description": "Reads DLDIR for the most recent file group. Maps the group by deleting the last page. Merges the pdfs together",
-    }
-)
-APPS.append(
-    {
-        "name": "k5learning",
-        "description": "Reads DLDIR for the most recent file group. Maps the group by deleting the last page. Merges the pdfs together",
-    }
-)
-
-
-def runApps():
-    ref = choose(APPS)
-    fn = ref.get("fn", globals().get(ref.get("key"), None))
-    print({"fn": fn})
-
 
 def main(override=0):
-
     """file: run.py
     this is the primary accessor function
     for touching other files
@@ -66,7 +42,6 @@ def email(to=0, subject="", body="", files=0, debug=0):
 
     elif files:
         files = toArray(files)
-        from ga import GoogleDrive
 
         drive = GoogleDrive()
         ids = map(files, drive.uploadFile)
@@ -152,7 +127,7 @@ def buildFiles():
     return store
 
 def uploadAssignments():
-    from ga import GoogleClassroom, GoogleDrive
+    from ga import GoogleDrive, GoogleClassroom
     data = buildFiles()
     prompt(data)
 
@@ -291,16 +266,13 @@ def cwtBuildNecessaryFiles(grades=[4, 5]):
     return data
 
 
-e = env.basepyref
-e["em"] = "email"
-e["um"] = "uploadMaterials"
-e["mr"] = "mostRecentDirectoryFiles"
-e["apps"] = "runApps"
-e["rev"] = "revertFile"
-e["rr"] = "replyReddit"
-e["rjs"] = "redditFromJS"
-e["eod"] = "endOfDay"
-
+env.basepyref["em"] = "email"
+env.basepyref["um"] = "uploadMaterials"
+env.basepyref["mr"] = "mostRecentDirectoryFiles"
+env.basepyref["rev"] = "revertFile"
+env.basepyref["rr"] = "replyReddit"
+env.basepyref["rjs"] = "redditFromJS"
+env.basepyref["eod"] = "endOfDay"
 
 def replyReddit():
     from redditscript import Reddit
@@ -476,31 +448,6 @@ env.basepyref["elf"] = "emailLastFile"
 # email(to='work', subject='Additional G4 Materials', files=files, debug=0)
 
 
-def gitInit(dir, user=env.user):
-    assert isdir(dir)
-    chdir(dir)
-    repo = tail(dir)
-    gitIgnore = env.gitIgnores.get(repo)
-
-    if not isfile(".gitignore"):
-        write(".gitignore", smartDedent(gitIgnore))
-        from githubscript import Github
-
-        Github(key=user, repo=repo)
-
-    command = f"""
-        git init
-        git add .
-        git commit -m "push everything"
-        git remote add o3 git@github.com:{user}/{repo}
-        git push -u o3 master 
-    """
-
-    res = SystemCommand(command, dir=dir)
-    if res.success:
-        ofile(f"https://github.com/{user}/{repo}")
-
-
 def gitNames(dir):
     cmd = "git diff --name-status"
     names = SystemCommand(cmd, dir=dir).success
@@ -573,7 +520,18 @@ def pipInstall(s):
     print(cmd)
 
 def pythonAppController(state=0):
-    s = dollarPrompt(env.pac, python=True)
+    items = split(smartDedent(env.pac), '\n\n+')
+
+    ref = {
+        'Github': 'githubscript',
+        'Google': 'ga',
+        'aiprompt': 'chatgpt',
+    }
+
+    s = dollarPrompt(items, python=True)
+    extra = dsearch(s, ref, '^(?:$1)')
+    if extra:
+        s = f"from {extra} import *\n{s}"
     exec(s)
 
 def googleAppController():
@@ -582,11 +540,6 @@ def googleAppController():
     command = stringCall('Action2', quote(name), kwargs, *args)
     pprint(dict(command=command))
     return googleAppScript(command)
-    return stringCall(name, kwargs, *args)
-
-
-
-#env.g
 
 
 env.basepyref['pac'] = 'pythonAppController'

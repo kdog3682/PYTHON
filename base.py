@@ -115,6 +115,7 @@ dirdict = {
     "dldir": dldir,
     "budir": budir,
     "current": dir2023,
+    "dir2023": dir2023,
 }
 
 macdirdict = {
@@ -4473,17 +4474,6 @@ def googleSearchQuery(s):
     s = s.replace(" ", "+")
     return f"https://google.com/search?q={s}"
 
-def getGithubFile():
-    def githubUrlToUserContent(s):
-        return s.replace("blob/", "").replace(
-            "github.com", "raw.githubusercontent.com"
-        )
-
-    a = prompt("url for getting github file: ")
-    a = githubUrlToUserContent(a)
-    name = tail(a)
-    write(name, request(a), open=1)
-
 def revertFile():
     print("getting file from budir", budir)
     file = mostRecent(budir)
@@ -6810,7 +6800,6 @@ def newdir():
 
 
 
-#ff(dir=dir2023, js=1, text='^(?:import|}).*?[\'\"]\.\/node-utils', flags=re.M)
 env.basepyref['rnlf'] = 'rnl'
 env.basepyref['nd'] = 'newdir'
 
@@ -6908,3 +6897,89 @@ def revertFromTrash():
     ofile(file)
     print(file)
     mfile(file, dldir)
+#ff(dir=dir2023, js=1, text='^(?:import|}).*?[\'\"]\.\/node-utils', flags=re.M)
+
+
+def makeGitIgnore():
+    s = """
+        */*
+        .*
+        env.js
+        env.py
+        env*
+    """
+    write(".gitignore", smartDedent(s))
+
+
+def grabGitFiles():
+    files = ['codemirror.js', 'codemirror.css', 'cm.js', 'cm.css']
+    base = 'https://github.com/kdog3682/codemirror/blob/main/'
+    files = map(files, lambda x: npath(base, x))
+    map(files, getGithubFile)
+
+def getGithubFile(a):
+    def githubUrlToUserContent(s):
+        return s.replace("blob/", "").replace(
+            "github.com", "raw.githubusercontent.com"
+        )
+
+    a = githubUrlToUserContent(a)
+    name = tail(a)
+    s = request(a)
+    if not s:
+        dprint(name)
+    write(name, s, open=1)
+
+def gitInit(dir=0, user=env.user):
+    if not dir:
+        #dir = prompt('make a dir inside of dir2023')
+        dir = 'code-editor'
+        if not isdir(dir):
+            dir = npath(dir2023, dir)
+            #mkdir(dir)
+            #makeGitIgnore()
+
+        #chdir(dir)
+        #grabGitFiles()
+
+    assert isdir(dir)
+    repo = tail(dir)
+    chdir(dir)
+    from githubscript import Github
+    Github(key=user, repo=repo)
+
+    command = f"""
+        git init
+        git add .
+        git commit -m "push everything"
+        git remote add origin git@github.com:{user}/{repo}
+        git push -u origin master 
+    """
+
+    res = SystemCommand(command, dir=dir)
+    if res.success:
+        ofile(f"https://github.com/{user}/{repo}")
+
+def removeLastFile(dir=dldir):
+    file = glf(dirgetter(dir))
+    prompt('is this file correct?', file)
+    rfile(file)
+    
+
+def removeDateString(s):
+    return re.sub(' *\d+[-/]\d+[-/]\d+ *$', '', s)
+
+env.basepyref['rlf'] = 'removeLastFile'
+
+def regexFromDict(dict, template=0):
+    if not template:
+        template = '(?:$1)'
+    payload = '|'.join(list(dict.keys()))
+    return re.sub('\$1', payload, template)
+
+def dsearch(s, dict, template=0):
+    r = regexFromDict(dict, template)
+    m = search(r, s)
+    return dict[m] if m else None
+
+#pprint(dsearch('hiya', {'hi': 'asdasd'}, '^(?:$1)'))

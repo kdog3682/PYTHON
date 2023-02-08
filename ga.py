@@ -142,20 +142,29 @@ def queryHelper(key, mode=0):
 
 
 class GoogleDrive:
-    def downloadFile(self, q):
-        fileName, q = self.findFile(q=q)
+    def downloadFile(self, x=0):
+        if isObject(x):
+            file = x
+        elif isString(x):
+            file = self.getFiles2(name=x)
+        else:
+            file = self.getFiles2()
+
+        fileId = file.get('id')
+        fileName = npath(dldir, file.get('name'))
+        fileName = removeDateString(fileName)
+        fileName = addExtension(fileName, 'pdf')
+
         r = self.files.export(
             fileId=fileId, mimeType="application/pdf"
         )
+
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, r)
         done = False
         while done is False:
             status, done = downloader.next_chunk()
-            print(
-                "Download %d%%"
-                % int(status.progress() * 100)
-            )
+
         fh.seek(0)
         with open(fileName, "wb") as f:
             shutil.copyfileobj(fh, f, length=131072)
@@ -172,15 +181,18 @@ class GoogleDrive:
         q = createq(folder=folder)
         if e:
             q += f" and mimeType = {getMime(e)}"
-        if r:
-            results = filter(
-                results, lambda x: test(r, x.get("name"))
-            )
+
 
         results = driveGetter(self, q=q, pageSize=n)
+        if name:
+            results = filter(
+                results, lambda x: test(name, x.get("name"), flags=re.I)
+            )
         dprint(
             results=results, lengthMatch=len(results) == n
         )
+        if n == 1:
+            return smallify(results)
         return results
 
     def downloadFiles(self, **kwargs):
@@ -1074,7 +1086,6 @@ def googleDriveGetFolders(self, folder=0):
     return driveGetter(self, q=q, pageSize=pageSize)
 
 
-# GoogleDrive().downloadFiles(n=2)
 
 # GoogleDrive()
 # print(googleDriveGetFolders(GoogleDrive()))
@@ -1177,3 +1188,4 @@ def isRecentSubmission(s):
     delta = today - date
     if delta.days > 15:
         return False
+

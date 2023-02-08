@@ -20,24 +20,28 @@ i like it
 cmon lets go
 """
 
-def aiprompt():
-    promptMessage = 'Hello. What question can I answer for you?'
-    #fallback = 'Write a python function to organize and parse this data: ' + quote(s)
-    #fallback = 'How many days are there in a year?'
-    q = 'organize the following raw data into json: ' + s
+#Summarize what the following function does and put the results into a json:
+s = '''
+Write the function below as javascript:
+
+function Node2()
+    let tail = Tail()
+    if tail == 'app-main.js'
+        call BasePY('gac')
+    elseif tail == 'worksheet-components.js'
+        call VisualAction('vt')
+    else
+        call PuppetRunner()
+    endif
+endfunction
+'''
+
+def aiprompt(prompt):
     completion = openai.Completion.create(
-        engine="text-davinci-003",
-        max_tokens=60,
-        temperature=0.5,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
+        **defaultKwargs, prompt=prompt
     )
-    clip(completion)
-    return completion
     return completion.choices[0].text
 
-#pprint(aiprompt())
 #"https://platform.openai.com/docs/api-reference/completions/create"
 
 defaultKwargs = dict(
@@ -61,3 +65,5 @@ def conversation(message = 'Hello. How may I help you?'):
     return conversation(text)
     # conversation()
     # it doesnt work
+
+#pprint(aiprompt(s))
