@@ -1019,3 +1019,20 @@ def grade5ClassworkHomework():
 #pdfa = removeWhitePages(glf())
 #pdfb = sliceStartEnd('Grade 4 Classwork', start=2)
 #mergepdf([pdfa, pdfb], outpath='g4cw')
+#insertpdf('test', )
+def insertpdf(base=0, insert=0, after=0, before=0):
+    if not insert: insert = 'test'
+    base = gpdf(base)
+    insert = gpdf(insert)
+    pdf1 = pikeOpen(base)
+    pdf2 = pikeOpen(insert)
+    payload = pdf2.pages[0]
+    pdf1.pages.insert(after, payload)
+    save(pdf1, outpath='g4cw')
+def gpdf(f):
+    return addExtension(fixDest(f), 'pdf')
+
+def opdf(f):
+    ofile(gpdf(f))
+
+#insertpdf('g4cw', after=7)

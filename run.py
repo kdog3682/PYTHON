@@ -3,35 +3,6 @@ import time
 import inspect
 import env
 
-def main(override=0):
-    """file: run.py
-    this is the primary accessor function
-    for touching other files
-    it only connects to _python
-    from base import *
-    """
-
-    if isMacbook():
-        global drivedir
-        drivedir = "~/Google\ Drive"
-        runMacbook()
-
-        """ 
-            print: print the most recent files
-            move: move the most recent files to ~/
-            execute: execute the most recent python file
-         """
-    if override:
-        python(override)
-    elif len(sys.argv) > 1:
-        try:
-            python()
-        except KeyboardInterrupt as e:
-            print("done via keyboard")
-
-        """ only runs if sys.argv is active """
-    else:
-        print("no run because not from shell")
 
 
 def email(to=0, subject="", body="", files=0, debug=0):
@@ -63,130 +34,75 @@ def email(to=0, subject="", body="", files=0, debug=0):
 def emailLastFile():
     email(subject="last file", files=glf())
 
+def yuma(a, b, c):
+    dprint(a, b, c)
 
-def python(override=0):
-    if override:
-        arg = override
-        args = []
-    else:
-        baseArgs = sys.argv[1:]
-        arg, args = splitonce(map(baseArgs, shellunescape))
 
-    if arg.endswith("dir") and isdir(eval(arg)):
-        return printdir(eval(arg))
+def python(argv = sys.argv[1:]):
+    if not argv:
+        return print("requires shell")
 
-    basepyref = env.basepyref
-    key = basepyref.get(arg, arg)
-    key = re.sub("^:", "", key)
-    key, config = mget("@(\w+)", key)
-
+    key, *args = argv
+    args = map(list(args), shellunescape)
+    key = env.basepyref.get(key, key)
     fn = globals().get(key)
-    if not fn:
-        return print("no fn")
-
-    value = 0
-    if config.get("string"):
-        args = " ".join(args)
-        value = fn(args)
-
-    elif len(args) > 0:
-        availableAmount = countArgs(fn)
-        if availableAmount == 1:
-            value = fn(args[0])
-        else:
-            value = fn(*args)
-    else:
-        value = fn()
-
-    pprint(
-        {
-            "caller": key,
-            "success": "Yes!",
-            "args": args,
-            "value": value,
-        }
-    )
-
+    fn(*args)
 
 
 def buildFiles():
-    files = Partitioner2(ff(dldir, week=1))()
+    base = ff(dldir, week=1, pdf=1)
+    files = Partitioner2(base)()
+
     storage = Storage()
 
     for file in files:
         k = search('g(?:rade)? *(\d+)', file, flags=re.I)
-        if not k: k = prompt(file, 'key? Choose G4 or G5')
+        assert k
         storage.add(k, file)
 
     store = []
     for k,v in storage.toJSON().items():
         store.append({
             'key': k,
-            'files': v,
+            'files': sort(v, sortCwtFiles),
         })
     return store
 
-def uploadAssignments():
-    from ga import GoogleDrive, GoogleClassroom
-    data = buildFiles()
-    prompt(data)
-
-    for item in data:
-        key = item.get('key')
-        files = item.get('files')
-        room = GoogleClassroom(key)
-        map(files, room.uploadAssignment)
-        room.openLink()
-
-def uploadMaterials(official=1, dontEmail=0):
+def uploadMaterials(skipClassroom=0, skipEmail=0, official=1):
     from ga import GoogleClassroom, GoogleDrive
 
-    chdir(dldir)
-    # ------------------------------------------------
-    data = cwtBuildNecessaryFiles()
-    prompt(data)
+    data = buildFiles()
     store = []
 
-    for item in data.get("classFiles"):
+    for item in data:
         key = item.get("key") if official else "emc"
         files = item.get("files")
         room = GoogleClassroom(key)
+        room.skipClassroom = skipClassroom 
         results = map(files, room.uploadAssignment)
+        room.openLink()
         store.extend(results)
 
-    # ------------------------------------------------
-    extraFiles = data.get("extraFiles")
-    individualFiles = data.get("individualFiles")
-    extraItems = filter([extraFiles, individualFiles])
-
-    if official and extraItems:
-        drive = GoogleDrive()
-        for group in extraItems:
-            for file in group:
-                fileId = drive.uploadFile(file)
-                store.append({"id": fileId, "name": file})
     # ------------------------------------------------
     def getSubject(subject="G4/G5", topic="Math"):
         date = upcomingDate("saturday")
         return f"{subject} {topic} Materials {date}"
-
     # ------------------------------------------------
 
-    files = map(
-        store, lambda x: removeExtension(x.get("name"))
-    )
-    attachments = map(store, lambda x: x.get("id"))
-    to = env.workEmail if official else env.myEmail
     payload = {
         "subject": getSubject(),
-        "data": store,
-        "attachments": attachments,
-        "files": files,
-        "to": to,
+        "files": map(store, lambda x: x.get("name")),
+        "attachments": map(store, lambda x: x.get("id")),
+        "to": env.workEmail if official else env.EmailContacts.get('self')
     }
+
     # ------------------------------------------------
+    if skipEmail:
+        print('Done. Skipping email.')
+        return 
+
+    prompt(payload)
     googleAppScript("Action", "courseWork", payload)
-    ofile(uploadMaterialURLS)
 
 def cwtBuildNecessaryFiles(grades=[4, 5]):
 
@@ -496,7 +412,6 @@ def astFunctions(file):
     return unique([f.name for f in getFunctions(tree.body)])
 
 #PythonController()
-#uploadAssignments()
 
 def smartManager():
     file = glf()
@@ -519,29 +434,39 @@ def pipInstall(s):
     cmd = 'abc ' + s
     print(cmd)
 
-def pythonAppController(state=0):
-    items = split(smartDedent(env.pac), '\n\n+')
-
-    ref = {
+def addPythonImports(s):
+    
+    importRef = {
         'Github': 'githubscript',
         'Google': 'ga',
         'aiprompt': 'chatgpt',
     }
+    extra = dsearch(s, importRef, '^(?:$1)')
+    return f"from {extra} import *\n{s}" if extra else s
 
-    s = dollarPrompt(items, python=True)
-    extra = dsearch(s, ref, '^(?:$1)')
-    if extra:
-        s = f"from {extra} import *\n{s}"
-    exec(s)
+def pythonAppController():
+    items = split(smartDedent(env.pac), '\n\n+')
+    cmd = dollarPrompt(items, python=True)
+    cmd = addPythonImports(cmd)
+    print(cmd, 'hii')
+    exec(cmd)
 
 def googleAppController():
-    s = dollarPrompt(env.gac)
+    items = split(smartDedent(env.gac), '\n+')
+    s = dollarPrompt(items)
     name, args, kwargs = getNameArgsKwargs(s)
     command = stringCall('Action2', quote(name), kwargs, *args)
     pprint(dict(command=command))
     return googleAppScript(command)
 
 
-env.basepyref['pac'] = 'pythonAppController'
-main()
+def execPython(s=''):
+    dict = {
+        'av': 'appendVariable',
+    }
+    s = dreplace(s, dict, template='b')
+    exec(s)
 
+
+env.basepyref['pac'] = 'pythonAppController'
+python()

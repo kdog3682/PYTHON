@@ -417,13 +417,21 @@ class GoogleClassroom:
         self.drive.clearFolder(loc)
 
     def uploadAssignment(self, file):
+        name = removeExtension(tail(file))
+        skipClassroom = self.skipClassroom or isSkippable(name)
         fileId = self.drive.uploadFile(file)
-        resource = self.createResource(file, fileId)
-        response = self.createCourseWork(resource)
+        print('Uploaded File to GoogleDrive:', name)
+
+        if skipClassroom:
+            print('Skipping Classroom', name)
+        else:
+            resource = self.createResource(file, fileId)
+            response = self.createCourseWork(resource)
+            print('Created GoogleClassroom Coursework')
 
         return {
             "id": fileId,
-            "name": tail(file),
+            "name": name,
         }
 
     def getResourceMetaInfo(self, fileName):
@@ -527,7 +535,10 @@ class GoogleClassroom:
         ofile(self.classWorkLink)
 
     def loadClass(self, classKey):
-        ref = env.ClassroomRef.get("g" + classKey)
+        ref = env.ClassroomRef.get(classKey)
+        if not ref:
+            ref = env.ClassroomRef.get("g" + classKey)
+
         self.classWorkLink = ref.get("classWorkLink")
         self.courseName = ref.get("name", classKey)
         self.courseSubject = capitalize(ref.get("subject"))
@@ -543,6 +554,7 @@ class GoogleClassroom:
     def __init__(self, classKey):
         service = getService(key="classroom", reset=0)
         self.loadClass(classKey)
+        self.skipClassroom = False
 
         courses = service.courses()
         courseWork = courses.courseWork()
@@ -1188,4 +1200,9 @@ def isRecentSubmission(s):
     delta = today - date
     if delta.days > 15:
         return False
+
+def isSkippable(name):
+    r = 'progress|report|announce'
+    if test(r, name, re.I):
+        return True
 

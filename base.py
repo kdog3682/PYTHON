@@ -590,12 +590,32 @@ def askToRemove(file):
     if a:
         rfile(file)
 
+def fixBrowserPath(f):
+    ref = {
+        'json': [dldir, jsondir],
+        'pdf': [dldir, pdfdir],
+    }
+    e = getExtension(f)
+
+    if e:
+        dirs = ref.get(e, [])
+        if isfile(f):
+            return f
+        else:
+            for dir in dirs:
+                temp = npath(dir, f)
+                if isfile(temp):
+                    return temp
+            raise Exception('cant find the file')
+    return f
+    
+
 def openBrowser(f):
-    try:
-        webbrowser.open(f)
-        print(f"opening file: {f}")
-    except:
-        print("error opening file f")
+    if not f:
+        return 
+    f = fixBrowserPath(f)
+    print(f"opening file: {f}")
+    webbrowser.open(f)
 
 def choose(x, mode=0, filter=0, auto=1):
     if isString(x) and isdir(x):
@@ -1325,7 +1345,7 @@ def googleAppScript(f="", *args):
 
         s = join(store) + "\n\n" + s
 
-    callable = toCallable(f, *args)
+    callable = f if '\n' in f else toCallable(f, *args)
     s += "\n\n" + callable
     data = None
     try:
@@ -1813,6 +1833,15 @@ NCG_TEMPLATE_LIBRARY = {
     "b": "\\b(?:$1)\\b",
 }
 
+def reWrap(dict, template = ''):
+    ref = {
+        '': '(?:$1)',
+        'b': "\\b(?:$1)\\b",
+    }
+    template = ref.get(template, template)
+    s = "|".join(list(dict.keys()))
+    return re.sub('\$1', s, template)
+
 def ncg(template, ref):
     if not template:
         template = "(?:$1)"
@@ -1822,10 +1851,9 @@ def ncg(template, ref):
     r = template.replace("$1", s)
     return r
 
-def dreplace(s, dict, flags=0, template=None):
+def dreplace(s, dict, flags=0, template=''):
 
-    regex = ncg(template, dict)
-
+    regex = reWrap(dict, template)
     def parser(x):
         return (
             dict.get(x.group(1))
@@ -3256,6 +3284,7 @@ def super(s):
         # write('scrape.json', m)
 
 def createShellArgs(args):
+    raise Exception()
     def parser(arg):
         if "zz" in arg:
             value = shellunescape(arg)
@@ -3274,9 +3303,14 @@ def createShellArgs(args):
     return join(map(args, parser), delimiter=", ")
 
 def shellunescape(s):
+    if not isString(s):
+        return s
+    if 'zz' not in s:
+        return s
     dict = {
         "newline": "\\n",
         "sq": "'",
+        "tilda": "`",
         "rcb": "}",
         "lcb": "{",
         "lt": "<",
@@ -6344,7 +6378,7 @@ def gitUrl(file, repo, user="kdog3682"):
 
 
 def npmInstall(s):
-    dev = test("nodemon|jest|grunt", s, flags=re.I)
+    dev = test("nodemon|jest|grunt|uglify", s, flags=re.I)
     SystemCommand(
         "npm i " + s + (" --save-dev" if dev else "")
     )
@@ -6642,6 +6676,7 @@ def finfo(f):
         return [name]
 
 def googleAction(obj):
+    raise Exception()
     template = f"Action2({dumpJson(obj)})"
     googleAppScript(template)
 
@@ -6816,16 +6851,53 @@ class Partitioner2:
     def __call__(self):
         return self.run()
 
+    def transformRegex(self, s):
+        return self.regexPrefix + s + self.regexSuffix
+    
     def __init__(self, items):
         self.items = items
         self.store = {}
+        self.resetRegex()
 
+    def resetRegex(self):
+        self.regexPrefix = '^'
+        self.regexSuffix = ''
+        self.regexFlags = 0
+    
     def partition(self):
         number(map(self.items, tail))
         pprint(self.store)
         a = input('')
         if a == '':
             return True
+
+        if a == 'o':
+            return ofile(list(self.store.values()))
+
+        if a == 'd':
+            self.store = {}
+            return 
+
+        if a == 'reset':
+            return self.resetRegex()
+
+        m = search('^(\w*) *= *(.+)', a)
+        if m:
+            key, val = m
+            if key == 'flags' or key == 'f' or key == '':
+                if 'b' in val:
+                    self.regexSuffix = '\\b'
+                if 'B' in val:
+                    self.regexSuffix = ''
+                if 'S' in val:
+                    self.regexPrefix = ''
+
+                if 's' in val:
+                    self.regexPrefix = '^'
+                if 'i' in val:
+                    self.regexFlags -= re.I
+                if 'I' in val:
+                    self.regexFlags += re.I
 
         m = search('^o *(\d+)', a)
         if m:
@@ -6851,7 +6923,11 @@ class Partitioner2:
                 index = len(self.store) + 1
                 self.store[index] = self.items[i]
         else:
-            items = filter(self.items, lambda x: test(a, tail(str(x)), flags=re.I))
+            r = self.transformRegex(a)
+            #print(self.regexFlags)
+            #print(r)
+            #raise Exception()
+            items = filter(self.items, lambda x: test(r, tail(str(x)), flags=self.regexFlags))
             for item in items:
                 index = len(self.store) + 1
                 self.store[index] = item
@@ -6977,9 +7053,37 @@ def regexFromDict(dict, template=0):
     payload = '|'.join(list(dict.keys()))
     return re.sub('\$1', payload, template)
 
-def dsearch(s, dict, template=0):
-    r = regexFromDict(dict, template)
+def dsearch(s, dict, template=''):
+    r = reWrap(dict, template)
     m = search(r, s)
     return dict[m] if m else None
 
 #pprint(dsearch('hiya', {'hi': 'asdasd'}, '^(?:$1)'))
+#append('/home/kdog3682/PYTHON/env.py', join(env.gac))
+#print(toCallable('hi\nbye'))
+
+#alist = ['a', 'b', 'c', 'd', 'e']
+#Partitioner2(alist)()
+
+temp = [
+            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Classwork.pdf",
+            "/mnt/chromeos/MyFiles/Downloads/Grade 4 quizzes.pdf",
+            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Homework.pdf",
+            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Extra Homework.pdf",
+            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Extra AHomework.pdf",
+            "foo",
+]
+def sortCwtFiles(s):
+    dict = {
+        'announcement': 5,
+        'extra': 4,
+        'homework': 2,
+        'classwork': 1,
+        'exam': 3,
+        'test': 3,
+        'quiz': 3,
+    }
+    s = tail(s).lower()
+    m = dsearch(s, dict)
+    assert m
+    return (m, s)
