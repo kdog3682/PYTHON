@@ -4,6 +4,15 @@ import inspect
 import env
 
 
+def drivePicturesToHammyArtContestFolder(contestNumber):
+    from heif import heicToJpg
+    assert contestNumber
+    dir = mkdir(dir2023 + 'hammy-math-class/art-contest-' + str(contestNumber))
+    files = mostRecentFileGroups(drivedir)
+    f = lambda x: npath(dir, changeExtension(x, 'jpg'))
+    items = double(files, f)
+    for a,b in items:
+        heicToJpg(a, b)
 
 def email(to=0, subject="", body="", files=0, debug=0):
     if debug:
@@ -216,7 +225,6 @@ def redditFromJS(items):
     print("done")
     return
     a = choose(map(items, "title"), auto=0)
-    print("hii", a)
     if not a:
         return
     for s in submissions:
@@ -224,6 +232,11 @@ def redditFromJS(items):
             s.delete()
             print("deleting", s.title)
 
+
+def runFunction(fn, *args):
+    count = countArgs(fn)
+    args = list(args)[0:count]
+    print(args)
 
 def countArgs(f, *args, **kwargs):
     data = inspect.signature(f)
@@ -402,17 +415,6 @@ env.basepyref['gpa'] = 'gitPushAll'
 # print(ofile(gitUrl(pydir)))
 # print(isRecent(glf(), days=1))
 
-def astFunctions(file):
-    # cute but not necessary
-
-    import ast
-    def getFunctions(body):
-        return (f for f in body if isinstance(f, ast.FunctionDef))
-    tree = ast.parse(read(file))
-    return unique([f.name for f in getFunctions(tree.body)])
-
-#PythonController()
-
 def smartManager():
     file = glf()
     name = removeExtension(file)
@@ -427,7 +429,6 @@ def smartManager():
     elif test('resume', name, flags=re.I):
         mfile(file, 'Kevin Lee resume.pdf')
 
-#smartManager()
 
 
 def pipInstall(s):
@@ -448,7 +449,7 @@ def pythonAppController():
     items = split(smartDedent(env.pac), '\n\n+')
     cmd = dollarPrompt(items, python=True)
     cmd = addPythonImports(cmd)
-    print(cmd, 'hii')
+    dprint(cmd)
     exec(cmd)
 
 def googleAppController():

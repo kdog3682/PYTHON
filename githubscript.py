@@ -22,18 +22,20 @@ class Github:
         self.isFirstTime = False
 
         if kwargs:
-            pprint(kwargs)
             for k,v in kwargs.items():
                 m = getattr(self, k)
                 if m:
-                    m(v)
+                    try:
+                        m(v)
+                    except:
+                        m()
                     break
 
         if self.isFirstTime:
             pprint(self.getInfo())
 
     def getInfo(self):
-        print('Getting Repository Info')
+        print('Getting Repository Info because firstTime')
         user = self.User
         f = lambda x: not x.fork
         repos = filter(list(user.get_repos()), f)
@@ -54,15 +56,15 @@ class Github:
 
         def getHtmlSourceFile():
             f = mostRecent(dir2023, name = '\w{2,}\.html')
-            prompt(f)
             return f
 
-        chdir(dir2023)
         if not sourceFile:
             sourceFile = getHtmlSourceFile()
         files = getFileDependencies(sourceFile)
         files = filter(files, isMyScriptFile, self.Files)
-        prompt('files for upload', files)
+        if len(files) > 2:
+            prompt('files for upload', files)
+
         pprint(self.upload(files))
 
     def __str__(self):
@@ -187,6 +189,15 @@ class Github:
             else:
                 return self.write(key)
 
+        self.openLink()
+
+    def openLink(self):
+        return ofile(self.url)
+    
+    @property
+    def url(self):
+        return self.getRepo().html_url
+    
     def getRepo(self, x=None):
         if not x:
             return self.User.get_repo(self.name)
@@ -197,10 +208,14 @@ class Github:
 
     def deleteRepo(self, repo=0):
         repo = self.getRepo(repo)
-        r = 'github.io|kdog3682|2023'
+        r = 'kdog3682|2023'
         if test(r, repo.name):
             print(f"Forbidden Deletion: {repo.name}")
             return
+        elif test('github.io', repo.name):
+            if not prompt(repo.name, 'are  you sure you want to delete?'):
+                print(f"Forbidden Deletion: {repo.name}")
+                return
 
         repo.delete()
         print("deleting repo", repo.name)
@@ -226,46 +241,26 @@ class Github:
     def name(self):
         return self.repo
 
+    def deleteForks(self):
+        for repo in self.repos:
+            self.deleteRepo(repo)
+    
+    def printRepo(self, repo):
+        
+        def getTime(f):
+            strife = "%a, %d %b %Y %H:%M:%S GMT"
+            date = f._headers.get("date")
+            return datetime.strptime(date, strife)
 
-def printGithub(deleteForks=0):
+        def runner(file):
+            return {'path': file.path, 'time': getTime(file)}
+        
+        self.load(repo)
+        contents = self.getContents()
+        if contents:
+            store = map(contents, runner)
+            pprint(store)
+        elif prompt(f"delete {self.name} because it is empty repo?"):
+            self.deleteRepo(self.name)
 
-    def getTime(f):
-        githubStrife = "%a, %d %b %Y %H:%M:%S GMT"
-        date = f._headers.get("date")
-        time = datetime.strptime(date, githubStrife)
-        time = timestamp(time)
-        return f
-
-    g = Github()
-
-    parent = {}
-    for repo in g.repos:
-        if deleteForks and repo.fork:
-            g.deleteRepo(repo)
-            return
-
-        g.load(repo)
-        name = g.name
-
-        contents = g.getContents()
-
-        if not contents:
-            g.deleteRepo(name)
-
-        def runner(contents, dir):
-            store = {}
-            for f in contents:
-                if f.type == "dir":
-                    name = os.path.join(dir, f.path)
-                    items = repo.get_contents(f.path)
-                    runner(items, name)
-                else:
-                    time = getTime(f)
-                    store[f.path] = time
-
-            parent[dir] = store
-
-        runner(contents, name)
-
-    print(parent)
-
+#Github(key='hammy', printRepo='hammymathclass.github.io')

@@ -1,3 +1,4 @@
+alist = ['a', 'b', 'c']
 gunkExtensions = ['recent', 'mp3', 'ass', 'eps', 'zip', 'url', 'gz', 'backup', 'webp', 'asy', 'vcf', 'js']
 pdfdir2 = "/home/kdog3682/PDFS2/"
 archdir = "/mnt/chromeos/GoogleDrive/MyDrive/ARCHIVES/"
@@ -75,7 +76,7 @@ sandir = "/mnt/chromeos/removable/Sandisk/"
 pydir = "/home/kdog3682/PYTHON/"
 pdfdir = "/home/kdog3682/PDFS/"
 logdir = "/home/kdog3682/LOGS/"
-txtdir = "/home/kdog3682/TEXTS/"
+oldtxtdir = "/home/kdog3682/TEXTS/"
 txtdir = "/home/kdog3682/2023/TEXTS/"
 jsondir = "/home/kdog3682/JSONS/"
 mathdir = "/home/kdog3682/MATH/"
@@ -91,6 +92,8 @@ budir = "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/"
 bucurdir = (
     "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/CURRENT/"
 )
+
+currentdir = dir2023
 
 dirdict = {
     "root": rootdir,
@@ -462,12 +465,13 @@ def cfiles(files, dir):
     mkdir(dir)
     assert isdir(dir)
     for f in files:
-        mfile(f, dir, mode="copy")
+        cfile(f, dir)
 
 def cfile(f, t):
     mfile(f, t, mode="copy")
 
 def mfile(f, t, mode="move"):
+    assert isfile(f)
     if not getExtension(t) and not isdir(t):
         mkdir(t)
     elif not getExtension(t):
@@ -557,11 +561,9 @@ def fileInfo(f, r=0):
         size = fsize(f)
         return {
             "name": tail(f),
-            "date": date,
             "size": fsize(f),
+            "date": date,
         }
-        print([tail(f), datestamp(f, strife), fsize(f)])
-        return filter([name, datestamp(f), size])
     else:
         print(["not a file", f])
 
@@ -591,6 +593,15 @@ def askToRemove(file):
         rfile(file)
 
 def fixBrowserPath(f):
+    aliases = {
+        'red': 'reddit',
+    }
+    if f in aliases:
+        return fixUrl(aliases[f])
+
+    if isUrl(f):
+        return f
+
     ref = {
         'json': [dldir, jsondir],
         'pdf': [dldir, pdfdir],
@@ -607,6 +618,8 @@ def fixBrowserPath(f):
                 if isfile(temp):
                     return temp
             raise Exception('cant find the file')
+    else:
+        return f"https://google.com/search?q={f}"
     return f
     
 
@@ -757,6 +770,8 @@ def sort(x, f=int, reverse=0):
         return sorted(list(x), key=f, reverse=reverse)
 
 def append(f, s):
+    if f.endswith('.json'):
+        return appendjson(f, s)
     if isObject(s):
         s = s.values()
 
@@ -829,8 +844,21 @@ def join(*args, delimiter="\n"):
 
     return backspace(s) if delimiter else s
 
+def logger(**kwargs):
+    kwargs['date'] = datestamp()
+    append('log.json', [kwargs])
+
 def backup(f):
-    shutil.copy(f, npath(dldir, f + ".backup"))
+    if isArray(f):
+        assert every(f, isfile)
+        dirName = budir + prompt('Creating new Directory: Name for the back-up directory (it will be located in drive/budir)?')
+        cfiles(f, dirName)
+        logger(action='backup', dirName=dirName, files=f)
+    elif isfile(f):
+        shutil.copy(f, npath(budir, f + ".backup"))
+    elif isdir(f):
+        return print('no dirs yet')
+
     print("backed up", f)
 
 def backspace(s):
@@ -1005,11 +1033,13 @@ quoteRE = "(?<!\\)'.*?(?<!\\)'|(?<!\\)\".*?(?<!\\)\""
 def mkdir(dir):
     if isdir(dir):
         print("dir alrady exists. early return")
+        return dir
     elif getExtension(dir):
         raise Exception("dir has an extension...")
     else:
         os.makedirs(dir)
         print(f"creating new directory: {dir}")
+        return dir
         return True
 
 def write(f, s, open=0):
@@ -1588,6 +1618,7 @@ def checkpointf(
     smallerThan=0,
     fn=0,
     e=0,
+    json=0,
     **kwargs,
 ):
     if text:
@@ -1605,8 +1636,8 @@ def checkpointf(
         extensions.append("math")
     if css:
         extensions.append("css")
-    if js:
-        extensions.append("js")
+    if js: extensions.append("js")
+    if json: extensions.append("json")
     if py:
         extensions.append("py")
     if txt:
@@ -3119,14 +3150,6 @@ def _asset(name, data):
     )
 
 
-def google_search(key, site=0):
-    if key:
-        url = f"https://google.com/search?q={key}"
-    else:
-        url = "https://www.reddit.com"
-
-    ofile(url)
-
 def sendTextMessages(f):
     s = textgetter(f)
     r = "^ *(?:// *)?" + datestamp()
@@ -3967,7 +3990,9 @@ def dirFromFile(f):
     if f.startswith("/"):
         return f
     e = getExtension(f)
-    return dirdict.get(e, pubdir)
+    if e == 'py': return pydir
+    return dir2023
+    #return dirdict.get(e, pubdir)
 
 def mlf():
     f = glf()
@@ -4416,12 +4441,11 @@ def findFile(f):
     store = []
     for dir in dirs:
         file = npath(dir, f)
-        print(file)
         if isfile(file):
-            print(file, "FOUND")
+            print(file)
             if fsize(file) > 10:
                 print('valid')
-            return file
+                return file
 
 
 def shell(cmd):
@@ -4429,8 +4453,7 @@ def shell(cmd):
 
 
 def normDirPath(file):
-    dir = dirFromFile(file)
-    return normpath(dir, file)
+    return npath(dirFromFile(file), file)
 
 def normFactory(fn):
     def lambdaNorm(file, *args, **kwargs):
@@ -4650,7 +4673,7 @@ def appendjson(file, data):
     if not data:
         return
     placeholder = [] if isArray(data) else {}
-    file = normDirPath(file)
+    #file = normDirPath(file)
     store = readjson(file, placeholder)
     assert type(store) == type(data)
 
@@ -4974,7 +4997,7 @@ class SystemCommand:
         chdir(dir)
 
         def fix(s):
-            if "\n" in s:
+            if "\n" in s and not ';' in s:
                 return join(linegetter(s), delimiter="; ")
             return s
 
@@ -5234,7 +5257,7 @@ def ff(
     elif mode == "open" or mode == "o":
         map(files, openBrowser)
     elif mode == "info":
-        map(files, fileInfo)
+        return pprint(map(files, fileInfo))
     elif mode == "clipinfo":
         files.sort(key=mdate, reverse=1)
         f = lambda x: join(map(x, str), delimiter="  ")
@@ -6145,7 +6168,7 @@ jdir = "/home/kdog3682/JAVASCRIPT/"
 def odir(dir):
     ofile(absdir(dir))
 
-def backup(directories):
+def backupDirectories(directories):
     import shutil
 
     mkdir(budir + datestamp())
@@ -7073,6 +7096,7 @@ temp = [
             "/mnt/chromeos/MyFiles/Downloads/Grade 4 Extra AHomework.pdf",
             "foo",
 ]
+
 def sortCwtFiles(s):
     dict = {
         'announcement': 5,
@@ -7086,4 +7110,77 @@ def sortCwtFiles(s):
     s = tail(s).lower()
     m = dsearch(s, dict)
     assert m
+    # Everything needs to be under one of these tags
+    # Everything needs to be prefixed with G4 or G5
+    # It is incrementally more work for everyone ... but it is neater
     return (m, s)
+
+
+shellCommandResetGit = """
+    git rm -r --cached .;
+    git add .;
+    git commit -m "Untracked files issue resolved to fix .gitignore";
+    git push;
+    # holy shit this was scary.
+    # I thought it deleted everything, but it didnt.
+    # Thank goodness. It merely clears everything out.
+
+"""
+ShellCommands = {
+    'resetGit':  shellCommandResetGit,
+    'foo': '''
+        echo 'hi'
+    ''',
+}
+#SystemCommand(shellCommandResetGit)
+#print(isfile('master.java
+#ff(dir2023, js=1, days=1, text='objectWalk', once=1)
+
+def readLastReversion():
+    f = glf(budir)
+    print(fileInfo(f))
+
+#readLastReversion()
+#pprint(glf(drivedir))
+#ofile(glf(drivedir))
+def double(items, f):
+    return [(item, f(item)) for item in items]
+
+#pprint(double(alist, lambda x: 3))
+
+#dir = mkdir(dir2023 + 'hammy-math-class/art-contest-3')
+#print(dir)
+
+def isf(f):
+    extensions = ['json', 'pdf']
+    for e in extensions:
+        name = addExtension(f, e)
+        dirs = [dldir, dirFromFile(name)]
+        for dir in dirs:
+            path = npath(dir, name)
+            if isfile(path):
+                ofile(path)
+                return path
+env.basepyref['o'] = 'ofile'
+#ff(dir=oldtxtdir, days=40, name='m\d+\.txt', mode='open')
+#ff(txtdir, mode='open')
+
+
+#backup(temp)
+def normMove(file):
+    mfile(normDirPath(file), currentdir)
+    
+#normMove('log.json')
+#findFile('log.json')
+#print(read('log.json'))
+#pprint(dirdict)
+
+def mclean(file):
+    def runner(s):
+       r = '^#+ *(.*)'
+       s, b = mget(r, s, flags=re.M)
+       print(b)
+       return 
+
+    
+    rpw(file, runner)
