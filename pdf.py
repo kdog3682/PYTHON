@@ -193,7 +193,7 @@ def pikeOpen(f=0):
 
 
 def fixDest(s):
-    s = re.sub("g(?=\d)", "Grade ", s)
+    s = re.sub("\bg(?=\d)", "Grade ", s)
     s = re.sub(" *ehw", " Extra Homework", s)
     s = re.sub(" *hw", " Homework", s)
     s = re.sub(" *q", " Quiz", s)
@@ -211,19 +211,23 @@ def fixDest(s):
 # pikeExtract('2022_Felix.pdf', '2-5', 'g4cw')
 
 
-def mergepdf(files, **kwargs):
-    pdf = pikeCreate(files)
-    prompt(len(pdf.pages), kwargs, len(files))
+def mergepdf(files, fn = lambda x: x.pages, **kwargs):
+    if isdir(files):
+        files = absdir(files)
+    pdf = pikeCreate(files, fn)
     save(pdf, **kwargs)
 
 
-def fitzSave(pdf, outpath, dir=0, openIt=1):
+def fitzSave(pdf, outpath, dir=0, openIt=1, incremental=0):
     if not outpath:
         outpath = pdf.metadata["title"]
     if not outpath:
         raise Exception("no outpath")
     outpath = addExtension(outpath, "pdf")
-    pdf.save(outpath)
+    if incremental:
+        pdf.saveIncr()
+    else:
+        pdf.save(outpath)
     if openIt:
         ofile(outpath)
 
@@ -297,7 +301,10 @@ def pikeCreate(files, f=lambda x: x.pages):
     for file in files:
         src = pikeOpen(file)
         value = f(src)
-        pdf.pages.extend(value)
+        try:
+            pdf.pages.extend(value)
+        except:
+            pdf.pages.append(value)
     return pdf
 
 
@@ -530,56 +537,65 @@ WHITE = [1, 1, 1]
 BLACK = [0, 0, 0]
 
 
-def whiteTheMargin(pdf, xMargin=30, yMargin=20):
-    count = len(pdf)
+def whiteTheMargin(page, top=0, bottom=0, left=0, right=0):
 
-    if count == 4:
-        page = pdf[1]
-    else:
-        page = pdf[0]
 
-    r1 = fitz.Rect(0, 0, page.rect.width, yMargin)
+    color = WHITE
+    fill = WHITE
+    width = 10
 
-    r2 = fitz.Rect(
-        0,
-        page.rect.height - yMargin,
-        page.rect.width,
-        page.rect.height,
-    )
+    r1 = 0
+    r2 = 0
+    r3 = 0
+    r4 = 0
 
-    r3 = fitz.Rect(
-        0,
-        0,
-        xMargin,
-        page.rect.height,
-    )
+    if top:
+        r1 = fitz.Rect(0, 0, page.rect.width, top)
 
-    r4 = fitz.Rect(
-        page.rect.width - xMargin,
-        0,
-        page.rect.width,
-        page.rect.height,
-    )
+    if bottom:
+        r2 = fitz.Rect(
+            0,
+            page.rect.height - bottom,
+            page.rect.width,
+            page.rect.height,
+        )
+
+    if right:
+        r3 = fitz.Rect(
+            0,
+            0,
+            right,
+            page.rect.height,
+        )
+
+    if left:
+        r4 = fitz.Rect(
+            left,
+            0,
+            page.rect.width,
+            page.rect.height,
+        )
 
     if not page.is_wrapped:
         page.wrap_contents()
 
-    color = WHITE
-    fill = WHITE
+    if r3:
+        page.draw_rect(r3, color=color, fill=fill, width=width)
+    if r4:
+        page.draw_rect(r4, color=color, fill=fill, width=width)
+    if r1:
+        page.draw_rect(r1, color=color, fill=fill, width=width)
+    if r2:
+        page.draw_rect(r2, color=color, fill=fill, width=width)
 
-    page.draw_rect(r1, color=color, fill=fill, width=10)
-    page.draw_rect(r2, color=color, fill=fill, width=10)
-    page.draw_rect(r3, color=color, fill=fill, width=10)
-    page.draw_rect(r4, color=color, fill=fill, width=10)
-    return pdf
 
-
-def fitzOpenSave(f, fn, outpath=None, openIt=0):
+def fitzOpenSave(f, fn, outpath=0, openIt=0, **kwargs):
     pdf = fitzOpen(f)
     try:
-        value = fn(pdf)
+        value = fn(pdf, **kwargs)
         if value:
-            fitzSave(pdf, outpath or f, openIt=openIt)
+            inc = not outpath or tail(outpath) == tail(f)
+            fitzSave(pdf, outpath or f, openIt=openIt, incremental=inc)
             print("success", f)
         return pdf
     except:
@@ -1036,3 +1052,19 @@ def opdf(f):
     ofile(gpdf(f))
 
 #insertpdf('g4cw', after=7)
+
+
+def whiteThePages(pdf, ignore=[], **kwargs):
+    for i, page in enumerate(pdf):
+        if i not in ignore:
+            whiteTheMargin(page, **kwargs)
+
+    return pdf
+        
+
+def pictureBook():
+    dir = colordir + datestamp()
+    mergepdf(dir, outpath='Coloring Handouts')
+
+#mergepdf(reverse(mostRecentFileGroups(minutes=2)), lambda x: x.pages[0])
+# Used for something which Im not too sure of.

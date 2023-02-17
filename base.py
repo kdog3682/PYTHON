@@ -5,7 +5,7 @@ archdir = "/mnt/chromeos/GoogleDrive/MyDrive/ARCHIVES/"
 sshfile = "/home/kdog3682/.ssh/id_rsa.pub"
 dir2023 =  "/home/kdog3682/2023/"
 nodedir2023 = "/home/kdog3682/2023/node_modules/"
-mathchadir = dir2023 + 'mathcha'
+mathchadir = dir2023 + 'mathcha/'
 githuburl = "https://github.com/"
 drivedir = "/mnt/chromeos/GoogleDrive/MyDrive/"
 outdir = "/mnt/chromeos/GoogleDrive/MyDrive/OUTBOUND/"
@@ -845,8 +845,18 @@ def join(*args, delimiter="\n"):
     return backspace(s) if delimiter else s
 
 def logger(**kwargs):
-    kwargs['date'] = datestamp()
-    append('log.json', [kwargs])
+    if not kwargs:
+        return 
+
+    from collections import OrderedDict
+    store = OrderedDict()
+    store['action'] = caller()
+    store['date'] = datestamp()
+    entries = sort(kwargs.items(), lambda x: len(json.dumps(x)))
+    for a,b in entries:
+        store[a] = b
+    
+    appendjson('log.json', store, mode=list)
 
 def backup(f):
     if isArray(f):
@@ -1098,6 +1108,7 @@ def stringify(x):
     return json.dumps(x, indent=4)
 
 def removeComments(s, e=None):
+    raise Exception()
     js = "(?://|/\*[\w\W]+?\*/)"
     html = "<!--[\w\W]*?-->"
     start = "^ *"
@@ -1188,9 +1199,15 @@ def map(items, fn, *args, filter=1, **kwargs):
 
     store = []
     for item in toArray(items):
-        value = fn(item, *args, **kwargs)
-        if not (filter and not value):
-            store.append(value)
+        try:
+            value = fn(item, *args, **kwargs)
+            if not (filter and not value):
+                store.append(value)
+        except Exception as e:
+            continue
+            #print(item, 'sdffffffffff')
+            #print(parseJSON(item.strip()))
+            #raise Exception(e)
     return store
 
 def raw(f):
@@ -1231,6 +1248,8 @@ def pop(x, key):
         return x.pop(key, None)
 
 def parseJSON(x):
+    if isString(x):
+        x = x.strip()
     return json.loads(x) if isJsonParsable(x) else x
 
 def isJsonParsable(x):
@@ -1549,17 +1568,24 @@ def dategetter(s, mode=int):
 
     if s == True:
         value = today.replace(minute=today.minute - 10)
-    elif test("\d+:?[ap]m", s, flags=re.I):
-        offset = 12 if test("pm", s, flags=re.I) else 0
-        hour = int(search("\d+", s)) + offset
+    elif test("^\d", s):
+        a, b, c = search('(\d+):?(\d*) *([ap]m)?', s, flags=re.I)
+        print(a, b, c)
+        offset = 0 if test("am", s, flags=re.I) else 12
+        hour = int(a) + offset
+        minute = int(b)
+        #date = datetime()
         day = (
             today.day - 1
             if today.hour < hour
             else today.day
         )
         value = today.replace(
-            day=day, hour=hour, minute=0, second=0
+            day=day, hour=hour, minute=minute, second=0
         )
+        #strife = "%A %B %d, %-I:%M:%S%p"
+        #print(datestamp(value, strife))
+        #return
     elif s == "yesterday":
         value = today.replace(day=today.day - 1)
     elif s == "today":
@@ -1598,6 +1624,7 @@ def checkpointf(
     name=0,
     big=0,
     r=0,
+    antiregex=0,
     small=0,
     before=0,
     after=0,
@@ -1691,6 +1718,11 @@ def checkpointf(
             rfile(f)
             return False
         if hours and not isRecent(f, hours=hours):
+            return False
+
+        if regex and not test(regex, filename, flags=flags):
+            return False
+        if antiregex and test(antiregex, filename, flags=flags):
             return False
 
         if name and not test(name, filename, flags=re.I):
@@ -2263,6 +2295,14 @@ def inferlang(s):
     }
     return ref.get(match)
 
+def getJspy():
+    import inspect
+
+    locals = inspect.currentframe().f_back.f_locals
+    indexes = ["js", "py", "vim", "bash", "css", "html"]
+    #ref = locals()
+    pprint(locals)
+
 def jspy(lang, key):
     lang = inferlang(lang)
 
@@ -2313,6 +2353,7 @@ def jspy(lang, key):
         "functionBodyRE": [functionBodyJS, functionBodyPY],
         "commentRE": [commentJS, commentPY],
         "superComment": ["//// ", "#### "],
+        "//": ['//', '#'],
         "variableRE": [variableJS, variablePY],
         "cleanupRE": [cleanupJS, cleanupPY],
         "codeRE": [codeJS, codePY],
@@ -3278,7 +3319,6 @@ def mainScrape():
 
 def getPureHtml(s):
     import bs4
-
     return bs4.BeautifulSoup(s, "html.parser").get_text()
 
 def regexdiv(
@@ -3988,7 +4028,7 @@ def dostufff(todo):
 
 def dirFromFile(f):
     if f.startswith("/"):
-        return f
+        return head(f)
     e = getExtension(f)
     if e == 'py': return pydir
     return dir2023
@@ -4318,8 +4358,10 @@ def mget(r, s, flags=0, mode=dict):
 
         return ""
 
-    s = re.sub(r, parser, s, flags=0).strip()
+    s = re.sub(r, parser, s, flags=flags).strip()
 
+    if mode == list:
+        return [s.strip(), store]
     if mode == str:
         if not store:
             config = ""
@@ -4453,7 +4495,8 @@ def shell(cmd):
 
 
 def normDirPath(file):
-    return npath(dirFromFile(file), file)
+    dir = dirFromFile(file)
+    return npath(dir, file)
 
 def normFactory(fn):
     def lambdaNorm(file, *args, **kwargs):
@@ -4669,29 +4712,36 @@ def addWordsToDictionaryf(s, corpus=None):
     )
 
 
-def appendjson(file, data):
+def push(store, data=0):
+    if not data:
+        return 
+    elif isArray(data):
+        store.extend(data)
+    else:
+        store.append(data)
+
+def appendjson(file, data, mode=0):
     if not data:
         return
-    placeholder = [] if isArray(data) else {}
-    #file = normDirPath(file)
+    placeholder = [] if mode == list else {}
     store = readjson(file, placeholder)
-    assert type(store) == type(data)
+
+    if mode == list and not isArray(store):
+        store = [store]
 
     if isArray(store):
-        store.extend(data)
+        push(store, data)
     elif isObject(store):
         store.update(data)
 
+    #return pprint(stringify(store)) #debugAppendJson
     write(file, store, open=1)
 
 def readjson(file, placeholder={}):
-    item = ""
-    try:
+    if isfile(file):
         with open(file) as f:
             return json.load(f)
-            item = json.load(f)
-        return item
-    except:
+    else:
         return placeholder
 
 
@@ -6967,8 +7017,6 @@ def getUntil(items, checkpoint):
             break
     return store
 
-#mdir(glf(), mathchadir)
-
 def watchMovie():
     s = prompt('movie name from 123movies?').replace(' ', '+')
     f = f"https://ww1.123moviesfree.net/search-query2/?q={s}"
@@ -6978,8 +7026,6 @@ def watchMovie():
 env.basepyref['wm'] = 'watchMovie'
 
 
-#findFile('python.log')
-#pprint(ff(dir2023, sort=1, reverse=1, text='kyrie', once=1))
 def renameLocalClipFile(a=0):
     name = a or prompt('new name for clip file?')
     mfile('clip.js', addExtension(name, 'js'))
@@ -6988,17 +7034,11 @@ def check(x):
     prompt(x)
     return x
 
-#rfile(check(glf()))
-
-#pprint(map(mostRecentFileGroups(), tail))
 def revertFromTrash():
     file = glf(trashdir)
     ofile(file)
     print(file)
     mfile(file, dldir)
-#ff(dir=dir2023, js=1, text='^(?:import|}).*?[\'\"]\.\/node-utils', flags=re.M)
-
-
 def makeGitIgnore():
     s = """
         */*
@@ -7070,86 +7110,29 @@ def removeDateString(s):
 
 env.basepyref['rlf'] = 'removeLastFile'
 
-def regexFromDict(dict, template=0):
-    if not template:
-        template = '(?:$1)'
-    payload = '|'.join(list(dict.keys()))
-    return re.sub('\$1', payload, template)
-
 def dsearch(s, dict, template=''):
     r = reWrap(dict, template)
     m = search(r, s)
     return dict[m] if m else None
 
-#pprint(dsearch('hiya', {'hi': 'asdasd'}, '^(?:$1)'))
-#append('/home/kdog3682/PYTHON/env.py', join(env.gac))
-#print(toCallable('hi\nbye'))
-
-#alist = ['a', 'b', 'c', 'd', 'e']
-#Partitioner2(alist)()
-
-temp = [
-            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Classwork.pdf",
-            "/mnt/chromeos/MyFiles/Downloads/Grade 4 quizzes.pdf",
-            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Homework.pdf",
-            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Extra Homework.pdf",
-            "/mnt/chromeos/MyFiles/Downloads/Grade 4 Extra AHomework.pdf",
-            "foo",
-]
-
-def sortCwtFiles(s):
-    dict = {
-        'announcement': 5,
-        'extra': 4,
-        'homework': 2,
-        'classwork': 1,
-        'exam': 3,
-        'test': 3,
-        'quiz': 3,
-    }
-    s = tail(s).lower()
-    m = dsearch(s, dict)
-    assert m
-    # Everything needs to be under one of these tags
-    # Everything needs to be prefixed with G4 or G5
-    # It is incrementally more work for everyone ... but it is neater
-    return (m, s)
-
-
-shellCommandResetGit = """
-    git rm -r --cached .;
-    git add .;
-    git commit -m "Untracked files issue resolved to fix .gitignore";
-    git push;
-    # holy shit this was scary.
-    # I thought it deleted everything, but it didnt.
-    # Thank goodness. It merely clears everything out.
-
-"""
-ShellCommands = {
-    'resetGit':  shellCommandResetGit,
-    'foo': '''
-        echo 'hi'
-    ''',
-}
-#SystemCommand(shellCommandResetGit)
-#print(isfile('master.java
-#ff(dir2023, js=1, days=1, text='objectWalk', once=1)
+def resetGit():
+    cmd = """
+        git rm -r --cached .;
+        git add .;
+        git commit -m "Untracked files issue resolved to fix .gitignore";
+        git push;
+        # holy shit this was scary.
+        # I thought it deleted everything, but it didnt.
+        # Thank goodness. It merely clears everything out.
+    """
+    SystemCommand(md)
 
 def readLastReversion():
     f = glf(budir)
     print(fileInfo(f))
 
-#readLastReversion()
-#pprint(glf(drivedir))
-#ofile(glf(drivedir))
 def double(items, f):
     return [(item, f(item)) for item in items]
-
-#pprint(double(alist, lambda x: 3))
-
-#dir = mkdir(dir2023 + 'hammy-math-class/art-contest-3')
-#print(dir)
 
 def isf(f):
     extensions = ['json', 'pdf']
@@ -7161,26 +7144,81 @@ def isf(f):
             if isfile(path):
                 ofile(path)
                 return path
+
 env.basepyref['o'] = 'ofile'
-#ff(dir=oldtxtdir, days=40, name='m\d+\.txt', mode='open')
-#ff(txtdir, mode='open')
-
-
-#backup(temp)
 def normMove(file):
     mfile(normDirPath(file), currentdir)
     
-#normMove('log.json')
-#findFile('log.json')
-#print(read('log.json'))
-#pprint(dirdict)
-
 def mclean(file):
-    def runner(s):
-       r = '^#+ *(.*)'
-       s, b = mget(r, s, flags=re.M)
-       print(b)
-       return 
+    r = f"^{jspy(file, '//')} *(.*)\n*"
 
-    
+    def runner(s):
+       s, items = mget(r, s, flags=re.M, mode=list)
+       prompt(s)
+       if not items:
+           return 
+
+       logger(items=items, file=file)
+       return s
+
     rpw(file, runner)
+
+
+def gitNames(dir):
+    s = SystemCommand('git status --short', dir=dir).success
+    pairs = unique(re.findall('(\S+) (\w+(?:\.\w+)+)', s))
+    store = [[], []]
+    for a,b in pairs:
+        if a == 'M':
+            store[0].append(b)
+        else:
+            store[1].append(b)
+    a, b = store
+    return {
+        'modified': a,
+        'created': b,
+    }
+
+#pprint(gitNames(pydir))
+
+
+
+def gitUrl(dir):
+    repo = tail(dir)
+    return f"https://github.com/{env.githubUser}/{repo}"
+
+def pipInstall(s):
+    cmd = 'abc ' + s
+    print(cmd)
+
+def removeComments(s):
+    return re.sub('^[#/].+\n*', '', s, flags=re.M)
+
+#logger(action='test', c='ddddddddddd', e='gggg', f=1, h=alist)
+#pprint(mclean('/home/kdog3682/PYTHON/utils.js'))
+#mclean('/home/kdog3682/2023/utils.js')
+
+#appendVariable(absdir(colordistdir))
+
+#parseTime('4:57PM')
+#dategetter('4:32pm')
+#pprint(datestamp())
+def createdir(dir, files, mode='copy'):
+   name = dir
+   if isdir(dir):
+       name = os.path.join(dir, datestamp())
+   mkdir(name) 
+   if mode == 'move':
+        map(files, mfile, name)
+   elif mode == 'move':
+        map(files, cfile, name)
+   printdir(name)
+
+#createdir(colordir, ff(dldir, after='4:55PM'), mode='move')
+
+def renameColoringFilesInDir():
+    
+    #data = map(absdir(colordir + datestamp()), lambda x: mfile(x, re.sub(' colo.+?(?=\.pdf)', '', x, flags=re.I)))
+    printdir(colordir + datestamp())
+
+#pprint(gitNames(dir=pydir))

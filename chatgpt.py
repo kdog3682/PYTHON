@@ -36,6 +36,14 @@ function Node2()
 endfunction
 '''
 
+def ask(s):
+    pprint(s)
+    completion = openai.Completion.create(
+        **defaultKwargs, prompt=s, max_tokens=3000
+    )
+    pprint(completion)
+    return completion.choices[0].text
+
 def aiprompt(prompt):
     completion = openai.Completion.create(
         **defaultKwargs, prompt=prompt
@@ -46,7 +54,6 @@ def aiprompt(prompt):
 
 defaultKwargs = dict(
         engine="text-davinci-003",
-        max_tokens=60,
         temperature=0.5,
         top_p=1,
         frequency_penalty=0,
@@ -85,3 +92,4 @@ How many moves will it take Hammy to move all 17 walnuts from Jar A into Jar B?
 """
 
 #pprint(aiprompt(s))
+

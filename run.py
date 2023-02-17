@@ -58,29 +58,54 @@ def python(argv = sys.argv[1:]):
     fn(*args)
 
 
+
+cwtFileDict = {
+    'announcement': 5,
+    'handout': 5,
+    'extra': 4,
+    'homework': 2,
+    'classwork': 1,
+    'exam': 3,
+    'test': 3,
+    'quiz': 3,
+}
+def sortCwtFiles(s):
+    s = tail(s).lower()
+    m = dsearch(s, cwtFileDict)
+    assert m
+    return (m, s)
+
 def buildFiles():
-    base = ff(dldir, week=1, pdf=1)
-    files = Partitioner2(base)()
+    regex = reWrap(cwtFileDict)
+    files = ff(dldir, week=1, pdf=1, regex=regex, flags=re.I, antiregex='test.pdf')
 
     storage = Storage()
+    misc = []
 
     for file in files:
         k = search('g(?:rade)? *(\d+)', file, flags=re.I)
-        assert k
-        storage.add(k, file)
+        if not k:
+            misc.append(file)
+        else:
+            storage.add(k, file)
 
-    store = []
+    data = []
     for k,v in storage.toJSON().items():
-        store.append({
+        data.append({
             'key': k,
             'files': sort(v, sortCwtFiles),
         })
-    return store
+    return [data, misc, files]
+
+def uploadFiles(files):
+    from ga import GoogleDrive
+    drive = GoogleDrive()
+    return [{'id': drive.uploadFile(f), 'file': f} for f in files]
 
 def uploadMaterials(skipClassroom=0, skipEmail=0, official=1):
     from ga import GoogleClassroom, GoogleDrive
 
-    data = buildFiles()
+    data, misc = buildFiles()
     store = []
 
     for item in data:
@@ -97,6 +122,9 @@ def uploadMaterials(skipClassroom=0, skipEmail=0, official=1):
         date = upcomingDate("saturday")
         return f"{subject} {topic} Materials {date}"
     # ------------------------------------------------
+
+    if misc:
+        store.extend(uploadFiles(misc))
 
     payload = {
         "subject": getSubject(),
@@ -301,20 +329,17 @@ def gitPush(file=None, dir=dir2023):
             cleandir(dir2023)
             time.sleep(1)
 
-        message = gitNames(dir)
-        print({"m": message})
+        logger(**gitNames(dir))
 
         time.sleep(1)
         mainCommand = f"""
             cd {dir}
             git add .
-            git commit -m "{message}"
+            git commit -m "'howdy autopush'"
             git push
         """
 
     success = SystemCommand(mainCommand, dir=dir).success
-    if success and not test('nothing to commit', success, flags=re.I):
-        ofile(gitUrl(dir))
 
 
 def gitManager(
@@ -368,72 +393,100 @@ def gitManager(
     SystemCommand(cmd)
 
 
-# gitManager(files=['a.js', 'b.js'], remove=1)
 env.basepyref["gp"] = "gitPush"
 env.basepyref["gd"] = "gitDelete"
 env.basepyref["elf"] = "emailLastFile"
 
-# files = sort(ff(pdfdir2, hours=13), mdate)
-# email(to='work', subject='Additional G4 Materials', files=files, debug=0)
-
-
-def gitNames(dir):
-    cmd = "git diff --name-status"
-    names = SystemCommand(cmd, dir=dir).success
-    return names
-
-
-def gitPushPython():
-    gitPush(dir=pydir)
-
-
-def gitUrl(dir):
-    repo = tail(dir)
-    return f"https://github.com/{env.githubUser}/{repo}"
-
-
 env.basepyref["gi"] = "gitInit"
 env.basepyref["gpy"] = "gitPushPython"
 env.basepyref["fp"] = "filePicker"
-#env.basepyref["google"] = "google @string"
-#env.basepyref["twil"] = "sendTwilio @string"
-
-
 def gitPushAll():
+    raise Exception()
     gitPushPython()
     gitPush()
 
-def PythonController(**kwargs):
-    file = os.path.abspath(apps.__file__)
-    keys = astFunctions(file)
-    key = choose(keys, mode=1)
-    fn = getattr(apps, key)
-    fn()
+def detect_content_type(text):
+    # Check for HTML tags
+    if '<html' in text or '<body' in text or '<div' in text:
+        return 'HTML'
 
-env.basepyref['gpa'] = 'gitPushAll'
-# gitInit()
-# print(ofile(gitUrl(pydir)))
-# print(isRecent(glf(), days=1))
+    code_keywords = ['const', 'function', 'def']
+    #code_keywords = ['def', 'class', 'import', 'return', 'for', 'while', 'if', 'else', 'func]
+    for keyword in code_keywords:
+        if keyword in text:
+            return 'Code'
+
+    return 'Prose'
+
+
+def parseMathcha(state):
+    #unzip(state.file, mathchadir)
+    file = mathchadir + 'index.html'
+    ofile(file)
+
+
+def parseOpenai(state):
+        pprint('in oprogress')
+        data = map(state.data, parseJSON)
+        item = reverseIter(data, runner)
+        if item:
+            return write('chatgpt-generated-html.html', item, 1)
+        #return ofile(file)
+
+smartItems = [
+    {
+        'name': 'online-document',
+        'fn': parseMathcha
+    },
+    {
+        'tail': 'openai.*?json',
+        'fn': parseOpenai,
+    },
+    {
+        'extension': 'html',
+        'fn': lambda state: ofile(state.file)
+    },
+
+    {
+        'extension': 'zip',
+        'fn': lambda state: unzip(state.file, state.name)
+    },
+
+    {
+        'tail': 'resume.*?pdf',
+        'fn': lambda state: mfile(state.file, 'Kevin Lee resume.pdf')
+    },
+]
+class FileState:
+    def __init__(self, file):
+        self.file = file
+        self.tail = tail(file)
+        self.name = removeExtension(self.tail)
+        self.extension = getExtension(file)
+
+    @property
+    def data(self):
+        try:
+            return read(file)
+        except:
+            return 
 
 def smartManager():
     file = glf()
-    name = removeExtension(file)
-    e = getExtension(file)
-    if False:
-        pass
 
-    elif name == 'online-document':
-        unzip(file, mathchadir)
-    elif e == 'zip':
-        unzip(file, name)
-    elif test('resume', name, flags=re.I):
-        mfile(file, 'Kevin Lee resume.pdf')
+    state = FileState(file)
 
+    def runner(item, key):
+        q = item.get(key)
+        if q and test('^' + q, getattr(state, key)):
+            return True
 
+    keys = ['name', 'extension', 'tail', 'file']
+    for item in smartItems:
+        for key in keys:
+            if runner(item, key):
+                return item['fn'](state)
 
-def pipInstall(s):
-    cmd = 'abc ' + s
-    print(cmd)
 
 def addPythonImports(s):
     
@@ -470,4 +523,98 @@ def execPython(s=''):
 
 
 env.basepyref['pac'] = 'pythonAppController'
+env.basepyref['sm'] = 'smartManager'
+#pprint(smartManager())
+
+
+exclude = ['decimals', 'percentages', 'exponents', 'square roots']
+chatgptPrompts = f"""
+#Samantha walks a total of 2/3 miles to and from school every day. Finish the text for this math question. Create 4 possible answer choices. Only one of them should be correct. Output the results in a json containing keys: "problem", "choices", "answer."
+
+Use the following instructions for all further prompts. The instructions are: Finish the text for the math question based on the given prompt. Then, create 4 possible answer choices. Only one answer choice should be correct. Output the results in a json containing keys: "problem", "choices", "answer", and "tags". The tags should describe what type of math question it is.
+
+If the problem incorporates a table, do not write the table in the problem. Rather, incorporate the table as data under a "data" key.
+
+When generating the problem, do not use {', '.join(exclude)}.
+
+
+If the question or answer or choices include math, write them as latex.
+Always output the result in a json object.
+
+
+What is this insane magic ...
+What is this absolute insanity ...
+
+If a job can be automated ...
+
+"""
+def reverseIter(items, f):
+    for i in range(len(items) -1, -1, -1):
+        item = items[i]
+        result = f(item)
+
+        if result == True:
+            return item
+        elif result == False:
+            return 
+
+def opener(s):
+    s = removeComments(s).strip()
+    return write('ofile.js', s, 1)
+
+#opener(chatgptPrompts)
+
+#pprint(smartManager())
+
+def getChatGptPrompt():
+    def runner(x):
+        s = x.group(0)
+        return stringify(eval(s))
+    s = read('/home/kdog3682/2023/chatgpt.txt')
+    s = removeComments(smartDedent(s))
+    s = re.sub('(?<== ).+', runner, s)
+    s += '\n'
+    s += '\n'
+    s += 'Output the results in json list form.'
+    return s
+
+def runChatgpt():
+    cmd = getChatGptPrompt()
+    from chatgpt import ask
+    data = ask(cmd)
+    pprint(data)
+
+def previewMaterials():
+    data, misc, files = buildFiles()
+    ofile(files)
+
+
+#previewMaterials()
+env.basepyref['pm'] = 'previewMaterials'
+#pprint(runChatgpt())
+
+
+def masterFileInfo(dir=dir2023):
+    files = sorted(absdir(dir))
+    def runner(f):
+        name = tail(f)
+        date = datestamp(f)
+        size = fsize(f)
+        return {
+            "name": tail(f),
+            "size": fsize(f),
+            "date": date,
+            "extension": getExtension(f)
+        }
+    payload = map(files, runner)
+    outpath = tail(dir) + '.directory.json'
+    write(outpath, payload, True)
+
+
+def gitPushPython():
+    gitPush(dir=pydir)
+
+#masterFileInfo()
+#pprint(len(map(filter(read('2023.directory.json'), lambda x: x.get('extension')=='js'), lambda x: x.get('name'))))
+env.basepyref['gpy'] = 'gitPushPython'
 python()
