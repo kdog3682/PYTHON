@@ -142,7 +142,7 @@ def queryHelper(key, mode=0):
 
 
 class GoogleDrive:
-    def downloadFile(self, x=0):
+    def downloadFile(self, x=0, outpath=0):
         if isObject(x):
             file = x
         elif isString(x):
@@ -151,9 +151,8 @@ class GoogleDrive:
             file = self.getFiles2()
 
         fileId = file.get('id')
-        fileName = npath(dldir, file.get('name'))
-        fileName = removeDateString(fileName)
-        fileName = addExtension(fileName, 'pdf')
+        fileName = outpath or removeDateString(file.get('name'))
+        fileName = addExtension(npath(dldir, fileName), 'pdf')
 
         r = self.files.export(
             fileId=fileId, mimeType="application/pdf"
@@ -320,9 +319,32 @@ class GoogleClassroom:
         resource["materials"] = materials
         return resource
 
-    def createCourseWork(self, resource):
+    def getStudentId(self, name):
+        student = find(self.studentList, lambda x: x.get('name') == name)
+        if student:
+            return student.get('id')
+
+    def createCourseWork(self, resource, individualStudents=0):
+
+        assigneeMode = 'ALL_STUDENTS'
+        individualStudentOptions = None
+
+        if individualStudents:
+            print("this is an individual coursework for", individualStudents)
+            assigneeMode = 'INDIVIDUAL_STUDENTS' 
+            self.studentList = self.getStudents()
+            ids = map(xsplit(individualStudents), self.getStudentId)
+            ids = filter(ids)
+            if not ids:
+                raise Exception('no ids found for individual students')
+            individualStudentOptions = {
+                'studentIds': ids
+            }
+        
         return self.courseWork.create(
-            courseId=self.courseId, body=resource
+            courseId=self.courseId, body=resource,
+            assigneeMode=assigneeMode,
+            individualStudentOptions=individualStudentOptions
         ).execute()
 
     def onlyEmail(self, files):
@@ -421,12 +443,14 @@ class GoogleClassroom:
         skipClassroom = self.skipClassroom or isSkippable(name)
         fileId = self.drive.uploadFile(file)
         print('Uploaded File to GoogleDrive:', name)
+        nameRE = '^(?:Ella Wu|Dianna Huang)
+        individual = search(nameRE, name)
 
         if skipClassroom:
             print('Skipping Classroom', name)
         else:
             resource = self.createResource(file, fileId)
-            response = self.createCourseWork(resource)
+            response = self.createCourseWork(resource, individual)
             print('Created GoogleClassroom Coursework')
 
         return {
@@ -572,9 +596,7 @@ class GoogleClassroom:
 
         self.defaultAssignmentPoints = 100
         self.date = upcomingDateObject("saturday")
-        self.creationReference = (
-            normRead("creation.json") or {}
-        )
+        self.creationReference = {}
         self.differentVersionForOnlineStudents = False
 
         self.labelFileDate = False
@@ -1049,7 +1071,6 @@ def getMime(s):
 
 
 def googleDriveDownloadFile(self, file):
-    prompt(file)
     fileId = file.get("id")
     name = file.get("name")
     mimeType = "application/pdf"
@@ -1206,3 +1227,18 @@ def isSkippable(name):
     if test(r, name, re.I):
         return True
 
+class GoogleApp:
+    def __init__(self):
+        self.drive = GoogleDrive()
+
+    def openDoc(self, name):
+        file = self.drive.getFiles2(name=name)
+        url = f"https://docs.google.com/document/d/{file.get('id')}"
+        ofile(url)
+
+    def downloadDoc(self, name, outpath=0):
+        self.drive.downloadFile(name, outpath)
+    
+#GoogleApp().openDoc('$1')
+#GoogleApp().downloadDoc('$1', '$2')
+#pprint(snapshotOfDirectory())

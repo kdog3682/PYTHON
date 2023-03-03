@@ -14,6 +14,7 @@ pdfdict = {
     "ff": "/home/kdog3682/PDFS/Nihan Math Notes.pdf",
     "gg": "/home/kdog3682/PDFS/G6M 501 Word Problems.pdf",
     "hh": "/home/kdog3682/PDFS/Olenych Math 2 - Fractions.pdf",
+    "bob": "/home/kdog3682/PDFS/Olenych Math 2 - Fractions.pdf",
     "ii": "/home/kdog3682/PDFS/Hugel Math - Fractions.pdf",
     "hugel": "/home/kdog3682/PDFS/Hugel Math - Fractions.pdf",
     "jj": "/home/kdog3682/PDFS/G4M Workbook 2.pdf",
@@ -193,7 +194,7 @@ def pikeOpen(f=0):
 
 
 def fixDest(s):
-    s = re.sub("\bg(?=\d)", "Grade ", s)
+    s = re.sub("\\bg(?=\d)", "Grade ", s)
     s = re.sub(" *ehw", " Extra Homework", s)
     s = re.sub(" *hw", " Homework", s)
     s = re.sub(" *q", " Quiz", s)
@@ -250,9 +251,12 @@ def save(pdf, outpath="test", dir=dldir, openIt=1):
                 "outpath is neither string nor pdf"
             )
 
+    #prompt(outpath, 'doing the outpath')
     outpath = fixDest(outpath)
     outpath = addExtension(outpath, "pdf")
     outpath = npath(dir, outpath)
+    prompt(outpath, 'doing the outpath')
+    
 
     pdf.save(outpath)
     if openIt:
@@ -1067,4 +1071,136 @@ def pictureBook():
     mergepdf(dir, outpath='Coloring Handouts')
 
 #mergepdf(reverse(mostRecentFileGroups(minutes=2)), lambda x: x.pages[0])
-# Used for something which Im not too sure of.
+#mergepdf(reverse(mostRecentFileGroups()), outpath='g4cw')
+# Takes the last pdf group from dldir and combines them together. 
+# It is important to do it in reverse so that the first downloaded items go first.
+
+
+def bobThenHugel():
+    s = "13 14 17    15 14"
+    a, b = map(split(s, '   +|\|')[0:2], rangeFromString)
+    A = pdfFromIndexes('bob', a)
+    B = pdfFromIndexes('hugel', b)
+    mergepdf([A, B], outpath='g4hw')
+
+#bobThenHugel()
+
+def classworkThenHomework():
+    files = reverse(mostRecentFileGroups())
+    a, b = splitInHalf(files)
+    mergepdf(a, outpath='g5cw')
+    mergepdf(b, outpath='g5hw')
+
+#classworkThenHomework()
+#snapshotOfDirectory()
+
+
+Adding and Subtracting Decimals
+
+It is just like regular addition and subtraction.
+The only difference is there is a dot.
+
+2.3 - 1.1
+
+Basically, this question is the same as 23 - 11.
+
+23 - 11 = 12.
+
+So for 2.3 - 1.1, the answer will be 12 with 1 decimal point.
+The answer is 1.2.
+
+Example 2
+23.45
+12.34
+
+When you do this question, 
+Do it just like normal addition.
+
+When you come to the decimal point, write the decimal point, and then keep going.
+
+
+Example 3
+
+23.45
+12.34
+11.00
+12.34
+
+It looks scary, but just take it one column at a time.
+It's just normal addition with an extra decimal dot.
+
+Multiplying Decimals
+
+
+Before we do multiplying decimals, let's review 
+
+What does 2 million times 3 million equal?
+
+2,000,000 times 3,000,000.
+
+Step 1. Take out lots of extra paper because these are really big numbers.
+
+But I don't have any extra scratch paper.
+
+In that case, we will have to do it in our heads.
+
+Step 1. Do 2 times 3.
+
+2 times 3 = 6.
+
+Step 2. Count up all the zeroes.
+
+There are 1,2,3,4,5,6,7,8,9,10,11,12 zeroes in total.
+The first 2 million has 6 zeroes. 
+The second 2 million has 6 zeroes.
+
+Step 3. Put it all together.
+
+Does that mean the final answer is 6 with 12 zeroes?
+
+That's correct $.
+The answer is 6,000,000,000,000. (pronounced 6 trillion)
+
+What does 10 times 200 times 3,000 equal?
+
+This question looks scary, but it's not.
+Forget about the zeroes.
+Put them into your pocket.
+
+But I don't have any pockets.
+
+Fine. Put them into your backpack.
+
+Okay, they are in my backpack. 
+
+Now, do 1 times 2 times 3.
+
+That equals 6.
+
+Now take the zeroes out of your backpack, and put them back onto the 6.
+
+In total, there is 1 zero from the 10, 2 zeroes from 200, and 3 zeroes from 3000. That's 6 zeroes.
+
+The final answer is 6 with 6 zeroes also known as 6 million. (6,000,000)
+
+
+
+a * b
+
+
+
+
+
+This is the exception. 
+
+
+
+s = """
+
+bim4:
+
+
+105 107 183
+
+g5cw 172 175-178
+"""

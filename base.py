@@ -1,4 +1,5 @@
-alist = ['a', 'b', 'c']
+alist = ['a', 'b', 'c', 'd']
+glogfile = '/home/kdog3682/2023/log.json'
 gunkExtensions = ['recent', 'mp3', 'ass', 'eps', 'zip', 'url', 'gz', 'backup', 'webp', 'asy', 'vcf', 'js']
 pdfdir2 = "/home/kdog3682/PDFS2/"
 archdir = "/mnt/chromeos/GoogleDrive/MyDrive/ARCHIVES/"
@@ -88,6 +89,7 @@ fontdir = "/home/kdog3682/CWF/public/fonts/"
 jchdir = "/home/kdog3682/CWF/jch/"
 pubdir = "/home/kdog3682/CWF/public/"
 budir = "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/"
+tempbudir = "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/TEMP/"
 
 bucurdir = (
     "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/CURRENT/"
@@ -363,7 +365,7 @@ def isfile(f):
     return os.path.isfile(abspath(f))
 
 def isdir(f):
-    return os.path.isdir(f)
+    return isString(f) and os.path.isdir(f)
     return os.path.isdir(os.path.expanduser(f))
 
 def toSeconds(
@@ -461,11 +463,16 @@ def mfiles(files, dir, fn=0):
             dir = fn(dir + fn(tail(f)))
         mfile(f, dir)
 
-def cfiles(files, dir):
+def cfiles(files, dir, ask=0):
+
+    if ask:
+        prompt(files, tempbudir, 'are you sure you want to copy these files and overwrite existing files in the directory?')
+
     mkdir(dir)
-    assert isdir(dir)
     for f in files:
         cfile(f, dir)
+    if ask:
+        printdir(dir)
 
 def cfile(f, t):
     mfile(f, t, mode="copy")
@@ -683,7 +690,7 @@ def find(arr, fn, mode=None, flags=0):
         if ftest(fn, item, flags=flags):
             return i if mode == int else item
 
-def _config(s):
+def createKwargs(s):
     if not s:
         return {}
 
@@ -750,7 +757,7 @@ def configurable(fn):
     def wrapper(s="", **bargs):
         if s:
             s += " of"
-        kwargs = _config(s)
+        kwargs = createKwargs(s)
         kwargs.update(bargs)
         return fn(**kwargs)
 
@@ -844,6 +851,10 @@ def join(*args, delimiter="\n"):
 
     return backspace(s) if delimiter else s
 
+def moveClipToLogJson(key):
+    value = clip()
+    logger(key=key, value=value)
+
 def logger(**kwargs):
     if not kwargs:
         return 
@@ -855,8 +866,8 @@ def logger(**kwargs):
     entries = sort(kwargs.items(), lambda x: len(json.dumps(x)))
     for a,b in entries:
         store[a] = b
-    
-    appendjson('log.json', store, mode=list)
+
+    appendjson(glogfile, store, mode=list)
 
 def backup(f):
     if isArray(f):
@@ -1604,6 +1615,7 @@ def isSameDate(date, f):
 def checkpointf(
     deleteIt=0,
     include="",
+    maxLength=0,
     image=0,
     today=0,
     flags=re.I,
@@ -1628,6 +1640,7 @@ def checkpointf(
     small=0,
     before=0,
     after=0,
+    minLength=0,
     minutes=0,
     days=0,
     hours=0,
@@ -1725,7 +1738,7 @@ def checkpointf(
         if antiregex and test(antiregex, filename, flags=flags):
             return False
 
-        if name and not test(name, filename, flags=re.I):
+        if name and not test(name, filename, flags=flags):
             return False
 
         e = getExtension(filename)
@@ -1748,6 +1761,12 @@ def checkpointf(
         if onlyFolders:
             if isdir(f):
                 return 1
+            return False
+
+        if maxLength and isString(f) and len(f) > maxLength:
+            return False
+
+        if minLength and isString(f) and len(f) < minLength:
             return False
 
         if biggerThan and fsize(f) < biggerThan:
@@ -4181,18 +4200,17 @@ def sliceDict(d, n=10):
         return dict(itertools.islice(d.items(), n))
     return d[:10]
 
-def changeFileName(name, newName, dir=0):
-    if not newName:
-        return name
-    head, tail = os.path.split(name)
+def changeFileName(file, newName=0, dir=0):
+
+    if not newName: newName = prompt(file, "new name?")
+    head, tail = os.path.split(file)
+    if dir: head = dir
 
     if isFunction(newName):
         newName = newName(removeExtension(tail))
 
-    e = getExtension(tail)
-    return os.path.join(
-        dir or head, addExtension(newName, e)
-    )
+    newName = addExtension(newName, getExtension(tail))
+    return os.path.join(head, newName)
 
 def lendir(s):
     print(len(listdir(s)))
@@ -4577,9 +4595,9 @@ def googleSearchQuery(s):
 def revertFile():
     print("getting file from budir", budir)
     file = mostRecent(budir)
-    d = dirdict.get(getExtension(file))
-    prompt(fileInfo(file, r=1), d)
-    cfile(file, d)
+    dir = dirFromFile(tail(file))
+    prompt(fileInfo(file, r=1), dir)
+    cfile(file, dir)
 
 def revert(file=0, vim=0, increment=0, dir=0, ask=0):
     if not file:
@@ -4599,7 +4617,7 @@ def revert(file=0, vim=0, increment=0, dir=0, ask=0):
         dir = dirFromFile(file)
 
     outpath = name or dir
-    prompt("outpath", outpath)
+    prompt("outpath", outpath, 'hiya')
     if vim:
         appendVim("filedict", outpath)
     cfile(file, outpath)
@@ -5276,9 +5294,9 @@ def ff(
 
     elif mode == "print":
         sort = True
-    dir = dirgetter(dir)
-    #raise Exception(dir)
-    rawFiles = absdir(dir)
+
+    rawFiles = dir if isArray(dir) else absdir(dirgetter(dir)) 
+
     checkpoint = checkpointf(**kwargs)
     if once:
         return find(rawFiles, checkpoint)
@@ -5302,6 +5320,9 @@ def ff(
         printdir(dir)
     elif mode == "print":
         map(files, fileInfo)
+    elif mode == "delete":
+        prompt(map(files, tail), 'delete?')
+        map(files, rfile)
     elif mode == "cleanup":
         cleanfiles(files)
     elif mode == "open" or mode == "o":
@@ -5362,10 +5383,10 @@ def makeEmojis():
     # build the links perhaps
     ################################################
 
-def changeFileName2(file, dir=pubdir, newName=0):
-    return dir + addExtension(
-        newName or prompt("name?"), getExtension(file)
-    )
+def changeFileName2(file, dir=0, newName=0):
+    if not newName: newName = prompt(file, "new name?")
+    if not dir: dir = head(file)
+    return npath(dir, addExtension(newName, getExtension(file)))
 
 def gfn():
     def dateSearch(s):
@@ -5639,7 +5660,12 @@ def toJSON(x):
 def getTime():
     return int(datetime.timestamp(datetime.now()))
 
-def mostRecentFileGroups(dir=dldir, targetIndex=3, minutes=10):
+def getFileName(file):
+    return removeExtension(tail(file))
+
+def mostRecentFileGroups(dir=dldir, minutes=3):
+    ignore = ['Grade Reports']
+
     #storage = PageStorage()
     files = ff(dir, sort=1, reverse=1)
     store = []
@@ -5648,6 +5674,8 @@ def mostRecentFileGroups(dir=dldir, targetIndex=3, minutes=10):
     lastDate = 0
 
     for i, file in enumerate(files):
+        if getFileName(file) in ignore:
+            continue
         date = mdate(file)
         name = tail(file)
         if test(ignoreRE, name):
@@ -7217,8 +7245,59 @@ def createdir(dir, files, mode='copy'):
 #createdir(colordir, ff(dldir, after='4:55PM'), mode='move')
 
 def renameColoringFilesInDir():
-    
     #data = map(absdir(colordir + datestamp()), lambda x: mfile(x, re.sub(' colo.+?(?=\.pdf)', '', x, flags=re.I)))
     printdir(colordir + datestamp())
 
 #pprint(gitNames(dir=pydir))
+#pprint(ff(txtdir, name='hash'))
+
+#pprint(glf(budir))
+#moveClipToLogJson(key='gradeRef')
+#s = linegetter(SystemCommand('git ls-tree --full-tree --name-only -r HEAD').success)
+#pprint(s)
+
+#ff(name='test')
+#pprint(changeFileName(npath(dldir, 'test.pdf'), lambda x: 'foo' + x))
+def renameFile(input, output):
+    outpath = changeFileName(input, output)
+    mfile(input, outpath)
+    ofile(outpath)
+
+def numbered(items, title=''):
+    if title: title = '  ' + title + '\n'
+    s = '\n' + title + '\n'
+    for i, item in enumerate(items):
+        spaces = '  ' if i < 9 else ' '
+        s += '  ' + str(i + 1) + '.' + spaces + item + '\n'
+    return s
+
+def snapshotOfDirectory(dir=dldir, amount=10):
+   os.chdir(dir)
+   items = sorted(os.listdir(dir), key=mdate, reverse=True)[0:amount]
+   return numbered(items, title='FILES IN: ' + dir)
+
+def dlf():
+    rfile(glf())
+
+def splitInHalf(items):
+    import math
+    halfPoint = math.floor(len(items) / 2)
+    return items[0:halfPoint], items[halfPoint:]
+
+#print(snapshotOfDirectory())
+
+#pprint(findFile('Student Grade Reports.pdf'))
+
+def deprecateFile(file):
+    newFile = changeExtension(file, 'deprecated.' + getExtension(file))
+    prompt(file, newFile)
+    mfile(file, newFile)
+
+def ffApp(s):
+    ff(**createKwargs(s))
+
+#pprint(isfile('data-parsers.js'))
+env.basepyref['dep'] = 'deprecateFile'
+#ffWrapper('name=dep')
+env.basepyref['ff'] = 'ffApp'
+

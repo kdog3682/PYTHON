@@ -1,4 +1,9 @@
+chatgptjsonfile = '/home/kdog3682/2023/chatgpt.json'
+departurejsonfile = '/home/kdog3682/2023/departures.json'
+
+
 from base import *
+from announce import announce
 import time
 import inspect
 import env
@@ -68,6 +73,7 @@ cwtFileDict = {
     'exam': 3,
     'test': 3,
     'quiz': 3,
+    'report': 6,
 }
 def sortCwtFiles(s):
     s = tail(s).lower()
@@ -84,10 +90,10 @@ def buildFiles():
 
     for file in files:
         k = search('g(?:rade)? *(\d+)', file, flags=re.I)
-        if not k:
-            misc.append(file)
-        else:
+        if k and not test('announcement|report', file, flags=re.I):
             storage.add(k, file)
+        else:
+            misc.append(file)
 
     data = []
     for k,v in storage.toJSON().items():
@@ -95,17 +101,28 @@ def buildFiles():
             'key': k,
             'files': sort(v, sortCwtFiles),
         })
+    prompt({
+        'all-files': files,
+        'data': data,
+        'misc': misc,
+        'caller': 'buildFiles',
+    })
     return [data, misc, files]
 
 def uploadFiles(files):
     from ga import GoogleDrive
+    def fixName(s):
+        return removeExtension(tail(s))
     drive = GoogleDrive()
-    return [{'id': drive.uploadFile(f), 'file': f} for f in files]
+    return [{'id': drive.uploadFile(f), 'name': fixName(f)} for f in files]
 
-def uploadMaterials(skipClassroom=0, skipEmail=0, official=1):
+
+
+def uploadMaterials(skipClassroom=0, skipEmail=0, official=1, fileData=0):
     from ga import GoogleClassroom, GoogleDrive
 
-    data, misc = buildFiles()
+    data, misc, all = fileData or buildFiles()
+    assert data
     store = []
 
     for item in data:
@@ -138,10 +155,15 @@ def uploadMaterials(skipClassroom=0, skipEmail=0, official=1):
         print('Done. Skipping email.')
         return 
 
-    prompt(payload)
+    prompt('We always prompt the payload before going to google emails', payload)
     googleAppScript("Action", "courseWork", payload)
 
+    gmailsenturl = "https://mail.google.com/mail/u/0/#sent"
+    ofile(gmailsenturl)
+    clear(departurejsonfile)
+
 def cwtBuildNecessaryFiles(grades=[4, 5]):
+    print("'this is kind of deprecated ... as the systems get better and better")
 
     extraFiles = [
         # "G4 & G5 Math Report Cards.pdf",
@@ -151,6 +173,7 @@ def cwtBuildNecessaryFiles(grades=[4, 5]):
         # "Midterm 1 Scores",
         # "Final Exam Scores",
         # "Report Cards",
+        "Grade Reports",
     ]
     baseFiles = [
         "Exam",
@@ -308,7 +331,7 @@ def gitPushObject(obj):
     print(obj)
 
 def gitPush(file=None, dir=dir2023):
-    if file:
+    if file and isfile(file):
         if getExtension(file) == 'py':
             dir = pydir
         message = prompt('running gitPush', pydir, file, "upload message: ")
@@ -324,22 +347,32 @@ def gitPush(file=None, dir=dir2023):
             git push
         """
     else:
+        fallbackMessage = 'howdy autopush'
+        message = None
+        if file:
+            message = file
+
         if dir == dir2023:
             print("cleaning dir2023")
             cleandir(dir2023)
             time.sleep(1)
 
-        logger(**gitNames(dir))
+        nameObject = gitNames(dir)
 
         time.sleep(1)
         mainCommand = f"""
             cd {dir}
             git add .
-            git commit -m "'howdy autopush'"
+            git commit -m "'{message or fallbackMessage }'"
             git push
         """
 
-    success = SystemCommand(mainCommand, dir=dir).success
+    response = SystemCommand(mainCommand, dir=dir)
+    gitData = {
+        'success': response.success,
+        'error': response.error,
+    }
+    logger(**nameObject, action='gitpush', message=message, gitData=gitData)
 
 
 def gitManager(
@@ -424,10 +457,24 @@ def parseMathcha(state):
     file = mathchadir + 'index.html'
     ofile(file)
 
+def filter2023(items, fn=0, **kwargs):
+    checkpoint = fn if fn else checkpointf(**kwargs)
+    return [item for item in items if checkpoint(item)]
+
 
 def parseOpenai(state):
-        pprint('in oprogress')
-        data = map(state.data, parseJSON)
+        raw = map(state.data, parseJSON)
+        data = filter2023(raw, lambda x: not isPrimitive(x))
+        if every(data, lambda x: len(x.keys()) == 1):
+            key = list(data[0].keys())[0]
+            if every(data, lambda x: key in x):
+                pprint('hi')
+                payload = flat(map(data, lambda x: x.get(key)))
+                return clip(payload)
+            else:
+                raise Exception()
+
+        return pprint(data)
         item = reverseIter(data, runner)
         if item:
             return write('chatgpt-generated-html.html', item, 1)
@@ -463,12 +510,14 @@ class FileState:
         self.tail = tail(file)
         self.name = removeExtension(self.tail)
         self.extension = getExtension(file)
+        pprint(self.file)
 
     @property
     def data(self):
         try:
-            return read(file)
-        except:
+            return read(self.file)
+        except Exception as e:
+            print(str(e))
             return 
 
 def smartManager():
@@ -508,6 +557,8 @@ def pythonAppController():
 def googleAppController():
     items = split(smartDedent(env.gac), '\n+')
     s = dollarPrompt(items)
+    return googleAppScript(f"Finish({s})")
+
     name, args, kwargs = getNameArgsKwargs(s)
     command = stringCall('Action2', quote(name), kwargs, *args)
     pprint(dict(command=command))
@@ -578,18 +629,39 @@ def getChatGptPrompt():
     s += 'Output the results in json list form.'
     return s
 
-def runChatgpt():
-    cmd = getChatGptPrompt()
+def runChatgpt(cmd=0):
+    debug = 1
+    if not cmd: 
+        cmd = getChatGptPrompt()
+        debug = 0
+
     from chatgpt import ask
-    data = ask(cmd)
-    pprint(data)
+    response = ask(cmd).strip()
+    payload = {
+        'prompt': cmd,
+        'response': response,
+    }
+
+    if debug:
+        print(response)
+    else:
+        appendjson(chatgptjsonfile, payload, mode=list)
+
 
 def previewMaterials():
+    try:
+        fileData = read(departurejsonfile)
+        if exists(fileData):
+            return uploadMaterials(fileData=fileData)
+    except Exception as e: 
+        pass
+
     data, misc, files = buildFiles()
     ofile(files)
+    if prompt(files, 'ready for departure?'):
+        write(departurejsonfile, [data, misc, files])
 
 
-#previewMaterials()
 env.basepyref['pm'] = 'previewMaterials'
 #pprint(runChatgpt())
 
@@ -617,4 +689,22 @@ def gitPushPython():
 #masterFileInfo()
 #pprint(len(map(filter(read('2023.directory.json'), lambda x: x.get('extension')=='js'), lambda x: x.get('name'))))
 env.basepyref['gpy'] = 'gitPushPython'
+def copyToBrowser(s):
+    return write(dldir + 'ofile.js', removeComments(s).strip(), 1)
+
+def temporaryBackup(state):
+    announce()
+    pprint(state)
+    files = ff(state.get('buffers'), js=1, biggerThan=100)
+    cfiles(files, tempbudir, ask=1)
+
+
 python()
+#smartManager()
+
+#runChatgpt("""
+#Explain what the function below does:
+#def copyToBrowser(s):
+    #return write(dldir + 'ofile.js', removeComments(s).strip(), 1)
+#""")
+
