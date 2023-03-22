@@ -6743,6 +6743,7 @@ def readjs(*args):
 
 
 def cleandir(dir):
+    print('cleaning the dir', dir)
     map(filter(absdir(dir), alwaysDelete), rfile)
 
 def renameLastFile(file = 'Extra Worksheet'):

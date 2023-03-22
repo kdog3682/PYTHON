@@ -378,6 +378,7 @@ def gitPushObject(obj):
 
 def gitPush(file=None, dir=dir2023):
     if file and isfile(file):
+        print("this only happens if there is a file")
         if getExtension(file) == 'py':
             dir = pydir
         message = prompt('running gitPush', pydir, file, "upload message: ")
@@ -398,8 +399,7 @@ def gitPush(file=None, dir=dir2023):
         if file:
             message = file
 
-        if dir == dir2023:
-            print("cleaning dir2023")
+        if dir == dir2023 or dir == pydir:
             cleandir(dir2023)
             time.sleep(1)
 
