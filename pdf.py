@@ -2,6 +2,7 @@ from base import *
 import time
 import fitz
 from pikepdf import Pdf
+chdir(dldir)
 
 pdfdict = {
     "aa": "/home/kdog3682/PDFS/math5.pdf",
@@ -13,6 +14,7 @@ pdfdict = {
     "ee": "/home/kdog3682/PDFS/WS Maylynn Math.pdf",
     "ff": "/home/kdog3682/PDFS/Nihan Math Notes.pdf",
     "gg": "/home/kdog3682/PDFS/G6M 501 Word Problems.pdf",
+
     "hh": "/home/kdog3682/PDFS/Olenych Math 2 - Fractions.pdf",
     "bob": "/home/kdog3682/PDFS/Olenych Math 2 - Fractions.pdf",
     "ii": "/home/kdog3682/PDFS/Hugel Math - Fractions.pdf",
@@ -21,6 +23,7 @@ pdfdict = {
     "kk": "/home/kdog3682/PDFS/G3M BIM Workbook.pdf",
     "bim3": "/home/kdog3682/PDFS/G3M BIM Workbook.pdf",
     "ll": "/home/kdog3682/PDFS/Olenych Math 1 - Number Sense.pdf",
+    "bob1": "/home/kdog3682/PDFS/Olenych Math 1 - Number Sense.pdf",
     "mm": "/home/kdog3682/PDFS/G4M Mcgraw Workbook.pdf",
     "nn": "/home/kdog3682/PDFS/G5M Mcgraw Workbook.pdf",
     "oo": "/home/kdog3682/PDFS/G9M Exeter Workbook.pdf",
@@ -254,10 +257,9 @@ def save(pdf, outpath="test", dir=dldir, openIt=1):
     #prompt(outpath, 'doing the outpath')
     outpath = fixDest(outpath)
     outpath = addExtension(outpath, "pdf")
-    outpath = npath(dir, outpath)
-    prompt(outpath, 'doing the outpath')
-    
-
+    if dir:
+        outpath = npath(dir, outpath)
+    #prompt(outpath, 'doing the outpath')
     pdf.save(outpath)
     if openIt:
         ofile(outpath)
@@ -520,7 +522,7 @@ def pikeMetaData(pdf):
 
 
 def k5learning(grade=5):
-    group = mostRecentFileGroups()
+    group = reverse(mostRecentFileGroups(minutes=2))
     pdfs = map(group, sliceStartEnd, end=1)
     mergepdf(
         pdfs,
@@ -542,7 +544,6 @@ BLACK = [0, 0, 0]
 
 
 def whiteTheMargin(page, top=0, bottom=0, left=0, right=0):
-
 
     color = WHITE
     fill = WHITE
@@ -801,7 +802,6 @@ def sliceStartEnd(src, start=0, end=0, get=0):
     return src
 
 
-chdir(dldir)
 
 # pprint(build_homework_files())
 # that in this state ... I am not really talkative ...
@@ -1059,6 +1059,8 @@ def opdf(f):
 
 
 def whiteThePages(pdf, ignore=[], **kwargs):
+    if isString(pdf):
+        pdf = fitzOpen(pdf)
     for i, page in enumerate(pdf):
         if i not in ignore:
             whiteTheMargin(page, **kwargs)
@@ -1086,7 +1088,7 @@ def bobThenHugel():
 #bobThenHugel()
 
 def classworkThenHomework():
-    files = reverse(mostRecentFileGroups())
+    files = mostRecentFileGroups()
     a, b = splitInHalf(files)
     mergepdf(a, outpath='g5cw')
     mergepdf(b, outpath='g5hw')
@@ -1095,112 +1097,161 @@ def classworkThenHomework():
 #snapshotOfDirectory()
 
 
-Adding and Subtracting Decimals
-
-It is just like regular addition and subtraction.
-The only difference is there is a dot.
-
-2.3 - 1.1
-
-Basically, this question is the same as 23 - 11.
-
-23 - 11 = 12.
-
-So for 2.3 - 1.1, the answer will be 12 with 1 decimal point.
-The answer is 1.2.
-
-Example 2
-23.45
-12.34
-
-When you do this question, 
-Do it just like normal addition.
-
-When you come to the decimal point, write the decimal point, and then keep going.
+#k5learning(4)
 
 
-Example 3
+data = [
+  {
+    "classKey": "g5hw",
+    "items": [
+      {
+        "fileKey": "bim4",
+        "indexes": [
+          172,
+          175,
+          176,
+          177,
+          178
+        ]
+      }
+    ]
+  },
+  {
+    "classKey": "g5cw",
+    "items": [
+      {
+        "fileKey": "bim5",
+        "indexes": [
+          131,
+          137,
+          138,
+          139,
+          140
+        ]
+      }
+    ]
+  },
+  {
+    "classKey": "g4hw",
+    "items": [
+      {
+        "fileKey": "bim5",
+        "indexes": [
+          115,
+          165,
+          177,
+          178,
+          181
+        ]
+      }
+    ]
+  }
+]
 
-23.45
-12.34
-11.00
-12.34
+pystring = '''
+bob:
+g4hw 23-25
+'''
+def buildFromJavascript():
+    def runner(item):
+        return pdfFromIndexes(item.get('fileKey'), item.get('indexes'))
+    
 
-It looks scary, but just take it one column at a time.
-It's just normal addition with an extra decimal dot.
+    data = JavascriptAppCommand(key='pdfIni', arg=pystring)
+    assert data
 
-Multiplying Decimals
+    for item in data:
+        assignmentName = fixDest(item.get('classKey'))
+        # this is not necessary to fix because save will fix it.
+        # save kind of handles all of it.
+        assert(assignmentName)
+        children = map(item.get('items'), runner)
+        assert children
+        mergepdf(children, outpath=assignmentName)
 
+#buildFromJavascript()
 
-Before we do multiplying decimals, let's review 
+def getStateExams(name):
+    dict = {
+        'texas': '8-27',
+        'california': '7-29',
+    }
 
-What does 2 million times 3 million equal?
+    files = mostRecentFileGroups(minutes=1)
 
-2,000,000 times 3,000,000.
+    def runner(file):
+        grade = search('gr?(?:ade)?-?(\d+)', file, flags=re.I)
+        
+        assert grade
 
-Step 1. Take out lots of extra paper because these are really big numbers.
+        outpath = f"G{grade} {capitalize(name)} State Exam"
+        indexes = dict.get(name)
 
-But I don't have any extra scratch paper.
+        pdf = pdfFromIndexes(file, indexes)
+        save(pdf, outpath=outpath)
 
-In that case, we will have to do it in our heads.
+    map(files, runner)
 
-Step 1. Do 2 times 3.
-
-2 times 3 = 6.
-
-Step 2. Count up all the zeroes.
-
-There are 1,2,3,4,5,6,7,8,9,10,11,12 zeroes in total.
-The first 2 million has 6 zeroes. 
-The second 2 million has 6 zeroes.
-
-Step 3. Put it all together.
-
-Does that mean the final answer is 6 with 12 zeroes?
-
-That's correct $.
-The answer is 6,000,000,000,000. (pronounced 6 trillion)
-
-What does 10 times 200 times 3,000 equal?
-
-This question looks scary, but it's not.
-Forget about the zeroes.
-Put them into your pocket.
-
-But I don't have any pockets.
-
-Fine. Put them into your backpack.
-
-Okay, they are in my backpack. 
-
-Now, do 1 times 2 times 3.
-
-That equals 6.
-
-Now take the zeroes out of your backpack, and put them back onto the 6.
-
-In total, there is 1 zero from the 10, 2 zeroes from 200, and 3 zeroes from 3000. That's 6 zeroes.
-
-The final answer is 6 with 6 zeroes also known as 6 million. (6,000,000)
+#printdir(dldir)
+#pprint(getStateExams(name='texas'))
+#pprint(getStateExams(name='california'))
 
 
+def splitExamIntoMultipleParts(s, q):
+    srcFile = find_file(q=q)
+    ranges = map(linegetter(s), rangeFromString)
+    #pprint(ranges)
+    names = [
+        'Homework',
+        'Classwork',
 
-a * b
+        'Homework',
+        'Classwork',
+        'Extra Assignment'
+    ]
+    #pprint(srcFile)
+    for i, indexes in enumerate(ranges):
+        outpath = NameWrapper(names[i], next=i in [2,3])
+        pdf = pdfFromIndexes(srcFile, indexes)
+        pdf.save(outpath)
+        ofile(outpath)
 
-
-
-
-
-This is the exception. 
-
-
+def NameWrapper(name, gradeLevel=5, next=0):
+    aliases = {'e': 'Extra Homework', 'q': 'Quiz', 'h': 'Homework', 'c': 'Classwork'}
+    def getName(s):
+        m = search('^g?(\d)([hceq])w?$', s)    
+        if m:
+            return f"G{m[0]} {aliases[m[1]]}"
+    
+    dir = mathdir + upcomingDate('saturday', strife='-', next=next)
+    file = getName(name) or f"G{gradeLevel} {capitalize(tail(name))}"
+    file = addExtension(file, 'pdf')
+    outpath = npath(dir, file)
+    mkdir(dir)
+    return outpath
 
 s = """
-
-bim4:
-
-
-105 107 183
-
-g5cw 172 175-178
+    12-19
+    5-11
+    21-30
+    21-27
+    28-30 32-35
 """
+
+#splitExamIntoMultipleParts(s, '-5')
+
+#save(pdfFromIndexes(find_file('grade-3'), '7-12'), outpath=NameWrapper('g4hw'))
+
+#name = NameWrapper('4h')
+#save(whiteThePages(npath(dldir, name), bottom=50), dir=None, outpath=name)
+
+#save(pdfFromIndexes(find_file('grade-4'), '10-16'), outpath=NameWrapper('4c'))
+
+#name = NameWrapper('4c')
+#save(whiteThePages(npath(dldir, name), bottom=50), dir=None, outpath=name)
+
+#name = NameWrapper('4e')
+#save(pdfFromIndexes('mm', "140 212 214 216"), outpath=name, dir=None)
+
+#cfile(dldir + 'test.pdf', NameWrapper('4q'))
+#cfile(NameWrapper('4q'), usbdrivedir)

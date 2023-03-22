@@ -10,6 +10,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.http import MediaIoBaseDownload
 import mimetypes
+import webbrowser
 from email.message import EmailMessage
 from email.mime.application import MIMEApplication
 from email.mime.audio import MIMEAudio
@@ -29,7 +30,6 @@ import shutil
 
 def relaxTokenScope():
     os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
-
 
 relaxTokenScope()
 creds = None
@@ -117,7 +117,8 @@ def getService(
     version = ref.get("version")
     if ref.get("name"):
         key = ref.get("name")
-    creds = getCreds(tokenfile)
+    #reset = 1
+    creds = getCreds(tokenfile, reset)
     service = build(key, version, credentials=creds)
     print("Service success: returning service for ", key)
     return service
@@ -269,6 +270,8 @@ class GoogleDrive:
 
     def uploadFile(self, file):
 
+        dprint(file)
+        prompt()
         metaData = {
             "name": tail(file),
             "parents": [self.uploadDestination],
@@ -297,12 +300,13 @@ class GoogleDrive:
     def getFile(self, fileObject):
         fileId = fileObject.get("id")
         name = fileObject.get("title")
+        outpath = npath(dldir, name)
 
         if self.doDownloadFile:
             data = self.files.get_media(
                 fileId=fileId
             ).execute()
-            writeBuffer(name, data)
+            writeBuffer(outpath, data)
 
         return name
 
@@ -310,42 +314,91 @@ class GoogleDrive:
         return self.files.get(fileId=fileId).execute()
 
 
+
 class GoogleClassroom:
-    def createResource(self, file, fileId=None):
+    def view(self, x):
+
+        if isArray(x):
+            return map(x, self.view)
+
+        openUrl = True
+        item = x
+
+
+        if hasKey(x, 'materials'):
+            x = x.get('materials')[0].get('driveFile')
+
+        if hasKey(x, 'driveFile'):
+            x = x.get('driveFile')
+
+        if hasKey(x, 'assignment'):
+            item = x.get('assignment').get('studentWorkFolder')
+            pprint('viewing student course work')
+
+        if x.get('alternateLink') and openUrl:
+            url = x.get('alternateLink')
+            webbrowser.open(url)
+            return url
+        elif x.get('id'):
+            id = x.get("id")
+            name = x.get("name") or x.get('title')
+    
+    def getCourseWork(self, x):
+
+        if hasKey(x, 'courseWorkId'):
+            id = x.get('courseWorkId')
+        elif hasKey(x, 'id'):
+            id = x.get('id')
+        elif isString(x):
+            id = x
+        else:
+            raise Exception('no id')
+
+        courseWork = self.courseWork.get(courseId=self.courseId, id=id)
+        return courseWork.execute()
+    
+    def createResource(self, file, fileId=None, student=None):
         if not fileId:
             fileId = self.drive.uploadFile(file)
         materials = createMaterials(fileId)
         resource = self.getResourceMetaInfo(file)
         resource["materials"] = materials
+        if student:
+            print('creating resource for individual student', student)
+            id = self.getStudentId(student)
+            assert id
+            resource['assigneeMode'] = 'INDIVIDUAL_STUDENTS'
+            resource['individualStudentsOptions'] = {
+                'studentIds': [id]
+            }
+            if itest('handout|note', file):
+                newName = removeExtension(tail(file))
+                if not test(student, newName):
+                    newName = student + ' - ' + newName
+
+                resource['title'] = newName
+
         return resource
 
     def getStudentId(self, name):
-        student = find(self.studentList, lambda x: x.get('name') == name)
-        if student:
-            return student.get('id')
-
-    def createCourseWork(self, resource, individualStudents=0):
-
-        assigneeMode = 'ALL_STUDENTS'
-        individualStudentOptions = None
-
-        if individualStudents:
-            print("this is an individual coursework for", individualStudents)
-            assigneeMode = 'INDIVIDUAL_STUDENTS' 
+        if not hasattr(self, 'studentList'):
             self.studentList = self.getStudents()
-            ids = map(xsplit(individualStudents), self.getStudentId)
-            ids = filter(ids)
-            if not ids:
-                raise Exception('no ids found for individual students')
-            individualStudentOptions = {
-                'studentIds': ids
-            }
-        
+
+        def condition(x):
+            studentName = x.get('profile').get('name').get('fullName')
+            return studentName == name
+
+        student = find(self.studentList, condition)
+        if student:
+            return student.get('userId')
+            return student.get('profile').get('id')
+
+    def createCourseWork(self, resource):
         return self.courseWork.create(
             courseId=self.courseId, body=resource,
-            assigneeMode=assigneeMode,
-            individualStudentOptions=individualStudentOptions
         ).execute()
+
+        
 
     def onlyEmail(self, files):
         store = []
@@ -438,19 +491,27 @@ class GoogleClassroom:
         loc = self.drive.uploadDestination
         self.drive.clearFolder(loc)
 
-    def uploadAssignment(self, file):
+    def uploadAssignment(self, file=0, student=0):
+
+        if self.debug:
+            file = env.testAssignmentFile
+
         name = removeExtension(tail(file))
+        if student and not test(student, name):
+            name = student + ' - ' + name
+
         skipClassroom = self.skipClassroom or isSkippable(name)
-        fileId = self.drive.uploadFile(file)
-        print('Uploaded File to GoogleDrive:', name)
-        nameRE = '^(?:Ella Wu|Dianna Huang)
-        individual = search(nameRE, name)
+        if self.debug:
+            fileId = env.testAssignmentFileId
+        else:
+            fileId = self.drive.uploadFile(file)
+            print('Uploaded File to GoogleDrive:', name, fileId)
 
         if skipClassroom:
             print('Skipping Classroom', name)
         else:
-            resource = self.createResource(file, fileId)
-            response = self.createCourseWork(resource, individual)
+            resource = self.createResource(file, fileId, student)
+            self.createCourseWork(resource)
             print('Created GoogleClassroom Coursework')
 
         return {
@@ -469,7 +530,7 @@ class GoogleClassroom:
             workType = "ASSIGNMENT"
         elif itest("exam|test", fileName):
             workType = "ASSIGNMENT"
-        elif itest("handout|cw|classwork", fileName):
+        elif itest("note|handout|cw|classwork", fileName):
             points = None
 
         uploadFileName = self.toUploadName(fileName)
@@ -559,6 +620,8 @@ class GoogleClassroom:
         ofile(self.classWorkLink)
 
     def loadClass(self, classKey):
+        self.debug = True if classKey == 'emc' else False
+
         ref = env.ClassroomRef.get(classKey)
         if not ref:
             ref = env.ClassroomRef.get("g" + classKey)
@@ -653,6 +716,8 @@ class GoogleClassroom:
 
         def f(student):
             name = getStudentInfo(student).get("name")
+            if not self.onlineStudents:
+                return True
             if name in self.onlineStudents:
                 return True
 
@@ -763,26 +828,28 @@ def createMaterials(fileId):
 
 
 def getCreds(tokenfile, reset=0):
+
     global creds
+    tokenfile1 = 'token.json'              # the default token file
+    tokenfile2 = 'march2023credtoken.json' # gmail everything scope
+    tokenfile = tokenfile1
+
+    ref = {
+        tokenfile1: env.googleScopes,
+        tokenfile2: env.newGoogleScopes,
+        tokenfile2: env.onlyEmailScope,
+    }
+
+    googleScopes = ref.get(tokenfile)
     tokenfile = jsondir + tokenfile
-    # print(tokenfile)
-    # raise Exception()
-    googleScopes = env.googleScopes
-    # googleScopes = env.customsearchScopes
-    # googleScopes = env.youtubeScopes
-    debug = 0
-    # debug = 1
-    # reset = 1
 
     def get_creds(f):
-        if isfile(f):
+        if isfile(f) and not reset:
             print("returning existing token file", f)
             return Credentials.from_authorized_user_file(
                 f, googleScopes
             )
         else:
-            if debug:
-                input("creating oauth flow credentials")
             flow = (
                 InstalledAppFlow.from_client_secrets_file(
                     env.credentialfile, googleScopes
@@ -803,8 +870,6 @@ def getCreds(tokenfile, reset=0):
                 input("the credentials are expired")
             creds.refresh(Request())
         elif isfile(tokenfile):
-            if debug:
-                input("returning existing credentials")
             return get_creds(tokenfile)
         else:
             return make_creds(tokenfile)
@@ -816,7 +881,12 @@ def getCreds(tokenfile, reset=0):
 
 def writeCreds(file, creds):
     with open(file, "w") as f:
-        f.write(creds.to_json().replace('"2022', '"2023'))
+        year = getYearNumber()
+        nextYear = year + 1
+        a = '"' + str(year)
+        b = '"' + str(nextYear)
+        data = creds.to_json().replace(a, b)
+        f.write(data)
 
 
 def downloadImages(store, q):
@@ -927,6 +997,7 @@ class GoogleEmail:
         service = getService("gmail")
         self.users = service.users()
         self.messages = self.users.messages()
+        self.threads = self.users.threads()
 
     def createFilter(
         self,
@@ -962,39 +1033,101 @@ class GoogleEmail:
 
         print(f'Created filter with id: {result.get("id")}')
 
-    def testing():
-        print("not completing working right now")
-        for m in self.getMessages():
-            self.getMessage(m)
+    def cleanupEmails(self):
+
+        childKeys = ['keepInbox', 'removeInbox']
+        history = getLoggerData(key='cleanupEmails', childKeys=childKeys, fallback=[])
+        keepInbox, removeInbox = history
+        # do this later at some point
+        # it allows a history memory
+
+        users = []
+        deleted = []
+
+        for m in self.getFirstThreads():
+            sender = m.get('sender')
+
+            if sender in keepInbox:
+                continue
+
+            elif sender in removeInbox:
+                deleted.append(m)
+
+            elif prompt(m, 'DELETE?'):
+                deleted.append(m)
+                removeInbox.append(sender)
+            else:
+                keepInbox.append(sender)
+
+        map(choose2(deleted, anti=1), self.deleteThread)
+        logger(action='cleanupEmails', keepInbox=keepInbox, removeInbox=removeInBox)
+
+    def testing(self):
+        # it works
+        threads = self.getThreads()
+        for thread in threads:
+            firstMessage = self.getThread(thread)
             break
 
+    def getFirstMessages(self):
+        
+        threads = self.getThreads()
+        messageStore = []
+        for thread in threads:
+            id = thread.get('id')
+            messages = self.getThread(id)
+            if len(messages > 1):
+                continue
+            message = parseEmailMessage(messages[0])
+            message['id'] = id
+            messageStore.append(message)
+
+        return messageStore
+
+    
+
+    def deleteThread(self, id):
+        if isObject(id): id = id.get('id')
+
+        self.threads.delete(
+            userId="me", id=id
+        ).execute()
+        print("deleting thread", id)
+    
+
+    def deleteMessage(self, id):
+        if isObject(id): id = id.get('id')
+
+        self.messages.delete(
+            userId="me", id=id
+        ).execute()
+        print("deleting message", id)
+    
     def getMessage(self, m):
-        data = {}
         id = m.get("id")
         message = self.messages.get(
             userId="me", id=id
         ).execute()
-        return pprint(message)
-        print(
-            "not working at the moment because of scope problem"
+        return parseEmailMessage(message)
+
+
+
+    def getThread(self, id):
+        if isObject(id): id = id.get('id')
+        thread = self.threads.get(userId="me", id=id).execute()
+        #self.currentThreadId = thread.get('id')
+        messages = thread.get('messages')
+        return messages
+        return messages[0]
+    
+    def getThreads(self, labels=["INBOX"]):
+        return (
+            self.threads.list(userId="me", labelIds=labels)
+            .execute()
+            .get("threads", [])
         )
-        payload = message["payload"]
-        headers = payload["headers"]
 
-        for h in headers:
-            if h["name"] == "Subject":
-                data["subject"] = h["value"]
-
-            elif h["name"] == "Date":
-                data["date"] = h["value"]
-
-            elif h["name"] == "From":
-                data["from"] = h["value"]
-
-        data["snippet"] = message["snippet"]
-        return data
-
-    def getMessages(self, labels=["INBOX", "UNREAD"]):
+    def getMessages(self, labels=["INBOX"]):
         return (
             self.messages.list(userId="me", labelIds=labels)
             .execute()
@@ -1070,29 +1203,28 @@ def getMime(s):
     )
 
 
-def googleDriveDownloadFile(self, file):
+def googleDriveDownloadFile(drive, file):
     fileId = file.get("id")
     name = file.get("name")
     mimeType = "application/pdf"
     outpath = npath(dldir, addExtension(name, "pdf"))
-    print(outpath)
     fh = io.FileIO(outpath, "wb")
     done = False
     try:
-        request = self.files.export_media(
-            fileId=fileId, mimeType=mimeType
-        )
+        if isImage(name):
+            request = drive.files.get_media(
+                fileId=fileId
+            )
+        else:
+            request = drive.files.export_media(
+                fileId=fileId, mimeType=mimeType
+            )
         downloader = MediaIoBaseDownload(fh, request)
         while done is False:
             status, done = downloader.next_chunk()
-    except:
-        print("errrror")
+    except Exception as e:
+        print("errrror", e, outpath)
         return
-        raise Exception("it is not working")
-        request = self.files.get_media(fileId=fileId)
-        downloader = MediaIoBaseDownload(fh, request)
-        while done is False:
-            status, done = downloader.next_chunk()
 
     return outpath
 
@@ -1162,53 +1294,11 @@ def appendStudentStuff():
 
 
 
-def getTitle(item):
-    return (
-        item.get("assignmentSubmission")
-        .get("attachments")[0]
-        .get("driveFile")
-        .get("title")
-    )
-
-
-def grader(room=0, grade=100):
-    if not room:
-        keys = ['4', '5']
-        for key in keys:
-            room = GoogleClassroom("4")
-            grader(room)
-        return 
-
-    students = room.getStudents()
-    for student in students:
-        subs = (
-            room.studentSubmissions.list(
-                courseId=room.courseId,
-                courseWorkId="-",
-                userId=student.get("userId"),
-                states="TURNED_IN",
-            )
-            .execute()
-            .get("studentSubmissions")
-        )
-
-        #subs = getUntil(subs, isRecentSubmission)
-        pprint(subs)
-
-        for data in subs[0:3]:
-            if data.get("associatedWithDeveloper"):
-                if test("quiz|exam|test", getTitle(data)):
-                    print("hand grade quiz exam test")
-                    pass
-                else:
-                    result = room.gradeSubmission(
-                        data.get("courseWorkId"),
-                        data.get("id"),
-                        grade,
-                    )
-                    pprint(result)
-            else:
-                print("not made from console bypass")
+def getSubmissionTitle(item):
+    attachments = item.get("assignmentSubmission").get("attachments")
+    if attachments:
+        return attachments[0].get("driveFile").get("title")
+    return 'no-title'
 
 
 def isRecentSubmission(s):
@@ -1239,6 +1329,100 @@ class GoogleApp:
     def downloadDoc(self, name, outpath=0):
         self.drive.downloadFile(name, outpath)
     
-#GoogleApp().openDoc('$1')
-#GoogleApp().downloadDoc('$1', '$2')
-#pprint(snapshotOfDirectory())
+
+def individualAssignment(files=0, student='Ella Wu'):
+    ref = {
+        'Ella Wu': '5',
+    }
+
+    files = toArray(files) if files else [glf()]
+    classKey = ref.get(student)
+    room = GoogleClassroom(classKey)
+    for file in files:
+        room.uploadAssignment(file, student=student)
+    room.openLink()
+
+
+#GoogleEmail().testing()
+def parseEmailMessage(message):
+    data = {}
+    headers = message["payload"]["headers"]
+    for h in headers:
+        if h["name"] == "Subject":
+            data["subject"] = h["value"]
+
+        elif h["name"] == "Date":
+            data["date"] = h["value"]
+
+        elif h["name"] == "From":
+            data["sender"] = h["value"]
+
+    data["snippet"] = message["snippet"]
+    data["id"] = id
+    return data
+
+
+def gradeClassroom(room, grade=100):
+    students = room.getStudents()
+    for student in students:
+        submissions = (
+            room.studentSubmissions.list(
+                courseId=room.courseId,
+                courseWorkId="-",
+                pageSize=10,
+                userId=student.get("userId"),
+                states="TURNED_IN",
+            )
+            .execute()
+            .get("studentSubmissions")
+        )
+
+        if not submissions:
+            pprint('no submissions @ student')
+            continue
+
+        for submission in submissions:
+            gradeSubmission(room, submission, 100)
+
+def gradeSubmission(room, submission, grade=100):
+
+    title = getSubmissionTitle(submission)
+    if not submission.get("associatedWithDeveloper"):
+        pprint('!associated with developer', title)
+        return 
+
+    if test("quiz|exam|test", title, flags=re.I):
+        viewSubmission(room, submission)
+        grade = prompt('assign a grade for this item')
+
+    try:
+        result = room.gradeSubmission(
+            submission.get("courseWorkId"),
+            submission.get("id"),
+            grade,
+        )
+        print(result, "graded assignment", title)
+    except Exception as e:
+        prompt(str(e), title, 'ERROR_PROMPT')
+    
+
+def viewSubmission(room, submission):
+        
+    courseWork = room.getCourseWork(submission)
+    print("viewing courseWork assignment")
+    room.view(courseWork)
+
+    attachments = submission.get(
+        "assignmentSubmission"
+    ).get("attachments")
+
+    print("viewing student submission pictures")
+    room.view(attachments)
+
+def doGrades():
+    keys = ['g4', 'g5']
+    for key in keys:
+        r = GoogleClassroom(key)
+        gradeClassroom(r)
+
+#doGrades()

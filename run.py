@@ -81,9 +81,45 @@ def sortCwtFiles(s):
     assert m
     return (m, s)
 
+def changers():
+    
+    changers = {
+        "g5r.pdf": "Grade 5 Final Exam Review.pdf",
+        "g4r.pdf": "Grade 4 Final Exam Review.pdf",
+        "g5hw.pdf": "Grade 5 Homework.pdf",
+        "g4hw.pdf": "Grade 4 Homework.pdf",
+        "g5cw.pdf": "Grade 5 Classwork.pdf",
+        "g4cw.pdf": "Grade 4 Classwork.pdf",
+        "g5q.pdf": "Grade 5 Quiz.pdf",
+        "g4q.pdf": "Grade 4 Quiz.pdf",
+        "WG5Q1.pdf": "Grade 5 Quiz.pdf",
+        "WG4Q1.pdf": "Grade 4 Quiz.pdf",
+        "g4exam.pdf": "Grade 4 Exam.pdf",
+        "g5exam.pdf": "Grade 5 Exam.pdf",
+    }
+
+    for file, destination in changers.items():
+        if isfile(file) and not isRecent(
+            destination, days=3
+        ):
+            if prompt('change it?', file, destination):
+                mfile(file, destination)
+
 def buildFiles():
+    chdir(dldir)
+    changers()
     regex = reWrap(cwtFileDict)
-    files = ff(dldir, week=1, pdf=1, regex=regex, flags=re.I, antiregex='test.pdf')
+    #files = ff(dldir, hours=40, pdf=1, regex=regex, flags=re.I, antiregex='test.pdf')
+
+    files = [
+        "G5 Classwork.pdf",
+        "Grade 4 Announcements.pdf",
+        "G4 Homework.pdf",
+        "G4 Classwork.pdf",
+        "Grade 5 Announcements.pdf",
+        "G5 Homework.pdf",
+        "Student Letters.pdf"
+    ]
 
     storage = Storage()
     misc = []
@@ -118,19 +154,23 @@ def uploadFiles(files):
 
 
 
-def uploadMaterials(skipClassroom=0, skipEmail=0, official=1, fileData=0):
+def uploadMaterials(skipClassroom=0, skipEmail=0, official=1, fileData=0, doGrades=1):
     from ga import GoogleClassroom, GoogleDrive
 
     data, misc, all = fileData or buildFiles()
     assert data
     store = []
+    rooms = []
 
     for item in data:
         key = item.get("key") if official else "emc"
         files = item.get("files")
         room = GoogleClassroom(key)
+        rooms.append(room)
         room.skipClassroom = skipClassroom 
+        assert files
         results = map(files, room.uploadAssignment)
+        assert results
         room.openLink()
         store.extend(results)
 
@@ -156,14 +196,20 @@ def uploadMaterials(skipClassroom=0, skipEmail=0, official=1, fileData=0):
         return 
 
     prompt('We always prompt the payload before going to google emails', payload)
-    googleAppScript("Action", "courseWork", payload)
 
+    googleAppScript("Action", "courseWork", payload)
     gmailsenturl = "https://mail.google.com/mail/u/0/#sent"
     ofile(gmailsenturl)
-    clear(departurejsonfile)
+    #clear(departurejsonfile)
+    deleteFinishedPDFS()
+    if doGrades:
+        print("Starting the gradeClassroom auto process.")
+        for room in rooms:
+            gradeClassroom(room)
 
 def cwtBuildNecessaryFiles(grades=[4, 5]):
     print("'this is kind of deprecated ... as the systems get better and better")
+    raise Exception('use buildFiles instead')
 
     extraFiles = [
         # "G4 & G5 Math Report Cards.pdf",
@@ -425,8 +471,15 @@ def gitManager(
     # return print('debugging', cmd)
     SystemCommand(cmd)
 
+def gitPushAll():
+    pass
+    #gitPushPython()
+    #time.sleep(1)
+    #gitPush()
+
 
 env.basepyref["gp"] = "gitPush"
+env.basepyref["gpx"] = "gitPushAll"
 env.basepyref["gd"] = "gitDelete"
 env.basepyref["elf"] = "emailLastFile"
 
@@ -465,6 +518,9 @@ def filter2023(items, fn=0, **kwargs):
 def parseOpenai(state):
         raw = map(state.data, parseJSON)
         data = filter2023(raw, lambda x: not isPrimitive(x))
+        return clip(flat(data))
+        pprint(data)
+        raise Exception()
         if every(data, lambda x: len(x.keys()) == 1):
             key = list(data[0].keys())[0]
             if every(data, lambda x: key in x):
@@ -496,7 +552,7 @@ smartItems = [
 
     {
         'extension': 'zip',
-        'fn': lambda state: unzip(state.file, state.name)
+        'fn': lambda state: unzip(state.file, prompt('name for zip?'))
     },
 
     {
@@ -548,21 +604,20 @@ def addPythonImports(s):
     return f"from {extra} import *\n{s}" if extra else s
 
 def pythonAppController():
-    items = split(smartDedent(env.pac), '\n\n+')
-    cmd = dollarPrompt(items, python=True)
+    items = split(removeComments(read('pac.txt')), '\n\n+')
+    cmd = dollarPrompt(items)
     cmd = addPythonImports(cmd)
-    dprint(cmd)
-    exec(cmd)
+    try:
+        exec(cmd)
+    except Exception as e:
+        pprint(cmd)
+        pprint(e) 
+    
 
 def googleAppController():
-    items = split(smartDedent(env.gac), '\n+')
+    items = split(removeComments(read('gac.txt')), '\n+')
     s = dollarPrompt(items)
     return googleAppScript(f"Finish({s})")
-
-    name, args, kwargs = getNameArgsKwargs(s)
-    command = stringCall('Action2', quote(name), kwargs, *args)
-    pprint(dict(command=command))
-    return googleAppScript(command)
 
 
 def execPython(s=''):
@@ -699,7 +754,47 @@ def temporaryBackup(state):
     cfiles(files, tempbudir, ask=1)
 
 
-python()
+def revert(file=0, vim=0, increment=0, dir=0, ask=0):
+    if not file:
+        file = mostRecent(budir)
+        if not dir:
+            dir = dirFromFile(file)
+        name = dir + file
+    elif increment:
+        if not dir:
+            dir = dirFromFile(file)
+        name = incrementName(npath(dir, file))
+    elif ask:
+        name = prompt(file, "name for the file ?")
+        name = dir + name
+
+    if not dir:
+        dir = dirFromFile(file)
+        dir = budir
+
+    outpath = name or dir
+    dprint(outpath, file)
+    if vim:
+        appendVim("filedict", outpath)
+    cfile(file, outpath)
+
+def revertjs(file):
+    print('reverting js', file)
+    assert(file) 
+    src = trashdir + file
+    if not isfile(src):
+        src = budir + file
+
+    assert isfile(src)
+    outpath = dirFromFile(file)
+    input(dprint(src, outpath))
+    mfile(src, outpath)
+
+def deleteFinishedPDFS():
+    ff(dldir, pdf=1, mode='delete', weeks=2)
+
+env.basepyref['rev'] = 'revertjs'
+# The file is reverted from 
 #smartManager()
 
 #runChatgpt("""
@@ -708,3 +803,152 @@ python()
     #return write(dldir + 'ofile.js', removeComments(s).strip(), 1)
 #""")
 
+
+def shonitProject():
+
+    import redditscript
+    from tesseract import tesseractExtractText
+
+    kwargs = dict(
+        user = 'shonitB',
+        type = 'image',
+        minScore = 5,
+        minNumComments = 5,
+        subreddit = None,
+        fromDate = 0,
+        toDate = 'today',
+    )
+    shonitImageLinks = redditscript.Reddit().getPosts(**kwargs)
+    store = []
+    for url in shonitImageLinks:
+        localPath = downloadImage(url, name = 'temp')
+        text = tesseractExtractText(localPath)
+        text = postProcess(text)
+        if text:
+            store.append(text)
+
+    return store
+
+
+def downloadImage(url, name):
+    raise Exception('needs requests')
+    r = requests.get(url)
+    if r.status_code == 200:
+        with open(name, "wb") as f:
+            f.write(r.content)
+            print("Image sucessfully Downloaded: ", name)
+            return name
+    else:
+        print("Image Couldn't be retreived", name)
+
+#printdir()
+
+
+
+def surmonChinese(links):
+    raise Exception('do later')
+    import bs4
+    import html
+
+    def getLinks(n):
+        base = f"https://surmon.me/article"
+        soup = bs4.BeautifulSoup(request(base), "html.parser")
+        soup.find_all('links')
+
+    def runner(url):
+        text = request(url, delay=5)
+        if not text:
+            return 
+
+        store = []
+        body = bs4.BeautifulSoup(text, "html.parser").body
+        for item in body.find_all(recursive=True):
+            name = item.name
+            if name in ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                text = item.get_text()
+                if isChinese(text) or isEnglish(text):
+                    store.append((name, text))
+
+        return store
+
+    store = filter(map(links, runner))
+    return store
+
+#pprint(surmonChinese())
+
+
+def subprocessRun(s):
+    import subprocess
+    lines = linegetter(s)
+    dprint(lines)
+    kwargs = dict(stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    for line in lines:
+        result = subprocess.run(line, **kwargs)
+        success = result.stdout.decode()
+        error = result.stderr.decode()
+        if result.returncode == 0:
+            dprint(success)
+        else:
+            dprint(line)
+            dprint(error)
+            return 
+
+
+def compile_latex(texFile):
+    initCommand = """
+
+         sudo apt-get update
+         sudo apt-get install texlive-latex-base
+
+    """
+    subprocessRun(initCommand)
+
+
+    if find_latex_packages_dir():
+        subprocessRun("sudo apt-get install texlive-latex-extra")
+
+    pdfFile = changeExtension(texFile, 'pdf')
+    createCommand = f"pdflatex {texFile}"
+    subProcessRun(createCommand)
+
+    if isfile(pdfFile):
+        print('success')
+        ofile(pdfFile)
+
+
+def create_tex(file = 'document.tex'):
+    write(file, env.sampleTexText.strip())
+    return file
+
+def find_latex_packages_dir():
+    import subprocess
+    try:
+        output = subprocess.check_output(["kpsewhich", "-var-value", "TEXMFMAIN"])
+        return output.decode("utf-8").strip()
+    except (subprocess.CalledProcessError, OSError):
+        print("Error: Could not find LaTeX packages directory.")
+        return None
+
+
+def doLatex():
+    raise Exception('lock package is running... need to check it later')
+    print("cannot run at the moment or something may break")
+    chdir(latexdir)
+    compile_latex(create_tex())
+
+def is_package_manager_locked():
+    lock_file_path = '/var/lib/dpkg/lock'
+    if isfile(lock_file_path):
+        try:
+            open(lock_file_path, 'w')
+            return False
+        except IOError as e:
+            print("error")
+            print(e)
+            return True
+    else:
+        return False
+
+#subprocessRun('sudo fuser -v /var/lib/dpkg/lock')
+#pprint(is_package_manager_locked())
+python()

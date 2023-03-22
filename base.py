@@ -1,3 +1,9 @@
+linebreak = '-' * 50
+hammyfirebasehtml = "/home/kdog3682/FIREBASE/public/index.html"
+localbackupdir= "/home/kdog3682/LOCALBACKUP/"
+firebasedir= "/home/kdog3682/FIREBASE/"
+publicfirebasedir= "/home/kdog3682/FIREBASE/public"
+latexdir = '/home/kdog3682/LATEX/'
 alist = ['a', 'b', 'c', 'd']
 glogfile = '/home/kdog3682/2023/log.json'
 gunkExtensions = ['recent', 'mp3', 'ass', 'eps', 'zip', 'url', 'gz', 'backup', 'webp', 'asy', 'vcf', 'js']
@@ -73,7 +79,11 @@ cvfile = "Kevin Lee Cover Letter.pdf"
 resumefile = "Kevin Lee Resume.pdf"
 jsdir = "/home/kdog3682/CWF/public/"
 dldir = "/mnt/chromeos/MyFiles/Downloads/"
+pdfdldir = dldir + 'PDFS/'
 sandir = "/mnt/chromeos/removable/Sandisk/"
+
+usbdir = "/mnt/chromeos/removable/"
+usbdrivedir = "/mnt/chromeos/removable/USB Drive/"
 pydir = "/home/kdog3682/PYTHON/"
 pdfdir = "/home/kdog3682/PDFS/"
 logdir = "/home/kdog3682/LOGS/"
@@ -155,6 +165,7 @@ import webbrowser
 import shutil
 emptyBlockRE = "^ *(?:function )?\\w+\\(.*?\\) {\\s*},?"
 callableRE = "^[a-zA-Z.]+\\([^\\n`]+$"
+callableRE = "^[a-zA-Z]\w*(?:.\w+)*\\([^\\n`]*"
 
 blockQuoteRE = (
     "^ *(?:let |)?\\w+ =\\s*(?<!\\)`[^]+?(?<!\\)`.*\\n?"
@@ -285,7 +296,7 @@ def every(items, fn):
 def datestamp(x=None, strife="%m-%d-%Y"):
     ref = {
         "/": "%m/%d/%Y",
-        "-": "%m\-%d\-%Y",
+        "-": "%m-%d-%Y",
     }
     strife = ref.get(strife, strife)
     if isString(x):
@@ -369,7 +380,7 @@ def isdir(f):
     return os.path.isdir(os.path.expanduser(f))
 
 def toSeconds(
-    minutes=10, hours=0, seconds=0, days=0, months=0
+    minutes=0, hours=0, seconds=0, days=0, weeks=0, months=0
 ):
     return (
         seconds
@@ -392,8 +403,11 @@ def isRecent(file, before=0, after=0, **kwargs):
     if after:
         return n > dategetter(after)
 
-    delta = toSeconds(**kwargs)
-    return n + delta > timestamp()
+    seconds = toSeconds(**kwargs)
+    currentTime = timestamp()
+    lastAcceptableTime = currentTime - seconds
+    if n > lastAcceptableTime:
+        return True
 
 def timestamp(x=int):
     if type(x) == datetime:
@@ -452,19 +466,20 @@ google_url = "https://google.com/"
 def ofile(f):
     return map(f, openBrowser)
 
-def mfiles(files, dir, fn=0):
+def mfiles(files, dir, fn=0, ask=0):
     if isString(files):
         files = absdir(files)
     if not isdir(dir):
         dir = rootdir + dir.upper()
     assert isdir(dir)
+    if ask:
+        prompt(files, 'move these files to', dir, '?')
     for f in files:
         if fn:
             dir = fn(dir + fn(tail(f)))
         mfile(f, dir)
 
 def cfiles(files, dir, ask=0):
-
     if ask:
         prompt(files, tempbudir, 'are you sure you want to copy these files and overwrite existing files in the directory?')
 
@@ -545,7 +560,7 @@ def prompt(*args, **kwargs):
             pprint(arg)
     if kwargs:
         pprint(kwargs)
-    return input()
+    return input() or kwargs.get('fallback', '')
 
 def isIgnoredFile(name):
     name = tail(name)
@@ -561,8 +576,7 @@ def isIgnoredFile(name):
 
 def fileInfo(f, r=0):
     if isfile(f):
-        s = "%A %B %d -- %-I:%M:%S%p"
-        strife = "%A %B %d, %-I:%M:%S%p"
+        strife = "%A %B %d %Y, %-I:%M:%S%p"
         name = tail(f)
         date = datestamp(f, strife)
         size = fsize(f)
@@ -600,15 +614,16 @@ def askToRemove(file):
         rfile(file)
 
 def fixBrowserPath(f):
+    if not f:
+        return 
+    if isfile(f):
+        return f
+        prompt(f)
     aliases = {
         'red': 'reddit',
     }
     if f in aliases:
         return fixUrl(aliases[f])
-
-    if isUrl(f):
-        return f
-
     ref = {
         'json': [dldir, jsondir],
         'pdf': [dldir, pdfdir],
@@ -616,18 +631,17 @@ def fixBrowserPath(f):
     e = getExtension(f)
 
     if e:
-        dirs = ref.get(e, [])
-        if isfile(f):
-            return f
-        else:
-            for dir in dirs:
-                temp = npath(dir, f)
-                if isfile(temp):
-                    return temp
+        for dir in ref.get(e, []):
+            temp = npath(dir, f)
+            if isfile(temp):
+                return temp
             raise Exception('cant find the file')
-    else:
-        return f"https://google.com/search?q={f}"
-    return f
+
+
+    if isUrl(f):
+        return f
+
+    return f"https://google.com/search?q={f}"
     
 
 def openBrowser(f):
@@ -647,6 +661,8 @@ def choose(x, mode=0, filter=0, auto=1):
     if auto and len(x) == 1:
         return x[0]
 
+    if isString(x[0]) and isfile(x[0]):
+        x = map(x, tail)
     a = prompt2(x)
     if not a:
         return
@@ -1266,8 +1282,12 @@ def parseJSON(x):
 def isJsonParsable(x):
     return isString(x) and test("^[{\[]", x)
 
-def request(url):
+def request(url, delay=0):
     from requests import get
+
+    if delay:
+        import time
+        time.sleep(delay)
 
     r = get(fixUrl(url), {"user-agent": BROWSER_AGENT})
     return parseJSON(r.text) if r.status_code == 200 else ""
@@ -1344,13 +1364,13 @@ def googlePrint(s):
     clip(s)
 
 def googleOpen(o):
-    ofile(o)
-
+    webbrowser.open(o)
 def googleValue(s):
     pprint(s)
 
 def googleLogs(s):
-    pprint(s)
+    for item in toArray(s):
+        print(smallify(item))
 
 def googleWrite(obj):
     file = obj.get("file")
@@ -1372,10 +1392,10 @@ def googleCreateVariable(obj):
     else:
         payload = createVariable(name, value, lang)
 
+    prompt(abspath(file), payload, 'appendVargoogle?')
     append(file, payload)
 
 def googleAppScript(f="", *args):
-    print("starting google appscript")
     s = read(env.GOOGLE_APPSCRIPT_FILE).strip()
     r = "^(?:(?:// *|import).+)(?:\n+(?:// *|import).+)*"
     s, imports = mget(r, s, flags=re.M, mode=str)
@@ -1387,6 +1407,7 @@ def googleAppScript(f="", *args):
         )
         for i in imports:
             if i == "clip":
+                print("adding clip import")
                 store.append(
                     createVariable("clip", clip(), "js")
                 )
@@ -1407,13 +1428,6 @@ def googleAppScript(f="", *args):
 
     callable = f if '\n' in f else toCallable(f, *args)
     s += "\n\n" + callable
-    data = None
-    try:
-        data = google_request(s)
-    except:
-        print("error early return")
-        return
-
     ref = {
         "print": googlePrint,
         "open": googleOpen,
@@ -1423,19 +1437,26 @@ def googleAppScript(f="", *args):
         "value": googleValue,
         "vim": googleVim,
         "logs": googleLogs,
+        "error": lambda x: print(x),
         "createVariable": googleCreateVariable,
+        "appendVariable": googleCreateVariable,
     }
 
-    if isObject(data):
+    data = google_request(s)
+    try:
+
+        pprint(data)
+        print("starting google appscript function series")
         for k, v in data.items():
-            if v:
-                try:
-                    ref[k](v)
-                except Exception as e:
-                    print({
-                        'PYTHON_ERROR_MESSAGE': str(e),
-                        'k': k,
-                    })
+            if v and ref[k]:
+                print('::' + k + '::\n')
+                ref[k](v)
+    
+        print(linebreak)
+        print('done with google appscript')
+    except Exception as e:
+        print(data)
+    
 
 def googleVim(s):
     appendVim("filedict", s)
@@ -1479,9 +1500,9 @@ def google_request(data):
     except:
         value = response.text
 
-    print("--------------------------------------")
-    pprint(value)
-    print("--------------------------------------")
+    #print("--------------------------------------")
+    #pprint(value)
+    #print("--------------------------------------")
     return value
 
 def split(s, r=" ", flags=0):
@@ -1621,7 +1642,7 @@ def checkpointf(
     flags=re.I,
     files=0,
     gif=0,
-    week=0,
+    weeks=0,
     month=0,
     old=0,
     ignore="",
@@ -1700,12 +1721,12 @@ def checkpointf(
         hours = 24 * 30
     elif days:
         hours = days * 24
-    elif week:
-        hours = 24 * 7
+    elif weeks:
+        hours = 24 * 7 * weeks
     elif month:
         hours = 24 * 30
     elif today:
-        hours = 8
+        hours = 12
 
     if include:
         include = xsplit(include, "\s+")
@@ -1730,9 +1751,6 @@ def checkpointf(
             print("deleting")
             rfile(f)
             return False
-        if hours and not isRecent(f, hours=hours):
-            return False
-
         if regex and not test(regex, filename, flags=flags):
             return False
         if antiregex and test(antiregex, filename, flags=flags):
@@ -1747,6 +1765,9 @@ def checkpointf(
             return False
 
         if extensions and e not in extensions:
+            return False
+
+        if hours and not isRecent(f, hours=hours):
             return False
 
         if not lib and isLibraryFile(f):
@@ -1782,10 +1803,6 @@ def checkpointf(
         if text and not test(text, read(f), flags=flags):
             return False
         if date and not isSameDate(date, f):
-            return False
-        if (before or after) and not isRecent(
-            f, before, after
-        ):
             return False
         return True
 
@@ -1896,11 +1913,11 @@ def getfiles(dir, recursive=0, mode=dict, sort=0, **kwargs):
     runner(dirgetter(dir))
     return output
 
-def printdir(dir=None, printIt=0):
+def printdir(dir=dldir, printIt=0):
     dir = dirgetter(dir)
     files = os.listdir(dir)
     size = len(files)
-    if size < 20:
+    if size < 30:
         files = map(files, lambda f: normpath(dir, f))
         pprint(map(files, fileInfo))
     else:
@@ -1921,7 +1938,9 @@ def reWrap(dict, template = ''):
         'b': "\\b(?:$1)\\b",
     }
     template = ref.get(template, template)
-    s = "|".join(list(dict.keys()))
+    keys = list(dict.keys() if isObject(dict) else dict)
+    symbols = map(keys, re.escape)
+    s = "|".join(symbols)
     return re.sub('\$1', s, template)
 
 def ncg(template, ref):
@@ -2860,8 +2879,17 @@ def logf(fn):
 
     return decorator
 
+def find_file(q, dir=dldir):
+    with CD(dir):
+        files = sorted(os.listdir(dir), key=mdate)
+        for file in files:
+            if test(q, file):
+                return abspath(file)
+
 @logf
 def glf(dir=dldir, **kwargs):
+    if kwargs.get('q'):
+        return find_file(dir=dir, q=kwargs.get('q'))
     file = mostRecent(dir, **kwargs)
     return file
 
@@ -3384,12 +3412,7 @@ def createShellArgs(args):
 
     return join(map(args, parser), delimiter=", ")
 
-def shellunescape(s):
-    if not isString(s):
-        return s
-    if 'zz' not in s:
-        return s
-    dict = {
+shellescapedict =  {
         "newline": "\\n",
         "sq": "'",
         "tilda": "`",
@@ -3410,7 +3433,26 @@ def shellunescape(s):
         "exc": "!",
         "nl": "\n",
     }
-    s = dreplace(s, dict, template="zz($1)")
+def shellescape(s):
+    dict = reverse(shellescapedict)
+    regex = reWrap(dict)
+    def parser(x):
+        value = (
+            dict.get(x.group(1))
+            if x.groups()
+            else dict.get(x.group(0))
+        )
+        return 'zz' + value
+
+    return re.sub(regex, parser, s)
+
+
+def shellunescape(s):
+    if not isString(s):
+        return s
+    if 'zz' not in s:
+        return s
+    s = dreplace(s, shellescapedict, template="zz($1)")
     return parseJSON(s)
 
 def createGoogleSecret():
@@ -3918,19 +3960,26 @@ def mimeTypeFromFile(file):
     }
     return ref[getExtension(file)]
 
-def upcomingDate(day, mode=0, strife="/"):
+def upcomingDate(day, mode=0, strife="/", next=0):
     day = capitalize(day)
     today = datetime.now()
+
+    def increment():
+        nonlocal today
+        today = today + timedelta(days=1)
+
     while 1:
         weekday = weekdays[today.weekday()]
         if weekday == day:
+            if next:
+                today = today + timedelta(weeks=next)
             if mode == list:
                 return [today.month, today.day, today.year]
             if mode == datetime:
                 return today
             return datestamp(today, strife=strife)
         else:
-            today = today.replace(day=today.day + 1)
+            increment()
 
 def downloadYoutube(urls):
     import youtube_dl
@@ -4087,12 +4136,6 @@ def autodir(file):
 def isRecentFile(f, days=1, **kwargs):
     return isfile(f) and isRecent(f, days=days, **kwargs)
 
-def allFiles(**kwargs):
-    dirs = [rootdir, pubdir, cwfdir]
-    store = []
-    for dir in dirs:
-        store.extend(ff(dir=dir, **kwargs))
-    return store
 
 def recentFiles():
     dirs = [rootdir, pubdir, cwfdir]
@@ -4121,84 +4164,10 @@ def deleteFiles(files, save=0, title=0):
         happend(save, payload)
         print("Finished deleting files")
 
-def removeFiles(files, small=0):
-    for file in files:
-        if not isfile(file):
-            print("not a file", file)
 
-        elif small:
-            if fsize(file) < 50:
-                rfile(file)
-        else:
-            rfile(file)
 
-        files.remove(file)
 
-    return files
 
-def prettyTable(a, title=""):
-    longest = max(map(a, lambda x: len(x[0])))
-
-    def delta(s):
-        spaces = " " * (longest - len(s[0]) + 4)
-        return s[0] + spaces + s[1]
-
-    value = map(a, delta)
-
-    deli = "-"
-    return (
-        title
-        + "\n"
-        + deli * 40
-        + "\n"
-        + "\n".join(value)
-        + "\n"
-        + deli * 40
-        + "\n"
-    )
-
-def review10(x):
-    files = ff(x) if isString(x) else x
-    for file in files:
-        review11(file)
-
-def review11(file):
-    e = getExtension(file)
-    data = read(file)
-    if not data:
-        rfile(file)
-        return 1
-
-    length = len(data)
-    dir = dirFromFile(file)
-
-    if e == "json":
-        data = sliceDict(data)
-    elif length > 100_000:
-        data = ""
-        if e in utfe:
-            ofile(file)
-
-    a = prompt(data, file, "length : " + str(length))
-    if a == "o":
-        ofile(file)
-        a = prompt(data, file, "length : " + str(length))
-
-    if len(a) > 3:
-        mfile(file, changeFileName(file, a, dir))
-
-    elif a == "m":
-        mfile(file, dir)
-    elif a:
-        rfile(file)
-    return 1
-
-def sliceDict(d, n=10):
-    import itertools
-
-    if isObject(d):
-        return dict(itertools.islice(d.items(), n))
-    return d[:10]
 
 def changeFileName(file, newName=0, dir=0):
 
@@ -4212,16 +4181,16 @@ def changeFileName(file, newName=0, dir=0):
     newName = addExtension(newName, getExtension(tail))
     return os.path.join(head, newName)
 
-def lendir(s):
-    print(len(listdir(s)))
-
-def runjs(a, b=""):
-    if b:
-        b = " " + b
-    a = normDirPath(addExtension(a, "js"))
-    os.system("node " + a + b)
 
 def fs1(s):
+
+    def allFiles(**kwargs):
+        dirs = [rootdir, pubdir, cwfdir]
+        store = []
+        for dir in dirs:
+            store.extend(ff(dir=dir, **kwargs))
+        return store
+
     """
     1. grab all pdf json txt files
     2. make directories for pdf json and text
@@ -4244,7 +4213,7 @@ def fs1(s):
             mfile(file, d)
 
 def uploadResumeAndCoverLetter():
-    files = mostRecent(dldir, n=5, minutes=20)
+    files = mostRecent(dldir, n=5, minutes=10)
     donecv = 0
     doneres = 0
     for file in files:
@@ -4297,13 +4266,6 @@ deleteExtensionsList = [
     "m4a",
 ]
 
-class ErrorPass:
-    def __init__(self):
-        self.errors = []
-
-    def __exit__(self, etype, value, traceback):
-        self.errors.append([etype, value, traceback])
-        return 1
 
 def cleanupfiles(dir, f):
     files = filter(absdir(dir), f)
@@ -4340,8 +4302,7 @@ def toLocalFile(key):
         name,
     )
 
-def google(s):
-    webbrowser.open(googleSearchQuery(s))
+#webbrowser.open(googleSearchQuery(s))
 
 def rnl():  # name: renameLastFile
     f = glf()
@@ -4349,8 +4310,7 @@ def rnl():  # name: renameLastFile
     s = input("new name: ")
     mfile(f, changeFileName(f, s))
 
-def rlf():
-    pprint(read(glf()))
+#pprint(read(glf()))
 
 def sendTwilio(body="hi from twilio", to=env.selfphone):
     from twilio.rest import Client
@@ -4598,29 +4558,6 @@ def revertFile():
     dir = dirFromFile(tail(file))
     prompt(fileInfo(file, r=1), dir)
     cfile(file, dir)
-
-def revert(file=0, vim=0, increment=0, dir=0, ask=0):
-    if not file:
-        file = mostRecent(budir)
-        if not dir:
-            dir = dirFromFile(file)
-        name = dir + file
-    elif increment:
-        if not dir:
-            dir = dirFromFile(file)
-        name = incrementName(npath(dir, file))
-    elif ask:
-        name = prompt(file, "name for the file ?")
-        name = dir + name
-
-    if not dir:
-        dir = dirFromFile(file)
-
-    outpath = name or dir
-    prompt("outpath", outpath, 'hiya')
-    if vim:
-        appendVim("filedict", outpath)
-    cfile(file, outpath)
 
 def writeBuffer(name, data):
     with open(name, "wb") as f:
@@ -5069,9 +5006,19 @@ class SystemCommand:
                 return join(linegetter(s), delimiter="; ")
             return s
 
-        command = " ".join(map(map(args, dumpJson), fix))
-        # print(command, [command])
-        # return
+        if test('^(node|python)', args[0]):
+            a = " ".join(map(args, dumpJson))
+            a, b = mget('^(?:node|python) \S+ \S+ ', a, mode=str)
+            if not b:
+                b = a
+                a = ''
+            command = b + shellescape(a)
+            command += ' ' + shellescape(dumpJson(kwargs))
+            #dprint(a, b, command)
+            #pprint('ccc')
+            #return
+        else:
+            command = " ".join(map(map(args, dumpJson), fix))
 
         from subprocess import Popen, PIPE
 
@@ -5264,13 +5211,17 @@ def evaljs(s):
     # creating a grammar file
 
 def ff(
-    dir=".",
+    dir=dir2023,
     mode=0,
     once=0,
     sort=0,
     reverse=0,
+    recursive=0,
     **kwargs,
 ):
+
+    if isString(dir) and getExtension(dir):
+        return findFile(dir)
 
     if mode == "smallclean":
         kwargs["smallerThan"] = 2
@@ -5295,7 +5246,12 @@ def ff(
     elif mode == "print":
         sort = True
 
-    rawFiles = dir if isArray(dir) else absdir(dirgetter(dir)) 
+    if isArray(dir):
+        rawFiles = dir
+    elif recursive:
+        rawFiles = getFilesRecursive(dirgetter(dir))
+    else:
+        rawFiles = absdir(dirgetter(dir)) 
 
     checkpoint = checkpointf(**kwargs)
     if once:
@@ -5318,6 +5274,12 @@ def ff(
         prompt(files, "remove?")
         rfiles(files)
         printdir(dir)
+    elif mode == "date":
+        return write('file-table.txt', tabular(map(sorted(files, key=mdate), nameAndDate)))
+
+    elif mode == "rename":
+        map(files, promptRenameFile)
+
     elif mode == "print":
         map(files, fileInfo)
     elif mode == "delete":
@@ -5328,7 +5290,9 @@ def ff(
     elif mode == "open" or mode == "o":
         map(files, openBrowser)
     elif mode == "info":
-        return pprint(map(files, fileInfo))
+        os.system('clear')
+        pprint(map(files, fileInfo))
+        pprint(len(files))
     elif mode == "clipinfo":
         files.sort(key=mdate, reverse=1)
         f = lambda x: join(map(x, str), delimiter="  ")
@@ -5556,6 +5520,34 @@ def mergeFirstPageOfEachFile(files):
     f = lambda x: x.pages[0:1]
     return pdfCreate(files, f)
 
+def getFilesRecursive(dir):
+    store = []
+    def runner(dir):
+        files = absdir(dir)
+        for file in files:
+            if isIgnoredFile(tail(file)):
+                continue
+            elif isdir(file):
+                runner(file)
+            else:
+                if len(store) > 100:
+                    raise Exception('not allowed to many')
+                store.append(file)
+    runner(dir)
+    return store
+        
+def is_empty_dir(dir):
+    def runner(dir):
+        for file in absdir(dir):
+            if isfile(file):
+                return False
+            elif not runner(file):
+                return False
+
+        return True
+
+    return runner(dir)
+
 def printDirRecursive(dir, **kwargs):
 
     checkpoint = checkpointf(**kwargs)
@@ -5577,8 +5569,11 @@ def printDirRecursive(dir, **kwargs):
                 if checkpoint(file):
                     children.append({"file": name})
             elif isdir(file):
-                children.append(runner(file))
-
+                if is_empty_dir(file):
+                    print('is empty dir remove it?')
+                    rmdir(file)
+                else:
+                    children.append(runner(file))
         return store
 
     return runner(dir)
@@ -5663,14 +5658,14 @@ def getTime():
 def getFileName(file):
     return removeExtension(tail(file))
 
-def mostRecentFileGroups(dir=dldir, minutes=3):
-    ignore = ['Grade Reports']
+def mostRecentFileGroups(dir=dldir, minutes=3, reverse=True):
+    ignore = ['Grade Reports', 'g4q', 'g5q']
 
     #storage = PageStorage()
-    files = ff(dir, sort=1, reverse=1)
+    files = ff(dir, sort=1, reverse=reverse)
     store = []
 
-    ignoreRE = "(Class|home)work"
+    ignoreRE = "(Class|home)work|^g[45]"
     lastDate = 0
 
     for i, file in enumerate(files):
@@ -5762,8 +5757,10 @@ def splitOnWord(s, word):
 
 def tabular(data):
     store = []
+    n = 25
+    s = (f"{{: >{n}}}" * len(data[0])).strip()
     for row in data:
-        store.append("{: >25} {: >25} {: >25}".format(*row))
+        store.append(s.format(*row))
     return join(store)
 
 
@@ -6479,7 +6476,7 @@ def gitUrl(file, repo, user="kdog3682"):
 
 
 def npmInstall(s):
-    dev = test("nodemon|jest|grunt|uglify", s, flags=re.I)
+    dev = test("cors|nodemon|jest|grunt|uglify", s, flags=re.I)
     SystemCommand(
         "npm i " + s + (" --save-dev" if dev else "")
     )
@@ -6624,6 +6621,8 @@ def scrapeLinks(source=0):
     return map(items, downloader)
 
 def reverse(x):
+    if isObject(x):
+        return {b:a for a,b in x.items()}
     return list(reversed(x))
 
 
@@ -6776,12 +6775,6 @@ def finfo(f):
     else:
         return [name]
 
-def googleAction(obj):
-    raise Exception()
-    template = f"Action2({dumpJson(obj)})"
-    googleAppScript(template)
-
-
 def downloadDirectoryFromExcel(dir):
     data = googleAction({
         'type': 'gse',
@@ -6861,7 +6854,7 @@ def memoize(fn):
       return value
   return wrapper
 
-def dollarPrompt(x, python=0):
+def dollarPrompt(x):
     if isArray(x):
         item = choose(x, mode=1)
     elif isObject(x):
@@ -6877,9 +6870,8 @@ def dollarPrompt(x, python=0):
     def g(x):
         return prompt(item, 'input:')
 
-    r = '\$([a-zA-Z]\w*)'
     while True:
-        if test(r, item):
+        if test('\$([a-zA-Z]\w*)', item):
             item = sub(r, f, item, count=1)
         else:
             break
@@ -6893,8 +6885,7 @@ def dollarPrompt(x, python=0):
         else:
             break
 
-    if python: return item
-    return re.sub('\w+=(?=\W)', '', item)
+    return item
 
 
 def getNameArgsKwargs(s):
@@ -6966,7 +6957,7 @@ class Partitioner2:
         self.regexFlags = 0
     
     def partition(self):
-        number(map(self.items, tail))
+        print(numbered(map(self.items, tail)))
         pprint(self.store)
         a = input('')
         if a == '':
@@ -6981,6 +6972,10 @@ class Partitioner2:
 
         if a == 'reset':
             return self.resetRegex()
+
+        if a == 'pdf':
+            items = ff(self.items, pdf=1)
+            return self.setItems(items)
 
         m = search('^(\w*) *= *(.+)', a)
         if m:
@@ -7002,8 +6997,8 @@ class Partitioner2:
 
         m = search('^o *(\d+)', a)
         if m:
-            ofile(self.items[int(m[0]) - 1])
-            return 
+            return ofile(self.items[int(m[0]) - 1])
+
         m = search('^rn *(\d+) *(.+)', a)
         if m:
             old = self.store[int(m[0]) - 1]
@@ -7013,25 +7008,29 @@ class Partitioner2:
         m = search('^d *(.+)', a)
         if m:
             indexes = rangeFromString(m)
-            for i in indexes:
-                self.store.pop(i + 1)
-            return 
+            return self.deleteItems(indexes)
 
         if test('^\d', a):
             indexes = rangeFromString(a)
-            for i in indexes:
-                print(i)
-                index = len(self.store) + 1
-                self.store[index] = self.items[i]
+            self.setItems(indexes)
         else:
             r = self.transformRegex(a)
-            #print(self.regexFlags)
-            #print(r)
-            #raise Exception()
             items = filter(self.items, lambda x: test(r, tail(str(x)), flags=self.regexFlags))
-            for item in items:
-                index = len(self.store) + 1
-                self.store[index] = item
+            self.setItems(items)
+
+    def setItems(self, items):
+        for item in items:
+            index = len(self.store) + 1
+            if isNumber(item):
+                item = self.items[item]
+            self.store[index] = item
+        
+
+    def deleteItems(self, items):
+        for item in items:
+            if isNumber(item):
+                self.store.pop(item + 1)
+        
 
 def getNumbers(s):
     return map(re.findall('\d+', s), int)
@@ -7268,7 +7267,7 @@ def numbered(items, title=''):
     s = '\n' + title + '\n'
     for i, item in enumerate(items):
         spaces = '  ' if i < 9 else ' '
-        s += '  ' + str(i + 1) + '.' + spaces + item + '\n'
+        s += '  ' + str(i + 1) + '.' + spaces + stringify(item) + '\n'
     return s
 
 def snapshotOfDirectory(dir=dldir, amount=10):
@@ -7300,4 +7299,562 @@ def ffApp(s):
 env.basepyref['dep'] = 'deprecateFile'
 #ffWrapper('name=dep')
 env.basepyref['ff'] = 'ffApp'
+#t = datetime.now()
+#pprint(t.isoweekday())
+#ff(dir=pydir, text='^\d+\.\d+.*?\n\d+\.\d+', flags=re.M | re.I)
+#printdir(dir2023)
 
+#pprint(trashdir)
+#ff(listdir(trashdir), py=1)
+
+#strife = "%A %B %d, %-I:%M:%S%p"
+#t = mdate(pydir + 'base.py')
+#pprint(t)
+#pprint(timestamp())
+#pprint(toSeconds(hours=10))
+#n = timestamp()
+#pprint(datetime.fromtimestamp(timestamp()).strftime('%c'))
+#n =  timestamp() - toSeconds(hours=168)
+#pprint(datetime.fromtimestamp(n).strftime(strife))
+#pprint(isRecent(dldir + 'practice-test-math-grade-4.pdf', hours=1000))
+#ff(dldir, pdf=1, weeks=8, mode='info')
+#print(shellescape('/home/k/~asd'))
+"App.js"
+s='''
+bob:
+
+g4h 23-24
+'''
+#SystemCommand('node App.js pdfIni', s)
+def configString(kwargs):
+    s = ''
+    for k, v in kwargs.items():
+        s += k + ' = ' + v + ' '
+    return s.strip()
+
+def JavascriptAppCommand(key, arg='', **kwargs):
+    result = SystemCommand('node', 'App.js', key, arg, **kwargs, python=True)
+    if not result:
+        return 
+    if not result.success:
+        pprint('error')
+        return 
+
+    delimiter = '::CLEARING::'
+    s = re.split(delimiter, result.success, maxsplit=1)[1]
+    data = parseJSON(s)
+    return data
+
+def choose2(items, display=0, anti=0):
+    if isObject(items[0]) and not display:
+        if items[0].get('title'): display = lambda x: x.get('title')
+        elif items[0].get('foo'): display = lambda x: x.get('foo')
+        elif items[0].get('subject'): display = lambda x: x.get('subject')
+
+    if anti:
+        pprint('choosing which items to keep. The rest will be deleted')
+    presentation = map(items, display) if display else items
+    print(numbered(presentation))
+    indexes = rangeFromString(input())
+    if anti:
+        store = [el for i, el in enumerate(items) if i not in indexes]
+    else:
+        store = [el for i, el in enumerate(items) if i in indexes]
+    prompt(store)
+    return store
+        
+def deleteKey(item, key):
+    if isObject(item):
+        item.pop(key)
+    return item
+
+def getYearNumber():
+    return datetime.now().year
+#pprint(getYearNumber())
+
+#print(map(choose2([{'subject': 1}], anti=1), lambda x: deleteKey(x, 'subject')))
+
+def getLoggerData(key, childKeys=0, fallback=None):
+    data = read(glogfile)
+    f = lambda x: x.get('key') == key or x.get('action') == key
+    data = filter(data, f)
+
+    if not childKeys:
+        return data
+    return data
+    #for childKey in childKeys:
+    #for item in data:
+        #f
+    #if isArray(fallback):
+        #storeType = list
+    #for i
+
+
+    return data
+
+def hasKey(x, key):
+    return isObject(x) and x.get(key)
+
+#getLoggerData(key='gitpush')
+
+#SystemCommand('''
+#pip install pillow
+#pip install pytesseract
+#''')
+
+#pprint(npath(dldir, '/home/kdog3682/PYTHON/base.py'))
+#pprint(hasKey('asdf', 'a'))
+#printdir(pdfdir)
+
+
+#store = Partitioner2(os.listdir(dldir))()
+#pprint(store)
+#ff(dir2023, js=1, mode='info', text='worddict', flags=re.I)
+#todo vueData textEdit advanced htmlBuilder
+
+#ff(pubdir, js=1, name='comp', mode='open')
+
+
+def readRaw(file):
+    with open(file, 'r') as f:
+        return f.read()
+
+def seeClipKeys():
+    s = readRaw('clip.js')
+    keys = ['staticClass', 'component']
+    r = reWrap(keys, '(?:$1)": "(.*?)"')
+    data = unique(re.findall(r, s))
+    pprint(data)
+    return data
+#seeClipKeys()
+
+#Each item ... has to look a certain way.
+#When you serve those whom you have a connection to, it feels different.
+#All of you are smart!
+#There are not really any complaints.
+#For the most part, playing by the rules.
+#ofile(findFile('emoji.json'))
+#mkdir(dldir + 'PDFS')
+
+class StepwisePartition:
+
+    def run(self, items):
+        assert items
+        self.stack = [items]
+        while True:
+            done = self.prompt()
+            if done:
+                return unique(self.last)
+
+    @property
+    def last(self):
+        return getLast(self.stack)
+
+    def prompt(self):
+        print(numbered(map(self.last, tail)))
+        a = input('')
+
+        if a == '':
+            return True
+
+        if a == 'o':
+            ofile(self.last)
+            return 
+
+        if a == 'd':
+            self.stack.pop()
+            return 
+
+        if a == 'reset':
+            self.resetRegex()
+            return 
+
+        if a == 'pdf':
+            newItems = ff(self.items, pdf=1)
+            self.stack.append(newItems)
+            return 
+
+        m = search('^(\w*) *= *(.+)', a)
+        if m:
+            key, val = m
+            if key == 'flags' or key == 'f' or key == '':
+                if 'b' in val:
+                    self.regexSuffix = '\\b'
+                if 'B' in val:
+                    self.regexSuffix = ''
+                if 'S' in val:
+                    self.regexPrefix = ''
+
+                if 's' in val:
+                    self.regexPrefix = '^'
+                if 'i' in val:
+                    self.regexFlags -= re.I
+                if 'I' in val:
+                    self.regexFlags += re.I
+
+                print("setting flags", self.regexFlags)
+            return 
+
+        m = search('^o *(.+)', a)
+        if m:
+            indexes = rangeFromString(m)
+            newItems = [item for i, item in enumerate(self.last) if i in indexes]
+            prompt(newItems)
+            ofile(newItems)
+
+        m = search('^d *(.+)', a)
+        if m:
+            indexes = rangeFromString(m)
+            newItems = [item for i, item in enumerate(self.last) if i not in indexes]
+            self.stack.append(newItems)
+            return 
+
+        if test('^\d', a):
+            indexes = rangeFromString(a)
+            newItems = [item for i, item in enumerate(self.last) if i in indexes]
+            self.stack.append(newItems)
+            return 
+
+        r = self.transformRegex(a)
+        f = lambda x: test(r, tail(str(x)), flags=self.regexFlags)
+        newItems = filter(self.last, f)
+        if newItems: self.stack.append(newItems)
+
+    def transformRegex(self, s):
+        return self.regexPrefix + s + self.regexSuffix
+    
+    def __init__(self):
+        self.resetRegex()
+
+    def resetRegex(self):
+        self.regexPrefix = '^'
+        self.regexSuffix = ''
+        self.regexFlags = 0
+    
+def partitionMove(dir, to=0, action='move'):
+    files = StepwisePartition().run(absdir(dir))
+    prompt(files, action=action, message='please confirm')
+    if action == 'move':
+        mfiles(files, to)
+    elif action == 'delete':
+        map(files, rfile)
+
+
+def textlog(**kwargs):
+    store = []
+    store.append(('date', datestamp()))
+    store.append(('caller', caller()))
+    for k,v in kwargs.items():
+        store.append((k, v))
+    
+    s = ''
+    for a,b in store:
+        if not b:
+            continue
+        s += a + ': '
+        if isArray(b):
+            s += '\n' + indent(b) + '\n'
+        else:
+            s += b 
+
+        s += '\n'
+
+    value = s + linebreak + '\n'
+    if s.strip():
+        append('log.txt', value)
+
+def WorkSummary(file):
+    if getExtension(file) != 'js':
+        pprint('only js for worksummary')
+        return 
+
+    textlog(
+        file=file,
+        work=getBindingNames(read(file))
+    )
+
+def indent(items):
+    return join(map(items, lambda x: '    ' + x))
+
+
+def getBindingNames(s):
+    r = '^(?:class|const|var|(?:async )?function) (\w+)'
+    return re.findall(r, s, flags=re.M)
+
+def isChinese(s):
+    return test('[\u4e00-\u9fa5]', s)
+
+def isEnglish(s):
+    return test('[a-zA-Z]', s)
+
+#s = findFile('test.pdf')
+#ofile(s)
+
+#pprint(dollarPrompt('hi $1\n\nfooo()'))
+#printdir(nodedir2023)
+#ofile(nodedir2023 + 'pdfjs-dist/web/pdf_viewer.js')
+#ofile('/home/kdog3682/2023/pdfjs/web/viewer.html')
+#ofile('/home/kdog3682/2023/pdfjs/web/viewer.js')
+#printdir(pubdir)
+#sosdf()
+#chdir(pubdir)
+#ofile('sj.js')
+x = [
+    'magic', 'square', 'story', 'next', 'new', 'geometry'
+]
+s = """
+magic is no 
+
+square is some sort of thing.
+"""
+
+#ofile([el + '.js' for el in x])
+#printdir(mathdir)
+
+def saveMathFileByFolder(file, gradeLevel=4):
+    date = upcomingDate('saturday', strife='-')
+    dir = mathdir + date
+    f = lambda x: f"G{gradeLevel} {capitalize(x)}"
+    originalPath = addExtension(file, 'txt')
+    path = npath(dir, changeFileName(originalPath, f))
+
+    def getPath(path):
+        if isfile(path):
+            if gradeLevel == 4:
+                path = path.replace('G4', 'G5')
+            else:
+                path = path.replace('G5', 'G4')
+
+            if isfile(path):
+                return 
+            else:
+                return path
+        else:
+            return path
+
+    path = getPath(path)
+    assert path
+    message = "Do you want to move this file to the mathdir? It will delete the original file"
+    prompt(read(originalPath), message=message, outpath=path)
+
+
+    if not isdir(dir):
+        os.makedirs(dir)
+
+    mfile(originalPath, path)
+
+#pprint(saveMathFileByFolder('quiz'))
+
+#pprint(find_file('-5'))
+#pprint(upcomingDate('saturday', next=2))
+def promptRenameFile(file):
+    t = tail(file)
+    a, b = re.split(' *\| *', prompt(t), maxsplit=1)
+    newFile = file.replace(t, t.replace(a, b))
+    mfile(file, newFile)
+
+#ff(mathdir, recursive=1, mode='tree')
+#pprint(promptRenameFile('asdf/asdf/a.js'))
+#pprint(printDirRecursive(mathdir))
+#printdir(sandir)
+#ff(fontdir)
+
+def getMathDir(next=0):
+    dir = mathdir + upcomingDate('saturday', strife='-', next=next)
+    assert isdir(dir)
+    return dir
+
+def copydir(src, to):
+    newDir = npath(to, src)
+    assert not isdir(newDir) and isdir(to)
+    prompt(f"copying {src} to {newDir}")
+    shutil.copytree(src, newDir)
+    print(f"copying directory: {newDir}")
+#copydir(getMathDir(), sandir)
+#printdir(sandir)
+#printdir(dir2023)
+
+def usb(x=0):
+    if not isdir(usbdir):
+        return print("a usbdrive  is not plugged in.")
+    elif isdir(usbdrivedir):
+        dir = usbdrivedir
+    elif isdir(sandir):
+        dir = sandir 
+    else:
+        return print("no usb dir")
+
+    dir = os.path.join(dir, str(getYearNumber()))
+    mkdir(dir)
+
+    if not x:
+        if isRecent('clip.html', minutes=20):
+            cfile('clip.html', dir)
+        elif isRecent('clip.js', minutes=10):
+            cfile('clip.js', dir)
+        else:
+            x = ff(dir2023, days=1, js=1, py=1)
+            #dir = getSaturdayDir(dir)
+            prompt(files=x, message="do you want to copy all of these files to the new saturday dir?", dir=dir)
+            map(x, cfile, dir)
+
+    elif isArray(x):
+        map(x, cfile, dir)
+
+
+def saveToSandisk(x=2):
+    if not isdir(sandir):
+        raise Exception('')
+    outdir = os.path.join(sandir, datestamp())
+    if isdir(outdir):
+        raise Exception('outdir already exists')
+    mkdir(outdir)
+
+    if isdir(x):
+        copydir(dir, outdir)
+    else:
+        if isNumber(x):
+            x = ff(dir2023, days=2) + ff(pydir, days=2)
+
+        prompt(x, 'save to outdir?', outdir=outdir)
+        map(x, cfile, outdir)
+
+#pprint(upcomingDate('saturday'))
+#mfiles(absdir(usbdrivedir), mkdir(os.path.join(usbdrivedir, key)))
+#printdir(usbdrivedir)
+#cfile('ec.js', usbdrivedir)
+#usb('test.pdf as Q')
+
+temp = [
+    "/home/kdog3682/2023/positive-statements.school.txt",
+    "/home/kdog3682/2023/classwork.school.txt",
+    "/home/kdog3682/2023/comments.school.txt"
+]
+#printdir(getMathDir(-1))
+
+#appendVariable(choose(sort(ff(dldir, days=12, pdf=1), lambda x: tail(x))))
+
+#printdir(jchdir)
+#ofile(jchdir + 'components.js')
+
+
+def getSaturdayDir(dir):
+    return os.path.join(dir, upcomingDate('saturday', strife='-'))
+
+def swapFiles(a, b):
+    a = addExtension(a, 'js')
+    b = addExtension(b, 'js')
+    s = read(a)
+    cfile(b, a)
+    write(b, s)
+
+def sayhi(s):
+    return 'Hello from ' + s + '!'
+
+def writeFiles(*args):
+    def runner(arg):
+        write(addExtension(arg, 'js'), sayhi(arg))
+    map(args, runner)
+
+#writeFiles('a', 'b')
+#swapFiles('a', 'b')
+#swapFiles('test', 'dialogue')
+#mkdir(localbackupdir)
+#printdir(localbackupdir)
+#appendVariable(ff(dir2023, hours=1))
+#pprint(isRecentFile('base.py', after='1:00AM', days=0))
+
+temp = [
+    #"/home/kdog3682/2023/changelog.md",
+    #"/home/kdog3682/2023/javascript.dependencies.json",
+    #"/home/kdog3682/2023/scratchpad.js",
+    #"/home/kdog3682/2023/comments.school.txt",
+
+    "/home/kdog3682/2023/dialogue.js",
+    "/home/kdog3682/2023/utils.js",
+    "/home/kdog3682/2023/textEdit.js",
+    "/home/kdog3682/2023/codeOrganizer.js",
+    "/home/kdog3682/2023/compileRE.js",
+    "/home/kdog3682/2023/consumableParse.js",
+    "/home/kdog3682/2023/dialogue.txt",
+    "/home/kdog3682/2023/hammyDialogue.js",
+]
+#usb(temp)
+def nameAndDate(file):
+    name = tail(file)
+    date = datestamp(file)
+    return [date, name]
+
+#ff(dir2023, mode='date', js=1)
+#git clone https://github.com/firebase/codelab-friendlychat-web
+
+
+
+hammyfirebase = '''
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCOTawJsonmn-tMczAwn9aZcZlIplwP4vo",
+    authDomain: "hammy-math-class.firebaseapp.com",
+    projectId: "hammy-math-class",
+    storageBucket: "hammy-math-class.appspot.com",
+    messagingSenderId: "37397511963",
+    appId: "1:37397511963:web:8192df6cdbb76720c61dbe",
+    measurementId: "G-KJZ6Z4PMJC"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
+'''
+#SystemCommand('npm install -g firebase-tools')
+
+
+deletions = """
+
+I think delete github:
+CWF
+
+https://kdog3682.github.io/magicscript/ gives "hiii"
+https://kdog3682.github.io/magicscript/foo also works.
+
+"""
+def mkfile(file, *items):
+    write(file, join(items))
+
+samplehtml = '''
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sample HTML Document</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+	<h1>Welcome to My Sample HTML Document</h1>
+	<p>This is a paragraph of text. It's really not that interesting, but it's here anyway.</p>
+	<ul>
+		<li>List item 1</li>
+		<li>List item 2</li>
+		<li>List item 3</li>
+	</ul>
+	<a href="https://www.example.com">Click here to visit Example.com</a>
+</body>
+</html>
+
+
+'''
+
+#mkdir(publicfirebasedir)
+#mkfile(hammyfirebasehtml, samplehtml, hammyfirebase)
+
+#ff(html=1)

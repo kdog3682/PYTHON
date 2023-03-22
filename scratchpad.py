@@ -1,3 +1,8 @@
+
+
+
+
+from __future__ import annotations
 cents = 30
 denominations = [25, 10, 5, 1]
 names = {25: "quarter(s)", 10: "dime(s)", 5 : "nickel(s)", 1 : "pennies"}
@@ -21,5 +26,5 @@ def count_combs(left, i, comb, add):
     #return
     return sum(count_combs(left-x*cur, i+1, comb[:], (x,cur)) for x in range(0, int(left/cur)+1))
 
-count_combs(cents, 0, [], None)
+#count_combs(cents, 0, [], None)
 

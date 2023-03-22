@@ -21,13 +21,17 @@ class Github:
         self.private = private
         self.isFirstTime = False
 
+        prompt(kwargs, repo=self.Service)
+
         if kwargs:
             for k,v in kwargs.items():
                 m = getattr(self, k)
                 if m:
                     try:
                         m(v)
-                    except:
+                    except Exception as e:
+                        print(e)
+                        raise Exception('error')
                         m()
                     break
 
@@ -134,14 +138,16 @@ class Github:
         return base64.b64decode(f.content)
 
     def write(self, *args):
-
         name = tail(args[0])
         content = ''
 
         ref = self.ref
         branch = self.ref
         if len(args) == 1:
-            content = read(args[0])
+            if isfile(args[0]):
+                content = read(args[0])
+            else:
+                content = prompt(message='The file does not exist. Write something. This will be the content', fallback=args[0])
         else:
             content = textgetter(args[1])
         if not content:
@@ -151,7 +157,8 @@ class Github:
         if name == 'clip.html':
             name = prompt('Choose a file name. fallback=index.html')
             name = addExtension(name, 'html')
-
+        elif name == 'hammy.html' or name == 'asdfsadf.html':
+            name = 'index.html'
 
         try:
             server = self.Service.get_contents(
@@ -263,4 +270,5 @@ class Github:
         elif prompt(f"delete {self.name} because it is empty repo?"):
             self.deleteRepo(self.name)
 
-#Github(key='hammy', printRepo='hammymathclass.github.io')
+Github(key='hammy', write='changelog.html')
+#uploadAndMakeRepo
