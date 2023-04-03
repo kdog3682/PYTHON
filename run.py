@@ -369,73 +369,30 @@ def gitDelete(file):
     SystemCommand(cmd)
 
 
-def gitPushObject(obj):
 
-    return 
-    if obj['ext'] != 'js':
-        print('only pushing js at the moment')
-        return 
+def gitPush(dir=dir2023):
+    if dir == dir2023 or dir == pydir:
+        cleandir(dir2023)
+        time.sleep(1)
+    else:
+        raise Exception()
 
-    message = obj['line'].strip()
-    dir = dir2023
+    nameObject = gitNames(dir)
+    time.sleep(1)
+
     mainCommand = f"""
         cd {dir}
         git add .
-        git commit -m "{message}"
+        git commit -m "'autopush'"
         git push
     """
-
-    success = SystemCommand(mainCommand, dir=dir).success
-    if success and not test('nothing to commit', success, flags=re.I):
-        ofile(gitUrl(dir))
-
-
-
-    print(obj)
-
-def gitPush(file=None, dir=dir2023):
-    if file and isfile(file):
-        print("this only happens if there is a file")
-        if getExtension(file) == 'py':
-            dir = pydir
-        message = prompt('running gitPush', pydir, file, "upload message: ")
-
-        a, b = os.path.split(file)
-        if not a or len(a) < 2:
-            a = dir2023
-
-        mainCommand = f"""
-            cd {a}
-            git add {b}
-            git commit -m "{message}"
-            git push
-        """
-    else:
-        fallbackMessage = 'howdy autopush'
-        message = None
-        if file:
-            message = file
-
-        if dir == dir2023 or dir == pydir:
-            cleandir(dir2023)
-            time.sleep(1)
-
-        nameObject = gitNames(dir)
-
-        time.sleep(1)
-        mainCommand = f"""
-            cd {dir}
-            git add .
-            git commit -m "'{message or fallbackMessage }'"
-            git push
-        """
 
     response = SystemCommand(mainCommand, dir=dir)
     gitData = {
         'success': response.success,
         'error': response.error,
     }
-    logger(**nameObject, action='gitpush', message=message, gitData=gitData)
+    #logger(**nameObject, action='gitpush', message=message, gitData=gitData)
 
 
 def gitManager(

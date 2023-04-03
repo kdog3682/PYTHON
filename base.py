@@ -4255,7 +4255,7 @@ def alwaysDelete(f):
         return True
     if test(deleteRE, name, flags=re.I):
         return True 
-    if fsize(f) < 10:
+    if fsize(f) < 20:
         return True
     if getExtension(f) in deleteExtensionsList:
         return True
