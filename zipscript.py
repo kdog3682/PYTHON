@@ -13,7 +13,7 @@ def readzip(inpath=None, outpath=None, flatten=0):
         )
 
     assert getExtension(inpath) == "zip"
-    prompt('prompting', inpath, outpath)
+    prompt("prompting", inpath, outpath)
 
     with zipfile.ZipFile(inpath, "r") as z:
         z.extractall(outpath)
@@ -27,11 +27,43 @@ def readzip(inpath=None, outpath=None, flatten=0):
         return 1
 
 
+def usbz(files):
+    compression = zipfile.ZIP_DEFLATED
+    assert isArray(files)
+
+    name = datestamp() + ".zip"
+    dir = get_usb_dir()
+    outpath = os.path.join(dir, str(getYearNumber()), name)
+
+    prompt(
+        message="starting zip process",
+        numOfFiles=len(files),
+        outpath=outpath,
+        proceed="proceed?",
+    )
+
+    with zipfile.ZipFile(outpath, "w") as z:
+
+        for file in files:
+            if not isfile(file):
+                print("not a file", file)
+                continue
+            if fsize(file) < 100:
+                print("too small", file)
+                continue
+
+            name = tail(file)
+            z.write(
+                file, arcname=name, compress_type=compression
+            )
+
+
 def writezip(
     x, outpath=zipdir, name="backup", date=1, delete=0
 ):
 
-    if not x: return print('empty x', x)
+    if not x:
+        return print("empty x", x)
 
     if isArray(x):
         if not name:
@@ -48,7 +80,7 @@ def writezip(
     if date:
         date = "-" + datestamp(str)
     else:
-        date = ''
+        date = ""
     name = os.path.join(outpath, name + date)
     outpath = addExtension(name, "zip")
     files.sort(key=mdate)
@@ -69,7 +101,7 @@ def writezip(
         dest = "zip-files.log.txt"
         deleteFiles(files, save=dest, title=outpath)
 
-    print('success!\nWrote files to', outpath)
+    print("success!\nWrote files to", outpath)
 
 
 def zipWriteAll(outpath, files):
@@ -80,13 +112,14 @@ def zipWriteAll(outpath, files):
                 errors.append(tail(file))
         if len(errors) > 10:
             clip(errors)
-            raise Exception('to many errors')
+            raise Exception("to many errors")
+
 
 def zipWrite(z, f):
     if not f:
         return 1
     try:
-        name = re.sub('^\.', '', tail(f))
+        name = re.sub("^\.", "", tail(f))
         compression = zipfile.ZIP_DEFLATED
         z.write(f, arcname=name, compress_type=compression)
         return 0
@@ -109,26 +142,20 @@ def backup(key):
         return writezip(files, name=tail(key))
 
     if key == "js":
-        files = ff('js')
+        files = ff("js")
         return writezip(files, name="javascript")
 
     if key == "test":
         files = ["v.js"]
-        return writezip(
-            files, name="test", delete=1
-        )
+        return writezip(files, name="test", delete=1)
 
     if key == "oldpy":
         files = ff("cwf py old")
-        return writezip(
-            files, name="oldpy", delete=1
-        )
+        return writezip(files, name="oldpy", delete=1)
 
     if key == "oldjs":
         files = ff("pub js old")
-        return writezip(
-            files, name="oldjs", delete=1
-        )
+        return writezip(files, name="oldjs", delete=1)
 
     if key == "recent":
         files = recentFiles()
@@ -142,42 +169,48 @@ def backup(key):
 
 
 def fixZipAccident():
-    raise Exception('need to fix file path here')
-    f = '/home/kdog3682/zip-files.log.txt'
-    files = re.findall('file: (\S+)', read(f))
+    raise Exception("need to fix file path here")
+    f = "/home/kdog3682/zip-files.log.txt"
+    files = re.findall("file: (\S+)", read(f))
     files = map(files, lambda f: normpath(trashdir, f))
     files = filter(files, isfile)
     chdir(pubdir)
     files = key
-    return writezip(
-        files, name="oldjs"
-    )
+    return writezip(files, name="oldjs")
 
-#backup('oldpy')
-#backup('recent')
-#consolidate.js
-#backup(jsondir)
-#backup(txtdir)
-#printdir(jsdir)
-#print(os.listdir(sandir))
-#copydir(zipdir, sandir)
+
+# backup('oldpy')
+# backup('recent')
+# consolidate.js
+# backup(jsondir)
+# backup(txtdir)
+# printdir(jsdir)
+# print(os.listdir(sandir))
+# copydir(zipdir, sandir)
 # the difficulties can be solved.
 
+
 def unzipSpecificFile(s):
-    inpath = drivedir + 'ZIP/JSONS-09-21-2022.zip'
+    inpath = drivedir + "ZIP/JSONS-09-21-2022.zip"
     with zipfile.ZipFile(inpath, "r") as z:
-        z.extract('known.json', path=dldir)
+        z.extract("known.json", path=dldir)
+
 
 def unzipLatest():
     f = glf()
-    readzip(f, flatten=True, outpath=normpath(dldir, removeExtension(tail(f))))
+    readzip(
+        f,
+        flatten=True,
+        outpath=normpath(dldir, removeExtension(tail(f))),
+    )
 
     flatdir(mostRecent(dldir))
 
-#unzipLatest()
+
+# unzipLatest()
 
 # Bad actors do not act bad on purpose.
-# 
+#
 
 
 files = [
@@ -202,5 +235,13 @@ files = [
 
 def check(outpath):
     import zipfile
+
     with zipfile.ZipFile(outpath, "r") as z:
-       return map(z.filelist, lambda x: x.filename)
+        return map(z.filelist, lambda x: x.filename)
+
+
+vimFiles = ['/home/kdog3682/.vimrc', '/home/kdog3682/VIM/functions.vim', '/home/kdog3682/VIM/variables.vim']
+save = absdir(examdir) + ff(jsondir, days=10) + ff(txtdir, days=10) + ff(dir2023, files=1) + ff(pydir, days=10) + vimFiles
+
+#usbz(save)
+

@@ -160,11 +160,12 @@ class Github:
         elif name == 'hammy.html' or name == 'asdfsadf.html':
             name = 'index.html'
 
+        result = 0
         try:
             server = self.Service.get_contents(
                 name, ref=ref
             )
-            return self.Service.update_file(
+            result = self.Service.update_file(
                 server.path,
                 "--",
                 content,
@@ -172,9 +173,12 @@ class Github:
                 branch=branch,
             )
         except:
-            return self.Service.create_file(
+            result = self.Service.create_file(
                 name, "--", content, branch=branch
             )
+
+        print(result)
+        return result
 
     def delete(self, file):
         server = self.Service.get_contents(file, ref="main")
@@ -269,6 +273,3 @@ class Github:
             pprint(store)
         elif prompt(f"delete {self.name} because it is empty repo?"):
             self.deleteRepo(self.name)
-
-Github(key='hammy', write='changelog.html')
-#uploadAndMakeRepo

@@ -1,6 +1,7 @@
 linebreak = '-' * 50
 hammyfirebasehtml = "/home/kdog3682/FIREBASE/public/index.html"
 localbackupdir= "/home/kdog3682/LOCALBACKUP/"
+publishdir= "/home/kdog3682/PUBLISHED/"
 firebasedir= "/home/kdog3682/FIREBASE/"
 publicfirebasedir= "/home/kdog3682/FIREBASE/public"
 latexdir = '/home/kdog3682/LATEX/'
@@ -32,6 +33,7 @@ htmlbudir = "https://drive.google.com/drive/folders/16gpifAlQhHxBHr3SP0IbRiwnGLw
 teachdir = "/home/kdog3682/TEACHING/"
 vimdir = "/home/kdog3682/VIM & SH/"
 nodedir = "/home/kdog3682/.npm-global/lib/node_modules/"
+nodedir2023 = "/home/kdog3682/2023/node_modules/"
 linebreak = "-" * 50
 tododir = "/mnt/chromeos/GoogleDrive/MyDrive/TODO"
 boadir = "/mnt/chromeos/GoogleDrive/MyDrive/TODO/BOA"
@@ -90,6 +92,7 @@ logdir = "/home/kdog3682/LOGS/"
 oldtxtdir = "/home/kdog3682/TEXTS/"
 txtdir = "/home/kdog3682/2023/TEXTS/"
 jsondir = "/home/kdog3682/JSONS/"
+emojifile = "/home/kdog3682/JSONS/emojis.json"
 mathdir = "/home/kdog3682/MATH/"
 picdir = "/home/kdog3682/PICS/"
 colordir = "/home/kdog3682/COLORING/"
@@ -443,6 +446,8 @@ def mostRecent(dir, n=1, reverse=0, **kwargs):
 def npath(dir=0, file=0):
     if not dir:
         return file
+    elif not file:
+        return os.path.join(os.getcwd(), dir)
     return os.path.join(dir, tail(file))
 
 def normpath(dir, file):
@@ -557,7 +562,10 @@ def chdir(d, force=0):
 def prompt(*args, **kwargs):
     for arg in args:
         if arg:
-            pprint(arg)
+            if isString(arg):
+                print(arg)
+            else:
+                pprint(arg)
     if kwargs:
         pprint(kwargs)
     return input() or kwargs.get('fallback', '')
@@ -1506,6 +1514,10 @@ def google_request(data):
     return value
 
 def split(s, r=" ", flags=0):
+    if r == 'linebreak':
+        flags = re.M
+        r = '^----+'
+
     return map(
         filter(re.split(r, s.strip(), flags=flags)), trim
     )
@@ -1636,6 +1648,7 @@ def isSameDate(date, f):
 def checkpointf(
     deleteIt=0,
     include="",
+    size=0,
     maxLength=0,
     image=0,
     today=0,
@@ -1682,6 +1695,8 @@ def checkpointf(
     json=0,
     **kwargs,
 ):
+    if size:
+        biggerThan = size
     if text:
         onlyFiles = 1
     if isf:
@@ -1729,6 +1744,7 @@ def checkpointf(
         hours = 12
 
     if include:
+        print("deleting")
         include = xsplit(include, "\s+")
     if ignore:
         ignore = xsplit(ignore, "\s+")
@@ -1748,7 +1764,6 @@ def checkpointf(
         if isp and filename.startswith("."):
             return False
         if deleteIt and alwaysDelete(f):
-            print("deleting")
             rfile(f)
             return False
         if regex and not test(regex, filename, flags=flags):
@@ -1798,7 +1813,7 @@ def checkpointf(
             return False
         if big and fsize(f) < big:
             return False
-        if ignoreRE and test(ignoreRE, filename):
+        if ignoreRE and test(ignoreRE, filename, flags=re.I):
             return False
         if text and not test(text, read(f), flags=flags):
             return False
@@ -3181,17 +3196,6 @@ def boo():
     prompt(files)
     map(files, rfile)
 
-def _twilio(*args):
-    body = join(args)
-    to = env.selfphone
-    from twilio.rest import Client
-
-    client = Client(env.twiliosid, env.twilioauthtoken)
-    message = client.messages.create(
-        body="-\n\n\n" + body, from_=env.twiliophone, to=to
-    )
-    print(message)
-
 def error():
     pass
 
@@ -4251,7 +4255,7 @@ def alwaysDelete(f):
         return True
     if test(deleteRE, name, flags=re.I):
         return True 
-    if fsize(f) < 5:
+    if fsize(f) < 10:
         return True
     if getExtension(f) in deleteExtensionsList:
         return True
@@ -4312,14 +4316,6 @@ def rnl():  # name: renameLastFile
 
 #pprint(read(glf()))
 
-def sendTwilio(body="hi from twilio", to=env.selfphone):
-    from twilio.rest import Client
-
-    client = Client(env.twiliosid, env.twilioauthtoken)
-    message = client.messages.create(
-        body="-\n\n\n" + body, from_=env.twiliophone, to=to
-    )
-    print("success", message.sid)
 
 def mget(r, s, flags=0, mode=dict):
     store = []
@@ -4462,9 +4458,11 @@ def findFile(f):
     for dir in dirs:
         file = npath(dir, f)
         if isfile(file):
-            print(file)
-            if fsize(file) > 10:
+            size = fsize(file)
+            if size > 10:
                 print('valid')
+                print(size)
+                print(file)
                 return file
 
 
@@ -4552,7 +4550,18 @@ def googleSearchQuery(s):
     s = s.replace(" ", "+")
     return f"https://google.com/search?q={s}"
 
-def revertFile():
+def revertFile(name=None):
+    dir = localbackupdir
+    print("getting file from dir:", dir)
+    file = os.path.join(dir, name) if name else  mostRecent(dir)
+    todir = dirFromFile(tail(file))
+    newName = prompt(fileInfo(file, r=1), dir=dir, todir=todir)
+    if newName:
+        todir = npath(todir, addExtension(newName, getExtension(file)))
+        prompt(outpath=todir)
+    cfile(file, todir)
+
+    return 
     print("getting file from budir", budir)
     file = mostRecent(budir)
     dir = dirFromFile(tail(file))
@@ -5265,6 +5274,13 @@ def ff(
     if reverse:
         sort = 1
     if sort:
+        if isString(sort):
+            if sort == 'size':
+                sort = fsize
+
+            elif sort == 'date':
+                sort = mdate
+
         files.sort(
             key=mdate if sort == 1 else sort,
             reverse=reverse,
@@ -5274,11 +5290,14 @@ def ff(
         prompt(files, "remove?")
         rfiles(files)
         printdir(dir)
-    elif mode == "date":
+    elif mode == "filetable":
         return write('file-table.txt', tabular(map(sorted(files, key=mdate), nameAndDate)))
 
     elif mode == "rename":
         map(files, promptRenameFile)
+
+    elif mode == "save":
+        return appendVariable(files)
 
     elif mode == "print":
         map(files, fileInfo)
@@ -6823,17 +6842,6 @@ pokemonJsonSample = [
   },
 ]
 
-def downloadImage(url, name):
-    from requests import get
-    r = get(url)
-    if r.status_code == 200:
-        with open(name,'wb') as f:
-            f.write(r.content)
-            print('Image sucessfully Downloaded: ',name)
-            return name
-    else:
-        print('Image Couldn\'t be retreived', name) 
-
 def sub(r, f, s, **kwargs):
     def g(x):
         if isString(f):
@@ -7434,7 +7442,6 @@ def seeClipKeys():
 #All of you are smart!
 #There are not really any complaints.
 #For the most part, playing by the rules.
-#ofile(findFile('emoji.json'))
 #mkdir(dldir + 'PDFS')
 
 class StepwisePartition:
@@ -7675,32 +7682,28 @@ def copydir(src, to):
 #printdir(sandir)
 #printdir(dir2023)
 
-def usb(x=0):
-    if not isdir(usbdir):
-        return print("a usbdrive  is not plugged in.")
-    elif isdir(usbdrivedir):
-        dir = usbdrivedir
+def get_usb_dir():
+    if isdir(usbdrivedir):
+        return usbdrivedir
     elif isdir(sandir):
-        dir = sandir 
+        return sandir
     else:
-        return print("no usb dir")
+        raise Exception('no usb dir')
+
+def usb(x=0):
+
+    dir = get_usb_dir()
+
+    f = glf(dir=dir2023)
+    if tail(f) == 'clip.html' and isRecent(f, minutes=5):
+        cfile(f, dir)
+        return 
 
     dir = os.path.join(dir, str(getYearNumber()))
     mkdir(dir)
 
-    if not x:
-        if isRecent('clip.html', minutes=20):
-            cfile('clip.html', dir)
-        elif isRecent('clip.js', minutes=10):
-            cfile('clip.js', dir)
-        else:
-            x = ff(dir2023, days=1, js=1, py=1)
-            #dir = getSaturdayDir(dir)
-            prompt(files=x, message="do you want to copy all of these files to the new saturday dir?", dir=dir)
-            map(x, cfile, dir)
-
-    elif isArray(x):
-        map(x, cfile, dir)
+    files = x or ff(dir2023, hours=10, js=1)
+    map(files, cfile, dir)
 
 
 def saveToSandisk(x=2):
@@ -7739,8 +7742,11 @@ temp = [
 #ofile(jchdir + 'components.js')
 
 
+def saturdate():
+    return upcomingDate('saturday', strife='-')
+
 def getSaturdayDir(dir):
-    return os.path.join(dir, upcomingDate('saturday', strife='-'))
+    return os.path.join(dir, saturdate())
 
 def swapFiles(a, b):
     a = addExtension(a, 'js')
@@ -7820,15 +7826,6 @@ hammyfirebase = '''
 #SystemCommand('npm install -g firebase-tools')
 
 
-deletions = """
-
-I think delete github:
-CWF
-
-https://kdog3682.github.io/magicscript/ gives "hiii"
-https://kdog3682.github.io/magicscript/foo also works.
-
-"""
 def mkfile(file, *items):
     write(file, join(items))
 
@@ -7857,5 +7854,161 @@ samplehtml = '''
 
 #mkdir(publicfirebasedir)
 #mkfile(hammyfirebasehtml, samplehtml, hammyfirebase)
-
 #ff(html=1)
+
+def fa(s, r, flags=0, fn=0):
+    s = textgetter(s)
+    m = re.findall(r, s, flags=flags)
+    if fn:
+        map(m, fn)
+    else:
+        pprint(m)
+
+def file_table_cleanup():
+
+    def filetablefn(file, notes):
+        r = 'dep|del'
+        if not isfile(file):
+            print("'not a file'", file)
+            return 
+        try:
+            if test(r, notes) or fsize(file) < 50:
+                print('removing', tail(file))
+                rfile(file)
+        except Exception as e:
+            print(e, file)
+        
+
+    fa('file-table.txt', '2023 +(\S+)(.*)', fn=filetablefn)
+
+
+#ofile('http://localhost:8000')
+#printdir(nodedir2023 + 'nerdamer/')
+#ofile(nodedir2023 + 'nerdamer/index.html')
+
+def publish(name):
+    dir = publishdir
+    inpath = addExtension(name, 'txt')
+    outpath = npath(dir, inpath + '.' + saturdate())
+    shutil.copy(inpath, outpath)
+    clear(inpath)
+    printdir(dir)
+#usb(ff(js=1, hours=3))
+#ofile(findFile('emojis.json'))
+#printdir(publishdir)
+
+def openFirstFile(dir):
+    ofile(absdir(dir)[0])
+
+#openFirstFile(publishdir)
+
+#ff(js=1, days=5, text='./generateMultipleChoice')
+
+    
+
+def addfiles():
+    ignoreRE = '''
+        component
+        scratch
+        directive
+        state
+        config
+        ask
+        clip
+        wrappers
+        server
+        chalk
+        main
+        puppeteer
+        pretty
+
+        serve
+        type
+        interactive
+        ox3
+        hammy
+        app
+
+    '''
+    ignoreRE = '|'.join(linegetter(ignoreRE))
+    return ff(js=1, days=5, sort='date', ignoreRE=ignoreRE, size=2000)
+
+#addfiles()
+#ff(localbackupdir)
+
+def addTitles():
+    def f(item):
+        if test('^\w+(?: \w+){1,5} *\n', item):
+            title = search('^\w.+', item)
+            dprint(title)
+            return item
+        #if test('^\w+\n\n', item):
+            #dprint(title)
+            #return item
+
+        else:
+            a = prompt(item, 'write a title if you would like:  ')
+            if a:
+                return a + '\n\n' + item
+            return item
+
+    s = read('quiz.txt')
+    items = map(split(s, '^---+', flags=re.M), f)
+    clip('\n\n---------------------'.join(items))
+    #clip(items)
+    #s = join(items, '\n\n-------------------')
+    #clip(s)
+
+#cfile('clip.js', 'quiz.txt')
+#addTitles()
+#print(len(split(clip(), 'linebreak')))
+#pprint(len(clip()))
+#ff(js=1, name='cypher')
+#ff(dir=pubdir, js=1, name='vue', mode='open')
+
+#assert(print(sayhi('hi')))
+#pprint(datestamp())
+#printdir(get_usb_dir() + '/2023')
+#pprint(ff(days=15, js=1, text='downloadpdf', once=1, flags=re.I, ignoreRE='hammyco|server|browser'))
+#ff(mode='save', html=1)
+
+temp = [
+    "/home/kdog3682/2023/asdf.html",
+    "/home/kdog3682/2023/flashcards.html",
+    "/home/kdog3682/2023/chatgpt-generated-html.html",
+    "/home/kdog3682/2023/chat.html",
+    "/home/kdog3682/2023/chat2.html",
+    "/home/kdog3682/2023/clip.html",
+    "/home/kdog3682/2023/gpt.html",
+
+    #"/home/kdog3682/2023/hammy.html"  # current index.html of hammy
+    #"/home/kdog3682/2023/t.html", # download selected items
+    #"/home/kdog3682/2023/chatgpt.html", #vueShapes
+    #"/home/kdog3682/2023/index.html",
+    #"/home/kdog3682/2023/ec.html",
+    #"/home/kdog3682/2023/build.html",
+    #"/home/kdog3682/2023/ham.html",
+]
+#map(temp, rfile)
+#usb(ff(pydir, days=3))
+#ff(jsondir, mode='open', name='css')
+#file:///media/fuse/crostini_25bd1ae3ef71bac8d459747ce670faa67d509f14_termina_penguin/JSONS/css.abrevs.json
+#s =
+
+
+def downloadImage(url, name, openIt=0):
+    from requests import get
+    r = get(url)
+    if r.status_code == 200:
+        with open(name,'wb') as f:
+            f.write(r.content)
+            if openIt:
+                ofile(name)
+            print('Image sucessfully Downloaded: ',name)
+            return name
+    else:
+        print('Image Couldn\'t be retreived', name) 
+
+#ofile('gpt.json')
+#olf()
+# Give lots of details.

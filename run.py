@@ -52,12 +52,27 @@ def yuma(a, b, c):
     dprint(a, b, c)
 
 
+
+def pythonWithState(fnKey, mode, state):
+    fn = globals().get(fnKey)
+    assert(fn)
+
+    value = fn()
+    if mode == 'append':
+        lang = state.get('lang')
+        name = re.sub('^(?:add|get|remove|find)', '', fnKey.lower())
+        append(state.get('file'), createVariable(name, value, lang))
+    else:
+        print(value)
+
 def python(argv = sys.argv[1:]):
     if not argv:
         return print("requires shell")
 
     key, *args = argv
     args = map(list(args), shellunescape)
+    if key == 'pythonWithState':
+        return pythonWithState(*args)
     key = env.basepyref.get(key, key)
     fn = globals().get(key)
     fn(*args)
@@ -355,6 +370,8 @@ def gitDelete(file):
 
 
 def gitPushObject(obj):
+
+    return 
     if obj['ext'] != 'js':
         print('only pushing js at the moment')
         return 
@@ -793,7 +810,6 @@ def revertjs(file):
 def deleteFinishedPDFS():
     ff(dldir, pdf=1, mode='delete', weeks=2)
 
-env.basepyref['rev'] = 'revertjs'
 # The file is reverted from 
 #smartManager()
 
@@ -830,13 +846,15 @@ def shonitProject():
     return store
 
 
-def downloadImage(url, name):
-    raise Exception('needs requests')
+def downloadImage(url, name, openIt=0):
+    import requests
     r = requests.get(url)
     if r.status_code == 200:
         with open(name, "wb") as f:
             f.write(r.content)
             print("Image sucessfully Downloaded: ", name)
+            if openIt:
+                ofile(name)
             return name
     else:
         print("Image Couldn't be retreived", name)
@@ -949,6 +967,44 @@ def is_package_manager_locked():
     else:
         return False
 
-#subprocessRun('sudo fuser -v /var/lib/dpkg/lock')
-#pprint(is_package_manager_locked())
+env.basepyref['rev'] = 'revertjs'
+env.basepyref['rev'] = 'revertFile'
+def isAFile(name):
+    file = addExtension(name, 'js')
+    print(npath(file), isfile(file) or isfile(capitalize(file)))
+
+env.basepyref['isf'] = 'isAFile'
 python()
+
+temp = [
+    "/home/kdog3682/2023/clip.html",
+    "/home/kdog3682/2023/ec.html",
+    "/home/kdog3682/2023/build.html",
+    "/home/kdog3682/2023/ham.html",
+    "/home/kdog3682/2023/hammy.html",
+    "/home/kdog3682/2023/asdf.html",
+    "/home/kdog3682/2023/flashcards.html",
+    "/home/kdog3682/2023/t.html",
+    "/home/kdog3682/2023/chatgpt-generated-html.html",
+    "/home/kdog3682/2023/chatgpt.html",
+    "/home/kdog3682/2023/chat.html",
+    "/home/kdog3682/2023/chat2.html",
+    "/home/kdog3682/2023/gpt.html",
+    "/home/kdog3682/2023/index.html"
+]
+
+def imagePrompt(prompt= 'hamster snail baking cake', size=512):
+    #openai
+    raise Exception('the images suck. and are creepy no go')
+    
+    if isNumber(size):
+        size = f"{size}x{size}"
+
+    response = openai.Image.create(
+      prompt=prompt,
+      size=size,
+      response_format='url'
+    )
+
+    url = response['data'][0]['url']
+    downloadImage(url, 'gpt.png', openIt=True)
