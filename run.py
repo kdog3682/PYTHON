@@ -372,10 +372,8 @@ def gitDelete(file):
 
 def gitPush(dir=dir2023):
     if dir == dir2023 or dir == pydir:
-        cleandir(dir2023)
+        cleandir(dir)
         time.sleep(1)
-    else:
-        raise Exception()
 
     nameObject = gitNames(dir)
     time.sleep(1)

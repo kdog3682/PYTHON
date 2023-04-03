@@ -6763,7 +6763,9 @@ def readjs(*args):
 
 def cleandir(dir):
     print('cleaning the dir', dir)
-    map(filter(absdir(dir), alwaysDelete), rfile)
+    files = filter(absdir(dir), alwaysDelete)
+    pprint(files)
+    map(files, rfile)
 
 def renameLastFile(file = 'Extra Worksheet'):
     mfile(glf(), npath(dldir, addExtension(file, 'pdf')))
@@ -8012,3 +8014,4 @@ def downloadImage(url, name, openIt=0):
 #ofile('gpt.json')
 #olf()
 # Give lots of details.
+#cleandir(pydir)
