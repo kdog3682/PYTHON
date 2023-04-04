@@ -297,9 +297,15 @@ def every(items, fn):
     return True
 
 def datestamp(x=None, strife="%m-%d-%Y"):
+    if hasattr(x, 'created_utc'):
+        x = x.created_utc
+        strife = 'praw'
+
     ref = {
         "/": "%m/%d/%Y",
         "-": "%m-%d-%Y",
+        "human": "%A %B %d, %-I:%M:%S%p",
+        "praw": "%m-%d-%Y %-I:%M:%S%p",
     }
     strife = ref.get(strife, strife)
     if isString(x):
@@ -469,6 +475,8 @@ def abspath(file=None):
 google_url = "https://google.com/"
 
 def ofile(f):
+    if hasattr(f, 'permalink'):
+        return openBrowser('https://redd.it/' + f.id)
     return map(f, openBrowser)
 
 def mfiles(files, dir, fn=0, ask=0):
@@ -1252,20 +1260,11 @@ def raw(f):
 def read(file):
     e = getExtension(file)
     mode = "rb" if e in imge else "r"
-    with open(file, mode) as f:
-        try:
+    try:
+        with open(file, mode) as f:
             return json.load(f) if e == "json" else f.read()
-        except Exception as error:
-            print(error)
-            if e == "json":
-                return None
-            else:
-                s = f.read()
-                print("hii")
-                print([s])
-                print(file)
-                return
-                return json.load(f)
+    except Exception as error:
+        return None
 
 def snakeCase(s):
     return re.sub(
@@ -8015,3 +8014,52 @@ def downloadImage(url, name, openIt=0):
 #olf()
 # Give lots of details.
 #cleandir(pydir)
+
+
+timestamp = 1680605615
+
+class AbstractState():
+    def __init__(self):
+        self.store = []
+
+class BeforeAfter:
+
+    def __enter__(self):
+        return self
+    def __exit__(self, etype, value, traceback):
+        if etype:
+            print(etype, value)
+        else:
+            write(self.file, self.parent, open=1)
+
+    def __init__(self, file = 'reddit.json', key = 'mementomoriok'):
+        self.file = file
+        self.key = key
+        self.parent = read(self.file) or {}
+        if not key in self.parent:
+            self.parent[key] = {}
+        self.child = self.parent[key]
+
+    def set(self, k, v):
+        if isPrimitive(v):
+            self.child[k] = v
+        elif isArray(v):
+            self.child[k] = coerceArray(self.get(k)) + v
+        else:
+            raise Exception('ndy')
+
+    def get(self, k, fallback=None):
+        return self.child.get(k, fallback)
+    
+
+def coerceArray(x):
+    if isArray(x):
+        return x
+    if x == None:
+        return []
+    return [x]
+
+#print([][-1])
+#print(datestamp(1680614730.0, 'praw'))
+#pprint(map(read('reddit.json').get('unstable_diffusion').get(datestamp()), lambda x: datestamp(x.get('timestamp'), 'praw')))
+#pprint(map(read('reddit.json').get('unstable_diffusion').get(datestamp()), lambda x: ofile('https://reddit' + x.get('permalink'))))
