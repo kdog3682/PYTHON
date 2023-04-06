@@ -370,7 +370,10 @@ def gitDelete(file):
 
 
 
-def gitPush(dir=dir2023):
+def gitPushWorking():
+    gitPush(message='everything is working')
+
+def gitPush(dir=dir2023, message='autopush'):
     if dir == dir2023 or dir == pydir:
         cleandir(dir)
         time.sleep(1)
@@ -381,7 +384,7 @@ def gitPush(dir=dir2023):
     mainCommand = f"""
         cd {dir}
         git add .
-        git commit -m "'autopush'"
+        git commit -m "'{message}'"
         git push
     """
 
@@ -390,7 +393,9 @@ def gitPush(dir=dir2023):
         'success': response.success,
         'error': response.error,
     }
-    #logger(**nameObject, action='gitpush', message=message, gitData=gitData)
+    if message != 'autopush':
+        gitData['message'] = message
+    logger(**nameObject, action='gitpush', message=message, gitData=gitData)
 
 
 def gitManager(
@@ -929,7 +934,6 @@ def isAFile(name):
     print(npath(file), isfile(file) or isfile(capitalize(file)))
 
 env.basepyref['isf'] = 'isAFile'
-python()
 
 temp = [
     "/home/kdog3682/2023/clip.html",
@@ -963,3 +967,5 @@ def imagePrompt(prompt= 'hamster snail baking cake', size=512):
 
     url = response['data'][0]['url']
     downloadImage(url, 'gpt.png', openIt=True)
+env.basepyref['gpw'] = 'gitPushWorking'
+python()

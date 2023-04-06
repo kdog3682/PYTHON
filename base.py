@@ -300,6 +300,9 @@ def datestamp(x=None, strife="%m-%d-%Y"):
     if hasattr(x, 'created_utc'):
         x = x.created_utc
         strife = 'praw'
+    elif isObject(x)  and x.get('created_utc'):
+        x = x['created_utc']
+        strife = 'praw'
 
     ref = {
         "/": "%m/%d/%Y",
@@ -1247,10 +1250,8 @@ def map(items, fn, *args, filter=1, **kwargs):
             if not (filter and not value):
                 store.append(value)
         except Exception as e:
+            prompt(item, error='ERROR AT MAP', message=e)
             continue
-            #print(item, 'sdffffffffff')
-            #print(parseJSON(item.strip()))
-            #raise Exception(e)
     return store
 
 def raw(f):
@@ -1645,6 +1646,7 @@ def isSameDate(date, f):
     return date.day == fdate.day
 
 def checkpointf(
+    contains=0,
     deleteIt=0,
     include="",
     size=0,
@@ -1792,6 +1794,16 @@ def checkpointf(
 
         if onlyFiles and isdir(f):
             return False
+
+        if contains:
+            if not isdir(f):
+                return True
+            gn = lambda x: getExtension(x) == contains
+            files = filter(os.listdir(f), gn)
+            if len(files) < 5:
+                print(f, 'has some files but not enuf of ', contains)
+                return False
+            return True
 
         if onlyFolders:
             if isdir(f):
@@ -3425,6 +3437,7 @@ shellescapedict =  {
         "gt": ">",
         "dollar": "$",
         "backslash": "\\\\",
+        "bs2": "\\",
         "bsdq": '\\"',
         "hash": "#",
         "colon": ":",
@@ -3445,6 +3458,7 @@ def shellescape(s):
             if x.groups()
             else dict.get(x.group(0))
         )
+        if not value: prompt(x=x, error='shellescape')
         return 'zz' + value
 
     return re.sub(regex, parser, s)
@@ -4105,11 +4119,14 @@ def dirFromFile(f):
     return dir2023
     #return dirdict.get(e, pubdir)
 
+def dirFromFile2(f):
+    e = getExtension(f)
+    if e == 'py': return pydir
+    return dir2023
+
 def mlf():
     f = glf()
-    dir = dirFromFile(f)
-    # return print(f, dir)
-    return mfile(f, dir)
+    return mfile(f, dirFromFile2(f))
 
 def moveback():
     f = getLast(absdir(trashdir))
@@ -5020,7 +5037,9 @@ class SystemCommand:
             if not b:
                 b = a
                 a = ''
+            #prompt(b=b, a=a)
             command = b + shellescape(a)
+            #prompt(command=command)
             command += ' ' + shellescape(dumpJson(kwargs))
             #dprint(a, b, command)
             #pprint('ccc')
@@ -6334,8 +6353,8 @@ def promptSplit(*args):
     return re.split(r, a.strip())
 
 
-def saveToDrive(file, outpath):
-    cfile(file, drivedir + outpath)
+def saveToDrive(file):
+    cfile(file, tempbudir)
 
 
 def emptyTrash(dir=trashdir):
@@ -7973,23 +7992,6 @@ def addTitles():
 #pprint(ff(days=15, js=1, text='downloadpdf', once=1, flags=re.I, ignoreRE='hammyco|server|browser'))
 #ff(mode='save', html=1)
 
-temp = [
-    "/home/kdog3682/2023/asdf.html",
-    "/home/kdog3682/2023/flashcards.html",
-    "/home/kdog3682/2023/chatgpt-generated-html.html",
-    "/home/kdog3682/2023/chat.html",
-    "/home/kdog3682/2023/chat2.html",
-    "/home/kdog3682/2023/clip.html",
-    "/home/kdog3682/2023/gpt.html",
-
-    #"/home/kdog3682/2023/hammy.html"  # current index.html of hammy
-    #"/home/kdog3682/2023/t.html", # download selected items
-    #"/home/kdog3682/2023/chatgpt.html", #vueShapes
-    #"/home/kdog3682/2023/index.html",
-    #"/home/kdog3682/2023/ec.html",
-    #"/home/kdog3682/2023/build.html",
-    #"/home/kdog3682/2023/ham.html",
-]
 #map(temp, rfile)
 #usb(ff(pydir, days=3))
 #ff(jsondir, mode='open', name='css')
@@ -8016,7 +8018,7 @@ def downloadImage(url, name, openIt=0):
 #cleandir(pydir)
 
 
-timestamp = 1680605615
+stamp = 1680605615
 
 class AbstractState():
     def __init__(self):
@@ -8040,11 +8042,15 @@ class BeforeAfter:
             self.parent[key] = {}
         self.child = self.parent[key]
 
+        if not 'history' in self.child:
+            self.child['history'] = []
+        self.history = self.child['history']
+
     def set(self, k, v):
         if isPrimitive(v):
             self.child[k] = v
         elif isArray(v):
-            self.child[k] = coerceArray(self.get(k)) + v
+            pass
         else:
             raise Exception('ndy')
 
@@ -8062,4 +8068,176 @@ def coerceArray(x):
 #print([][-1])
 #print(datestamp(1680614730.0, 'praw'))
 #pprint(map(read('reddit.json').get('unstable_diffusion').get(datestamp()), lambda x: datestamp(x.get('timestamp'), 'praw')))
-#pprint(map(read('reddit.json').get('unstable_diffusion').get(datestamp()), lambda x: ofile('https://reddit' + x.get('permalink'))))
+#aobj = {'a': 1}
+#pprint(list(aobj))
+def save(**kwargs):
+    for k,v in kwargs.items():
+        appendVariable(v, name=k)
+        break
+
+#save(olddirs=ff(rootdir, contains='py'))
+#save(pyfiles=ff(rootdir, py=1))
+
+
+
+#a  =  {'created_utc': stamp}
+#pprint(datestamp(a))
+
+
+#print(filter([None]))
+#pprint(timestamp())
+#printdir(nodedir + 'chroma-js')
+
+#cfile(findFile('chroma.min.js'), dir2023)
+#cfile(glf(), dir2023)
+
+
+vimfiles = [
+'/home/kdog3682/VIM/functions.vim',
+'/home/kdog3682/.vimrc',
+'/home/kdog3682/VIM/variables.vim',
+'/home/kdog3682/.vim/ftplugin/javascript.vim',
+]
+#map(vimfiles, saveToDrive)
+
+#print(map([{'a':1}], 'a'))
+def archive(inpath=0, outpath=0):
+    if not inpath: inpath = 'clip.js'
+    if not outpath: 
+        outpath = prompt(outpath='need an outpath', inpath=inpath)
+    assert outpath
+
+    cfile(inpath, npath(drivedir, outpath))
+
+#s = read(drivedir + 'allGoogleDocs.json')
+def checkpoint_factory(schema):
+
+    def c2(**kwargs):
+        #print(kwargs)
+        def transform(a, b):
+            #print(a, b)
+            if b == str:
+                return lambda x: test(a, x, flags=re.I)
+
+            if b == bool:
+                print(a, b)
+                return lambda x: x == a
+
+            if b == int:
+                return lambda x: x > a
+
+        store = []
+        for k,v in schema.items():
+            arg = kwargs.get(k)
+            if arg != None:
+                store.append([k, transform(arg, v)])
+
+        def checkpoint(item):
+            for k,v in store:
+                arg = item.get(k)
+                if arg and not v(arg):
+                    return False
+
+            return True
+        return checkpoint
+
+    return  c2
+        
+
+def obj_filter(items, **kwargs):
+    schema = {
+        'title': str,
+        'owner': str,
+        0: int,
+        'delete': bool,
+    }
+
+    getter = getterf(kwargs.get('get'))
+    c1 = checkpoint_factory(schema)
+    f = c1(**kwargs)
+    
+    values = [getter(item) for item in items if f(item)]
+    return values
+def small(x):
+    return x[0: 3]
+
+tempGoogleDocJson = [
+    {
+        "id": "11PzEB137TPCDX4xr8Hcy3ysJ4FPRwm24jRMhIb7Lb6k",
+        "owner": "Kevin Lee",
+        "title": "Resume",
+        "size": 1478,
+        "elapsed": {
+            "type": "months",
+            "value": 2760
+        },
+        "date": "01-03-2023",
+        "year": 2023
+    },
+    {
+        "id": "17snn0wfBnvGzizd6Ox0ZM_QCq5wJU2ai-L2HX-wuKH4",
+        "owner": "Kevin Lee",
+        "title": "resume Sunny \u6253\u5370\u8bf4\u660e",
+        "size": 931,
+        "elapsed": {
+            "type": "days",
+            "value": 2
+        },
+        "date": "03-15-2023",
+        "year": 2023
+    },
+    {
+        "id": "1COY_z29tbRHH3ZX0pmpmNDn_6UE_KOXRxsIQRcTm1bY",
+        "owner": "Kevin Lee",
+        "title": "Final Letters Test",
+        "size": 9934,
+        "elapsed": {
+            "type": "minutes",
+            "value": 41
+        },
+        "date": "03-15-2023",
+        "year": 2023
+    }
+]
+
+def getterf(*args):
+    args = flat(map(args, lambda x: split(x, '[, ]+') if x else []))
+    if not args:
+        return identity 
+    def fn(item):
+        store = {}
+        for arg in args:
+            if arg in item:
+                store[arg] = item[arg]
+        return store
+    return fn
+
+def googleDocsJson(debug=0):
+    if debug:
+        return tempGoogleDocJson
+    return read(drivedir + 'allGoogleDocs.json')
+#items = googleDocsJson(debug=1)
+#items = obj_filter(items, title='\bcover\b|resume', owner='kevin', delete=False, get='id date title')
+#appendVariable(items)
+
+
+
+temp = [
+    {
+        "id": "11PzEB137TPCDX4xr8Hcy3ysJ4FPRwm24jRMhIb7Lb6k",
+        "date": "01-03-2023",
+        "title": "Resume"
+    },
+    {
+        "id": "17snn0wfBnvGzizd6Ox0ZM_QCq5wJU2ai-L2HX-wuKH4",
+        "date": "03-15-2023",
+        "title": "resume Sunny \u6253\u5370\u8bf4\u660e"
+    }
+]
+#makeNodePDF(temp)
+
+def makeNodePDF(data = temp, vob_key='resume_toc'):
+    fnKey = 'makePDF'
+    payload = {'key': vob_key, 'value': data}
+    SystemCommand('node', 'App.js', fnKey, payload)
+

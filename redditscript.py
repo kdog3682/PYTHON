@@ -1,4 +1,5 @@
 from base import *
+import requests
 import praw
 
 
@@ -97,9 +98,19 @@ def isMeatyComment(c):
 
 
 class RedditAPI(Reddit):
-
-
-    def checkpoint(self, submission, before=0, after=0, comments=0, image=0, score=10, body=0, title=0, clicked=0, **kwargs):
+    def checkpoint(
+        self,
+        submission,
+        before=0,
+        after=0,
+        comments=0,
+        image=0,
+        score=10,
+        body=0,
+        title=0,
+        clicked=0,
+        **kwargs,
+    ):
         if before and submission.created_utc >= before:
             print("failed at before")
             return 0
@@ -118,94 +129,102 @@ class RedditAPI(Reddit):
         if comments and submission.num_comments < comments:
             print("failed at comments")
             return 0
-        if body and not test(body, submission.selftext, flags=flags):
+        if body and not test(
+            body, submission.selftext, flags=flags
+        ):
             print("failed at body")
             return 0
-        if title and not test(title, submission.title, flags=flags):
+        if title and not test(
+            title, submission.title, flags=flags
+        ):
             print("failed at title")
             return 0
 
         return 1
-        
-    
+
     def getSubmissionData(self, submission, **kwargs):
 
         if isString(submission):
-            submission = self.reddit.submission(id=submission)
+            submission = self.reddit.submission(
+                id=submission
+            )
 
         data = {
-            'date': datestamp(submission),
-            'title': submission.title,
-            'url': submission.url,
-            'timestamp': submission.created_utc,
-            'score': submission.score,
-            'id': submission.id,
-            'shortlink': 'http://redd.it/' + submission.id,
-            'permalink': 'https://reddit.com' + submission.permalink,
+            "date": datestamp(submission),
+            "title": submission.title,
+            "url": submission.url,
+            "timestamp": submission.created_utc,
+            "score": submission.score,
+            "id": submission.id,
+            "shortlink": "http://redd.it/" + submission.id,
+            #'permalink': 'https://reddit.com' + submission.permalink,
         }
-        post = submission
-        urls = []
-        if submission.is_gallery:
-            for i in list(post.media_metadata):
-                urls.append(post.media_meta_data[i]['s']['u'])
-        data['urls'] = urls
-
-prints out all the Individual image links but messes up the order
-Also:
-post.is_gallery
-
+        if hasattr(submission, "media_metadata"):
+            store = []
+            for key in list(submission.media_metadata):
+                ref = submission.media_metadata[key]["p"]
+                urls = map(
+                    coerceArray(ref), lambda x: x["u"]
+                )
+                store.extend(urls)
+            data["urls"] = store
 
         return data
 
         return {
-            'title': submission.title,
-            'author': str(submission.author),
-            'score': submission.score,
-            'num_comments': submission.num_comments,
-            'body': submission.selftext,
-            'clicked': submission.clicked,
-            'url': submission.url,
-            'upvote_ratio': submission.upvote_ratio,
-            'is_image': not submission.is_self,
+            "title": submission.title,
+            "author": str(submission.author),
+            "score": submission.score,
+            "num_comments": submission.num_comments,
+            "body": submission.selftext,
+            "clicked": submission.clicked,
+            "url": submission.url,
+            "upvote_ratio": submission.upvote_ratio,
+            "is_image": not submission.is_self,
         }
 
-    def getSubmissionDataItems(self, subreddit, limit=10, **kwargs):
+    def getSubmissionDataItems(
+        self, subreddit, limit=10, **kwargs
+    ):
 
-        with BeforeAfter('reddit.json', key=subreddit) as ba:
+        with BeforeAfter(
+            "reddit.json", key=subreddit
+        ) as ba:
 
             items = []
-            after = ba.get('after', 0)
-            #before = ba.get('before', 0)
+            after = ba.get("after", 0)
             subreddit = self.reddit.subreddit(subreddit)
             submissions = subreddit.top(limit=limit)
 
             for s in submissions:
                 data = self.getSubmissionData(s, **kwargs)
-                if self.checkpoint(s, after=after, **kwargs):
+                if self.checkpoint(
+                    s, after=after, **kwargs
+                ):
+                    print('got data')
                     items.append(data)
-                    ofile(s)
 
             if not items:
-                raise Exception('stop')
-            raise Exception()
-            after = items[0].get('timestamp')
-            ba.set('after', after)
-            ba.set('date', datestamp(after, 'praw'))
-            ba.set('size', len(items))
-            ba.set(datestamp(), items)
+                raise Exception("stop")
+            after = items[0].get("timestamp")
+            ba.set("after", after)
+            ba.set("date", datestamp(after, "praw"))
+            ba.set("size", len(items))
+            ba.set('items', items)
 
 
 tests = [
-   {
-       'subreddit': 'unstable_diffusion',
-       'limit': 1,
-       'image': 1,
-       'score': 10,
-       'clear': 1,
-   }
+    {
+        "subreddit": "unstable_diffusion",
+        "limit": 100,
+        "image": 1,
+        "score": 10,
+    }
 ]
 
-api = RedditAPI()
-for test in tests:
-    api.getSubmissionDataItems(**test)
-    # "reddit.json"
+#api = RedditAPI()
+#for test in tests:
+    #api.getSubmissionDataItems(**test)
+"reddit.json"
+
+

@@ -1255,3 +1255,8 @@ s = """
 
 #cfile(dldir + 'test.pdf', NameWrapper('4q'))
 #cfile(NameWrapper('4q'), usbdrivedir)
+
+
+#rlf()
+files = mostRecentFileGroups(minutes=1)
+mergepdf(files, outpath='my_resumes_and_cvs.pdf')

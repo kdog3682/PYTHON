@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+from datetime import datetime
 from pprint import pprint
 from base import *
 
@@ -89,15 +91,24 @@ def downloadImage(url, name):
         print("Image Couldn't be retreived", name)
 
 
-class GoogleDocument:
+class GoogleDocs():
     def __init__(
         self,
     ):
         service = getService("docs")
-        self.document = service.documents()
+        self.documents = service.documents()
 
     def get(self, id):
-        return self.document.get(documentId=id).execute()
+        id = getId(id)
+        return self.documents.get(documentId=id).execute()
+
+
+    def create(self):
+        return self.documents.create().execute()
+    def batchUpdate(self, x, requests):
+        return self.documents.batchUpdate(documentId=x.get('documentId'), body={'requests': requests}).execute()
+    
+    
 
 
 def getService(
@@ -143,18 +154,36 @@ def queryHelper(key, mode=0):
 
 
 class GoogleDrive:
+    def getLastDocFiles(self, size=1):
+        query = "mimeType='application/vnd.google-apps.document' and trashed = false"
+        response = self.files.list(q=query, orderBy='modifiedTime desc', pageSize=size, fields="files(id, name)").execute()
+        files = response.get('files')
+        return smallify(files[0:size])
+
+    
     def downloadFile(self, x=0, outpath=0):
         if isObject(x):
             file = x
+        elif isGoogleFileID(x):
+            file = self.files.get(fileId=x).execute()
         elif isString(x):
             file = self.getFiles2(name=x)
         else:
-            file = self.getFiles2()
+            file = self.getLastDocFiles(1)
 
         fileId = file.get('id')
         fileName = outpath or removeDateString(file.get('name'))
-        fileName = addExtension(npath(dldir, fileName), 'pdf')
 
+        if fileName == 'Resume':
+            fileName = 'Kevin Lee resume'
+
+        return self._download(fileId, fileName)
+
+
+    def _download(self, fileId, fileName):
+
+        fileName = addExtension(npath(dldir, fileName), 'pdf')
+        
         r = self.files.export(
             fileId=fileId, mimeType="application/pdf"
         )
@@ -168,8 +197,8 @@ class GoogleDrive:
         fh.seek(0)
         with open(fileName, "wb") as f:
             shutil.copyfileobj(fh, f, length=131072)
-        ofile(fileName)
-
+        return fileName
+    
     def getFiles2(self, folder=0, name=0, r=0, e=0, n=1):
         if folder:
             q = f"mimeType = 'application/vnd.google-apps.folder' and name = '{folder}'"
@@ -214,9 +243,16 @@ class GoogleDrive:
         response = service.files().list(**kwargs).execute()
         return response.get("files", [])
 
-    def deleteFile(self, fileId):
-        self.files.delete(fileId=fileId).execute()
-        print("deleting file", fileId)
+
+    def delete(self, x):
+        if isArray(x):
+            return map(x, self.deleteFile)
+
+        return self.deleteFile(x)
+
+    def deleteFile(self, id):
+        id = getId(id)
+        self.files.delete(fileId=id).execute()
 
     def clearFolder(self, folderId):
 
@@ -1318,6 +1354,175 @@ def isSkippable(name):
         return True
 
 class GoogleApp:
+
+    def move(self, id, folder):
+        file = self.get(fileId=id, fields='parents, webViewLink')
+        folderId = self.getdir(folder)
+        parents = ",".join(file.get("parents"))
+
+        file = self.update(
+            fileId=id,
+            addParents=folderId,
+            removeParents=parents,
+            fields="id, parents, webViewLink"
+        )
+        self.viewParent(file)
+
+    def viewParent(self, file):
+        parentObj = self.get(fileId=file.get('parents')[0], fields='webViewLink')
+        webbrowser.open(parentObj.get('webViewLink'))
+
+    
+    #def pdf(self, id):
+        #file = self.get(fileId=id)
+    
+    def view(self, id):
+        raise Exception('doesnt work')
+
+    def update(self, **kwargs):
+        return self.drive.files.update(**kwargs).execute()
+
+    def get(self, **kwargs):
+        return self.drive.files.get(**kwargs).execute()
+    
+    def getdir(self, name):
+        if name == 'root':
+            return self.drive.files.get_root().execute().get('id')
+        query = "mimeType='application/vnd.google-apps.folder' and trashed = false and name='%s'" % name 
+        response = self.drive.files.list(q=query, fields='files(id)').execute()
+        if len(response.get('files', [])) > 0:
+            folder_id = response.get('files', [])[0].get('id')
+            return folder_id
+        if prompt(name + ' was not found ... do you want to make the dir?'):
+            self.mkdir(name)
+        else:
+            raise Exception('not found')
+    
+    def mkdir(self, name, parentId='root'):
+        body = {
+            'name': name,
+            'parents': [parentId],
+            'mimeType': 'application/vnd.google-apps.folder'
+        }
+        folder = self.drive.files.create(body=body, fields='id').execute()
+        print(f'Folder "{name}" created with ID: "{folder.get("id")}".')
+        return folder.get('id')
+    
+    def move(self, x):
+        return map(coerceArray(x), self.move_file_to_new_folder)
+    
+    def move_file_to_new_folder(self, id, folderId):
+       file = self.drive.files.get(fileId=id, fields='parents').execute()
+       previous_parents = ",".join(file.get('parents'))
+       file = self.drive.files.update(fileId=id,
+                           addParents=folderId,
+                           removeParents=previous_parents,
+                           fields='id, parents'
+       ).execute()
+       print(f'{id} has been moved to folder {folderId}.')
+       return id
+ 
+    
+    def app_get_files(self, query, pageSize=None):
+        query += " and trashed = false"
+        orderBy = 'modifiedTime desc'
+        response = self.drive.files.list(q=query, orderBy=orderBy, pageSize=pageSize, fields="files(id, name)").execute().get('files')
+        return response
+        
+    
+    def get_all_files(self, pageSize=None, info=None, q=0, fields=0, root=0):
+        """
+            
+
+        """
+        if root:
+            q = "mimeType='application/vnd.google-apps.document' and trashed = false and 'root' in parents and not 'appDataFolder' in parents"
+
+        if not fields:
+            fields = "id, name, modifiedTime, createdTime, shared, owners"
+        fields = f"nextPageToken, files({fields})"
+        if not q:
+            q = "mimeType='application/vnd.google-apps.document'"
+        pageToken = None
+        store = []
+
+        while True:
+            response = self.drive.files.list(
+                q=q,
+                pageSize=pageSize,
+                pageToken=pageToken,
+                fields=fields,
+                #fields="nextPageToken, files(id, name, modifiedTime, createdTime, size, fileExtension, mimeType, shared, owners)",
+            ).execute()
+            files = response.get("files", [])
+            print('got files', len(files))
+            store.extend(files)
+            pageToken = response.get("nextPageToken")
+
+            if not pageToken or pageSize == 1:
+                break
+
+        
+        if info:
+            docs = GoogleDocs()
+            def parser(item):
+                doc = docs.get(item)
+                text = getDocText(doc)
+                size = len(text)
+                elapsed = get_elapsed_time(item)
+                author = doc.get('author')
+                name = item.get('name')
+                id = item.get('id')
+                owner = item.get('owners')[0].get('displayName')
+                dt = datetime.fromisoformat(item.get('createdTime').rstrip('Z'))
+                deleteIt = size < 100 or size < 1000 and test('untitled', name, flags=re.I) or not test('kevin', owner, flags=re.I)
+                if deleteIt:
+                    pprint(dict(delete=True, size=size, owner=owner, name=name))
+                else:
+                    print('saving', name)
+
+                payload = {
+                    'id': id,
+                    'delete': deleteIt,
+                    'owner': owner,
+                    'title': name,
+                    'size': size,
+                    'author': author,
+                    'text': text,
+                    'elapsed': elapsed,
+                    'date': datestamp(dt),
+                    'year': dt.year,
+                }
+
+                return payload
+
+            store = map(store, parser)
+
+        return store
+        print('going')
+        print(exists(store))
+        clip(store)
+
+    
+    def find_cover_letters(self, r = 'cover', pageSize=1):
+        query = f"name matches '{r}'"
+        return self.app_get_files(query, pageSize=pageSize)
+    
+    def doJobApplication(self):
+
+        files = self.getLastDocFiles(2)
+        for file in files:
+            fileId = file.get('id')
+            name = removeDateString(file.get('name'))
+
+            if name == 'Resume':
+                name = 'Kevin Lee resume'
+
+            if name == 'CV':
+                name = 'Kevin Lee Cover Letter'
+
+            self._download(fileId, name)
+    
     def __init__(self):
         self.drive = GoogleDrive()
 
@@ -1326,7 +1531,7 @@ class GoogleApp:
         url = f"https://docs.google.com/document/d/{file.get('id')}"
         ofile(url)
 
-    def downloadDoc(self, name, outpath=0):
+    def downloadDoc(self, name=0, outpath=0):
         self.drive.downloadFile(name, outpath)
     
 
@@ -1426,3 +1631,89 @@ def doGrades():
         gradeClassroom(r)
 
 #doGrades()
+#GoogleApp().doJobApplication()
+#pprint(GoogleApp().find_cover_letters('resume'))
+
+def getDocText(document):
+    text = ''
+    for element in document.get("body").get("content"):
+        if 'paragraph' in element:
+            for run in element.get("paragraph").get("elements"):
+                if 'textRun' in run:
+                    s = run.get("textRun").get("content")
+                    text += s
+    return text
+
+
+
+
+
+def getId(x):
+    return x if isString(x) else x.get('documentId') or x.get('id')
+
+def get_doc_url(x):
+    id = getId(x)
+    return f"https://docs.google.com/document/d/{id}/edit"
+
+
+def get_elapsed_time(doc):
+    start_time_str = doc.get('createdTime')
+    end_time_str = doc.get('modifiedTime')
+    start_time = datetime.fromisoformat(start_time_str.rstrip('Z'))
+    end_time = datetime.fromisoformat(end_time_str.rstrip('Z'))
+    elapsed_time = end_time - start_time
+    elapsed_seconds = int(elapsed_time.total_seconds())
+    if elapsed_seconds >= 86400 * 30 * 12:
+        elapsed_months = elapsed_seconds // 86400 * 30 * 12
+        return {"type": "years", "value": elapsed_months}
+
+
+    if elapsed_seconds >= 86400 * 30:
+        elapsed_months = elapsed_seconds // 86400 * 30
+        return {"type": "months", "value": elapsed_months}
+
+    if elapsed_seconds >= 86400:
+        elapsed_days = elapsed_seconds // 86400
+        return {"type": "days", "value": elapsed_days}
+    elif elapsed_seconds >= 3600:
+        elapsed_hours = elapsed_seconds // 3600
+        return {"type": "hours", "value": elapsed_hours}
+    else:
+        elapsed_minutes = elapsed_seconds // 60
+        return {"type": "minutes", "value": elapsed_minutes}
+
+
+def isGoogleFileID(s):
+    r = '[\d-_][a-zA-Z]'
+    if isString(s) and len(s) > 20 and len(re.findall(r, s)) >= 4:
+        return True
+    else:
+        prompt(notValidId=s, len=len(re.findall(r, s)))
+
+        
+
+
+def downloadCoverLettersAndResumesAndMerge():
+    raise Exception('todo')
+    from pdf import mergepdf
+    items = googleDocsJson()
+    ids = obj_filter(items, title='cv|\bcover\b|resume', owner='kevin', delete=False, get='id, date, title')
+    app = GoogleApp()
+    assert(every(ids, isGoogleFileID))
+    #prompt(good=ids)
+    paths = map(ids, app.drive.downloadFile)
+    prompt(pathsToMerge=paths)
+    try:
+        mergepdf(paths, outpath='Kevin Lee - Resumes & Cover Letters.pdf')
+        return 1
+    except Exception as e:
+        clip(paths)
+        return 0
+    
+
+#pprint(downloadCoverLettersAndResumesAndMerge())
+
+
+def foo():
+    app = GoogleApp()
+
