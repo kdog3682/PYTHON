@@ -3,6 +3,10 @@ import time
 import zipfile
 
 
+def unzip(inpath, outpath):
+    with zipfile.ZipFile(inpath, "r") as z:
+        z.extractall(outpath)
+
 def readzip(inpath=None, outpath=None, flatten=0):
     if not inpath:
         inpath = choose(absdir(zipdir), mode=1)
@@ -13,7 +17,7 @@ def readzip(inpath=None, outpath=None, flatten=0):
         )
 
     assert getExtension(inpath) == "zip"
-    prompt("prompting", inpath, outpath)
+    dprompt(inpath, outpath)
 
     with zipfile.ZipFile(inpath, "r") as z:
         z.extractall(outpath)
@@ -127,6 +131,13 @@ def zipWrite(z, f):
         print(f, " -- ", "ERROR:", str(e))
         return 1
 
+def zip(files, outpath):
+    compress_type = zipfile.ZIP_DEFLATED
+    with zipfile.ZipFile(outpath, "w") as z:
+        for file in files:
+            name = tail(file)
+            z.write(file, arcname=name, compress_type=compress_type)
+
 
 def backup(key):
 
@@ -179,38 +190,12 @@ def fixZipAccident():
     return writezip(files, name="oldjs")
 
 
-# backup('oldpy')
-# backup('recent')
-# consolidate.js
-# backup(jsondir)
-# backup(txtdir)
-# printdir(jsdir)
-# print(os.listdir(sandir))
-# copydir(zipdir, sandir)
-# the difficulties can be solved.
-
-
 def unzipSpecificFile(s):
     inpath = drivedir + "ZIP/JSONS-09-21-2022.zip"
     with zipfile.ZipFile(inpath, "r") as z:
         z.extract("known.json", path=dldir)
 
 
-def unzipLatest():
-    f = glf()
-    readzip(
-        f,
-        flatten=True,
-        outpath=normpath(dldir, removeExtension(tail(f))),
-    )
-
-    flatdir(mostRecent(dldir))
-
-
-# unzipLatest()
-
-# Bad actors do not act bad on purpose.
-#
 
 
 files = [
@@ -222,14 +207,9 @@ files = [
     "/home/kdog3682/PICS",
     "/home/kdog3682/CLIPS",
     "/home/kdog3682/JSONS",
-    "/home/kdog3682/COLORING",
-    "/home/kdog3682/JAVASCRIPT/",
     "/home/kdog3682/PYTHON/",
     "/home/kdog3682/TEXTS",
-    "/home/kdog3682/LOGS",
     "/home/kdog3682/MATH",
-    "/home/kdog3682/SERVER",
-    "/home/kdog3682/VIM & SH",
 ]
 
 
@@ -240,8 +220,6 @@ def check(outpath):
         return map(z.filelist, lambda x: x.filename)
 
 
-vimFiles = ['/home/kdog3682/.vimrc', '/home/kdog3682/VIM/functions.vim', '/home/kdog3682/VIM/variables.vim']
-save = absdir(examdir) + ff(jsondir, days=10) + ff(txtdir, days=10) + ff(dir2023, files=1) + ff(pydir, days=10) + vimFiles
-
-#usbz(save)
-
+#name='COLORING'
+#zip(absdir(colordir), outpath=drivedir + name + ' ' + datestamp() + '.zip')
+#rmdir('/home/kdog3682/COLORING/', force=1)

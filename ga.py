@@ -1,4 +1,5 @@
 from __future__ import print_function
+UPLOAD_DESTINATION = "1sD9pfkJVa0WBH_FPygLQ-gCaJQRGaO-B"
 
 from datetime import datetime
 from pprint import pprint
@@ -197,7 +198,10 @@ class GoogleDrive:
         fh.seek(0)
         with open(fileName, "wb") as f:
             shutil.copyfileobj(fh, f, length=131072)
-        return fileName
+        return {
+            'id': fileId,
+            'name': fileName,
+        }
     
     def getFiles2(self, folder=0, name=0, r=0, e=0, n=1):
         if folder:
@@ -1192,11 +1196,11 @@ class GoogleEmail:
         ids = map(files, drive.uploadFile)
         googleAppScript("Action", "emailFiles", ids)
 
-    def email(self):
+    def email(self, message='automated message to self'):
         message = EmailMessage()
-        message.set_content("This is automated draft mail")
-        message["From"] = env.kdogEmail
-        message["To"] = env.myEmail
+        message.set_content(message)
+        message["From"] = env.EmailContacts.get('self')
+        message["To"] = env.EmailContacts.get('self')
         message["Subject"] = "Automated draft"
         em = base64.urlsafe_b64encode(
             message.as_bytes()
@@ -1714,6 +1718,21 @@ def downloadCoverLettersAndResumesAndMerge():
 #pprint(downloadCoverLettersAndResumesAndMerge())
 
 
-def foo():
+def send_goc_to_pdf():
     app = GoogleApp()
+    obj = app.drive.downloadFile()
+
+    metaData = {
+        "name": tail(obj.get('name')),
+        "parents": [UPLOAD_DESTINATION],
+    }
+
+    media = MediaFileUpload(
+        file, mimetype=mimeTypeFromFile(file)
+    )
+
+    fileResponse = self.files.create(
+        body=metaData, media_body=media, fields="id"
+    ).execute()
+#GoogleEmail().email('hi\bye')
 

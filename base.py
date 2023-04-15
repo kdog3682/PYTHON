@@ -1,4 +1,5 @@
 linebreak = '-' * 50
+resourcedir2023 = "/home/kdog3682/Resources2023"
 hammyfirebasehtml = "/home/kdog3682/FIREBASE/public/index.html"
 localbackupdir= "/home/kdog3682/LOCALBACKUP/"
 publishdir= "/home/kdog3682/PUBLISHED/"
@@ -358,7 +359,7 @@ def absdir(dir="."):
     dir = abspath(dir)
     return [os.path.join(dir, f) for f in os.listdir(dir)]
 
-def caller(n=0):
+def getCaller(n=0):
     from inspect import stack
 
     stack = stack()
@@ -371,7 +372,12 @@ def filter(items, f=exists, *args, **kwargs):
     if not f:
         return items
     if isString(f):
+        ref = {
+            'camel_case': '[a-z][A-Z]'
+        }
         r = f
+        if r in ref:
+            r = ref[r]
         f = lambda s: test(r, s)
     if isObject(items):
         return {k: v for k, v in items.items() if f(k, v)}
@@ -486,8 +492,9 @@ def mfiles(files, dir, fn=0, ask=0):
     if isString(files):
         files = absdir(files)
     if not isdir(dir):
-        dir = rootdir + dir.upper()
-    assert isdir(dir)
+        dprompt('not a dir', dir, 'press a key to make it')
+        mkdir(dir)
+
     if ask:
         prompt(files, 'move these files to', dir, '?')
     for f in files:
@@ -896,7 +903,7 @@ def logger(**kwargs):
 
     from collections import OrderedDict
     store = OrderedDict()
-    store['action'] = caller()
+    store['action'] = getCaller()
     store['date'] = datestamp()
     entries = sort(kwargs.items(), lambda x: len(json.dumps(x)))
     for a,b in entries:
@@ -975,7 +982,7 @@ def ftest(f, arg, flags=0):
     return True
 
 def handleError(e):
-    print([caller(), "error", str(e)])
+    print([getCaller(), "error", str(e)])
 
 def rigidSort(items, order, f=identity):
     order = {k: i for k in order}
@@ -1285,7 +1292,11 @@ def pop(x, key):
 def parseJSON(x):
     if isString(x):
         x = x.strip()
-    return json.loads(x) if isJsonParsable(x) else x
+    try:
+        return json.loads(x) if isJsonParsable(x) else x
+    except Exception as e:
+        prompt(text=x)
+    
 
 def isJsonParsable(x):
     return isString(x) and test("^[{\[]", x)
@@ -1672,6 +1683,7 @@ def checkpointf(
     big=0,
     r=0,
     antiregex=0,
+    anti=0,
     small=0,
     before=0,
     after=0,
@@ -1780,7 +1792,20 @@ def checkpointf(
         if text and e == 'pdf':
             return False
 
-        if extensions and e not in extensions:
+        if anti:
+            nevermove = ['.git', 'node_modules', 'package.json', 'screenshot.jpg', '.vimrc', '.gitignore', 'package-lock.json']
+
+            if e in extensions:
+                return False
+            if filename in nevermove:
+                return False
+            if isdir(f):
+                return False
+            #if fsize(f) < 50:
+                #rfile(f)
+                #return False
+            
+        elif extensions and e not in extensions:
             return False
 
         if hours and not isRecent(f, hours=hours):
@@ -1949,7 +1974,7 @@ def printdir(dir=dldir, printIt=0):
     else:
         pprint(sorted(files))
 
-    print("count", size)
+    dprint(size, dir)
     if printIt:
         clip(files)
     return files
@@ -1982,11 +2007,14 @@ def dreplace(s, dict, flags=0, template=''):
 
     regex = reWrap(dict, template)
     def parser(x):
-        return (
+        value = (
             dict.get(x.group(1))
             if x.groups()
             else dict.get(x.group(0))
         )
+        if None == value:
+            prompt(dreplace_error=x)
+        return value
 
     return re.sub(regex, parser, s, flags=flags)
 
@@ -2226,8 +2254,8 @@ def tempest(data=0, name=0):
     ofile(name)
     return ""
 
-def self(s):
-    append(sys.argv[0], createVariable("temp", s))
+def self():
+    return sys.argv[0]
 
 def deepEqual(_v1, _v2):
     import operator
@@ -2433,6 +2461,7 @@ def prepend(file, content):
 
 def getFunctionName(s):
     rA = "^(?:@.+\n)*(?:(?:async )?function|def|class|const|var|let) ([\w\$]+)"
+    rA = "^(?:@.+\n)*(?:(?:async )?function[!*]?|def|class|const|var) ([\w\$]+)"
     rB = "^([\w\$]+) ="
     return search(rA, s) or search(rB, s)
 
@@ -2441,6 +2470,8 @@ def getFunctionNames(s):
     return unique(re.findall(r, textgetter(s), flags=re.M))
 
 def textgetter(x):
+    if x == 'self':
+        return read(currentFile())
     if len(x) > 100:
         return x
     if isUrl(x):
@@ -2669,7 +2700,7 @@ def hjson(key, *args):
 def jspydata(lang="js"):
     ref = {"python": {}}
     # try:
-    # parent = caller()
+    # parent = getCaller()
     # ref = hread('jspy.json')
     # indexes = ['js', 'py', 'vim', 'bash', 'css', 'html']
     # data = ref[parent][indexes.index(lang)]
@@ -3242,7 +3273,7 @@ def ldf(x):
 
 
 def namer(x):
-    print(caller(-1) + ":", x)
+    print(getCaller(-1) + ":", x)
 
 def _asset(name, data):
     append(
@@ -4124,8 +4155,15 @@ def dirFromFile2(f):
     if e == 'py': return pydir
     return dir2023
 
-def mlf():
+def mlf(name=0):
     f = glf()
+    if is_json(f) and dprompt(f, 'is a json file. do you want to javascriptify it?'):
+        return write(npath(dir2023, changeExtension(f, 'js')), createVariable(file_name(f), read(f), 'js'))
+
+    if name:
+        file = dldir + addExtension(name, getExtension(f))
+        prompt(file)
+        return mfile(f, file)
     return mfile(f, dirFromFile2(f))
 
 def moveback():
@@ -4233,21 +4271,30 @@ def fs1(s):
             mfile(file, d)
 
 def uploadResumeAndCoverLetter():
-    files = mostRecent(dldir, n=5, minutes=10)
+    files = mostRecent(dldir, n=5, minutes=10, reverse=1)
+    #pprint(map(files, fileInfo))
+    #pprint(files)
+    #return
     donecv = 0
     doneres = 0
     for file in files:
+        if donecv and doneres:
+            print('done')
+
         if test("cv|cover|letter", file, flags=re.I):
             if donecv:
                 continue
-            donecv = 1
-            mfile(file, normpath(dldir, cvfile))
+            donecv = file
         else:
             if doneres:
                 continue
-            doneres = 1
-            mfile(file, normpath(dldir, resumefile))
+            doneres = file
 
+    cvout = npath(dldir, cvfile)
+    resout = npath(dldir, resumefile)
+    prompt(donecv=donecv, doneres=doneres, cvout=cvout, resout=resout)
+    mfile(donecv, cvout)
+    mfile(doneres, resout)
 def isUtf(file):
     return getExtension(file) in utfe
 
@@ -4263,6 +4310,8 @@ def alwaysDelete(f):
     deleteRE = 'view-source|released-items|\\bboo\\b|debug|dela|foo|\(|^-?\d+$'
     deleteExtensions = ["log", "aux", "mhtml", "tex", "zip"]
     name = tail(f)
+    if '\\'  in f:
+        return True
     if isPrivateFile(f):
         return False
     if name in keepList:
@@ -4703,7 +4752,7 @@ def push(store, data=0):
 def appendjson(file, data, mode=0):
     if not data:
         return
-    placeholder = [] if mode == list else {}
+    placeholder = [] if mode == list or isArray(data) else {}
     store = readjson(file, placeholder)
 
     if mode == list and not isArray(store):
@@ -4754,6 +4803,7 @@ def flatdir(dir):
     files = getfiles(dir, recursive=1, mode=list)
     map(files, mfile, dldir)
     rmdir(dir)
+    return map(files, lambda x: npath(dldir, x))
 
 def dread(name):
     return read(dldir + addExtension(name, "json"))
@@ -5065,14 +5115,14 @@ class SystemCommand:
         self.error = error
         self.success = success.strip()
 
-        pprint(
-            {
-                "caller": "SystemCommand",
-                "command": command,
-                "error": error,
-                "success": success,
-            }
-        )
+        #pprint(
+            #{
+                #"getCaller": "SystemCommand",
+                #"command": command,
+                #"error": error,
+                #"success": success,
+            #}
+        #)
 
 def gitCloner(url):
     chdir(jsdir)
@@ -5328,8 +5378,8 @@ def ff(
         map(files, openBrowser)
     elif mode == "info":
         os.system('clear')
-        pprint(map(files, fileInfo))
-        pprint(len(files))
+        return map(files, fileInfo)
+        #pprint(len(files))
     elif mode == "clipinfo":
         files.sort(key=mdate, reverse=1)
         f = lambda x: join(map(x, str), delimiter="  ")
@@ -6782,7 +6832,8 @@ def readjs(*args):
 def cleandir(dir):
     print('cleaning the dir', dir)
     files = filter(absdir(dir), alwaysDelete)
-    pprint(files)
+    if len(files) > 10:
+        prompt(files, message='deleting these files')
     map(files, rfile)
 
 def renameLastFile(file = 'Extra Worksheet'):
@@ -6862,7 +6913,7 @@ pokemonJsonSample = [
   },
 ]
 
-def sub(r, f, s, **kwargs):
+def sub(s, r, f, **kwargs):
     def g(x):
         if isString(f):
             return f
@@ -6901,7 +6952,7 @@ def dollarPrompt(x):
 
     while True:
         if test('\$([a-zA-Z]\w*)', item):
-            item = sub(r, f, item, count=1)
+            item = sub(item, r, f, count=1)
         else:
             break
         
@@ -6910,7 +6961,7 @@ def dollarPrompt(x):
         n += 1
         r = '\$' + str(n)
         if test(r, item):
-            item = sub(r, g, item)
+            item = sub(item, r, g)
         else:
             break
 
@@ -7219,21 +7270,6 @@ def mclean(file):
 
     rpw(file, runner)
 
-
-def gitNames(dir):
-    s = SystemCommand('git status --short', dir=dir).success
-    pairs = unique(re.findall('(\S+) (\w+(?:\.\w+)+)', s))
-    store = [[], []]
-    for a,b in pairs:
-        if a == 'M':
-            store[0].append(b)
-        else:
-            store[1].append(b)
-    a, b = store
-    return {
-        'modified': a,
-        'created': b,
-    }
 
 #pprint(gitNames(pydir))
 
@@ -7571,7 +7607,7 @@ def partitionMove(dir, to=0, action='move'):
 def textlog(**kwargs):
     store = []
     store.append(('date', datestamp()))
-    store.append(('caller', caller()))
+    store.append(('getCaller', getCaller()))
     for k,v in kwargs.items():
         store.append((k, v))
     
@@ -7876,13 +7912,30 @@ samplehtml = '''
 #mkfile(hammyfirebasehtml, samplehtml, hammyfirebase)
 #ff(html=1)
 
-def fa(s, r, flags=0, fn=0):
-    s = textgetter(s)
+def fa(s, r, flags=0, **kwargs):
+    s = s if isArray(s) else textgetter(s)
+    #print(len(s))
+    #print(currentFile())
+    #raise Exception()
     m = re.findall(r, s, flags=flags)
-    if fn:
-        map(m, fn)
+    #pprint(m)
+    if kwargs.get('filter'):
+        m = filter(m, kwargs.get('filter'))
+    m = unique(m)
+
+    if kwargs.get('fn'):
+        m = map(m, kwargs.get('fn'))
     else:
         pprint(m)
+
+    if kwargs.get('choose'):
+        pass
+
+    if kwargs.get('append'):
+        if kwargs.get('append') == 'self':
+            appendVariable(dumpJson(m))
+
+    return m
 
 def file_table_cleanup():
 
@@ -8241,3 +8294,272 @@ def makeNodePDF(data = temp, vob_key='resume_toc'):
     payload = {'key': vob_key, 'value': data}
     SystemCommand('node', 'App.js', fnKey, payload)
 
+def comment(s):
+    return '# ' + s
+
+def writejs(s):
+    name = prompt('choose a file name')
+    name = addExtension(name, 'js')
+    if exists(s):
+        write(name, s)
+        append(self(), comment(abspath(name)))
+
+#writejs(sub(sub(join(filter(read(glf()), '\n')), ';', ''), '(?: +|\n+)// .+', ''))
+
+# /home/kdog3682/2023/routers.pdfgen.js
+
+# /home/kdog3682/2023/routers.pdfgen.js
+
+
+    
+
+
+#vimFiles = ['/home/kdog3682/.vimrc', '/home/kdog3682/VIM/functions.vim', '/home/kdog3682/VIM/variables.vim']
+#save = absdir(examdir) + ff(jsondir, days=10) + ff(txtdir, days=10) + ff(dir2023, files=1) + ff(pydir, days=10) + vimFiles
+
+# also have an append.vim
+#usbz(save)
+
+def dprompt(*variables, **kwargs):
+    
+    import inspect
+
+    strings = []
+    caller = getCaller()
+    from collections import OrderedDict
+    store = OrderedDict()
+    store['caller'] = caller
+
+    for v in variables:
+        try:
+            vars = inspect.currentframe().f_back.f_locals.items()
+            name = [v_name for v_name, v_val in vars if v_val is v][0]
+            store[name] = v
+        except Exception as e:
+            strings.append(v)
+        
+
+    for a,b in kwargs.items():
+        store[a] = b
+
+    if strings: 
+        store['strings'] = strings
+
+    pprint(store)
+    return input('')
+
+
+
+def file_name(s):
+    return removeExtension(tail(s))
+
+def is_json(f):
+    return getExtension(f) == 'json'
+
+def rename_file():
+    f = glf(dir2023)
+    mfile(f, changeExtension(f, 'js'))
+
+#rename_file()
+#mlf()
+
+#file = '
+#SystemCommand(f"git log --pretty=format:%h --author-date-order --diff-filter=A --follow {file} | tail -1 > commit.txt")
+
+#SystemCommand('git add git.js')
+
+def printDiff(target=''):
+    s = SystemCommand(f"git diff --word-diff {target}")
+    if target:
+        print(s.success)
+    else:
+        #return print(s.success)
+        write('diff.txt', s.success, open=1)
+
+
+def getNewGitFiles():
+    s = SystemCommand('git status --short').success
+    r = '^ *\?\? *(.+)'
+    return re.findall(r, s, flags=re.M)
+
+
+def parseDiff():
+    
+    new = getNewGitFiles()
+    rfile = '^diff --git a/(.*?) b.*\nindex (\w+)\.\.(\w+)'
+    cmd = SystemCommand(f""" git diff --word-diff """)
+    date = datestamp()
+    matches = re.split(rfile, cmd.success, flags=re.M)
+    items = partition(filter(matches), 4)
+    def parse(x):
+        a, b, c, d = x
+        prefix = "[\[\{][-+]"
+        regex = "^\{\+(?:(?:async )?function[!*]?|def|class|const|var) ([\w\$]+)"
+        items = re.findall(regex, d, flags=re.M) or []
+        if not items:
+            return 
+
+        payload = { 'date': date, 'file': a, 'from': b, 'to': c, 'items': items }
+        return payload
+
+    items = filter([parse(x) for x in items])
+    for file in new:
+        payload = {
+            'date': date,
+            'file': file,
+            'new': True,
+            'items': getFunctionNames(read(file)),
+        }
+        items.append(payload)
+    return items
+
+#pprint(parseDiff())
+
+
+def mwrite(inpath, outpath, regex, flags=0):
+    text = read(inpath)
+    assert text
+
+    if test('^\^', regex) and not flags:
+        flags = re.M
+
+    a, payload = mget(regex, text, flags=flags, mode=list)
+    if not payload:
+        return print('no payload early return')
+
+    prompt(payload)
+    write(smart_path('temp.py'), text)
+    return 
+    clip(text)
+    raise Exception()
+    outpath = addExtension(outpath, getExtension(inpath))
+    append(smart_path(outpath), payload)
+
+def mwrite_base(outpath, regex):
+    mwrite(smart_path('base.py'), outpath, regex)
+
+
+def smart_path(file):
+    return npath(dirFromFile(file), file)
+
+
+#fa('self', '\w+', filter='camel_case')
+#fa('self', '\w+', filter='[a-z][A-Z]|\w_\w', choose=1, append='self', description='gets all the snake and camel words from self and appends it')
+
+
+
+
+#pprint(len(temp))
+
+
+#push_js()
+
+
+#printdir('~/)
+# temp = ["DrivePrep", "appendVargoogle", "googleVim", "qNgZxjJBey4", "apiKey", "depfindDir", "keepList", "newlineIndent", "vimFileOpener", "splitOnWord", "scrapeOrdering", "ZipFile", "removeList", "downloadImage", "commentJS", "CrOS", "sendToOutboundDrive", "argName", "choosePDFS", "baseFile", "earlyExit", "deprecateFile", "id_rsa", "moveToAppropiateDir", "aopsAMC_10answers", "ffWrapper", "format_str", "pdfIni", "pdf_viewer", "nameJS", "isPrivateFile", "renameQuizzes", "generateMultipleChoice", "allFiles", "isRemovableFile", "isVeryRecentFile", "move_last_file_and_name_it", "17snn0wfBnvGzizd6Ox0ZM_QCq5wJU2ai", "lastFile", "mergeFirstPageOfEachFile", "getNewGitFiles", "grabGitFiles", "is_empty_dir", "OrderedDict", "google_client_secret", "getLastWord", "printDirRecursive", "byteRead", "vob_key", "languageString", "get_usb_dir", "1Y3KRa7m3Nc8Z9ZGnKDFflGl5mldGBcosY1XIBYMF_Uo", "getGithubFile", "f_back", "mostRecent", "htmlBuilder", "__call__", "AppleWebKit", "splitInHalf", "linebreakJS", "pipInstall", "100_000", "addTitles", "biggerThan", "isPrimitive", "transformRegex", "asciiLetters", "writeGitIgnore", "downloadPDF", "__enter__", "activityLog", "childKeys", "pdfCreate", "isObject", "getExtension", "stockfish_14", "fileInfo", "__pycache__", "rangeFromString", "hrefRE", "getFilesRecursive", "getLinks", "TextAnalysis", "googleSearchQuery", "halfPoint", "StepwisePartition", "readClip", "appScript", "savedIndexes", "commentRE", "stateAction", "parseGoogleDate", "openBrowser", "NCG_TEMPLATE_LIBRARY", "sendEmail", "blockQuoteRE", "editMathcha", "currentTime", "isRemovablePdfFile", "githubUser", "savedPath", "removeJavascriptStuff", "make_archive", "setItems", "builtInClasses", "byteReplace", "googleOpen", "WorkSummary", "fnKey", "gunkExtensions", "prependFilePath", "oncePerDay", "getLastNumber", "cleanupRawText", "getDomainName", "regexSuffix", "ffApp", "debugAppendJson", "wuKH4", "getNameArgsKwargs", "normClear", "lowerCase", "removeCache", "nameAndDate", "downloadPdfsFromUrl", "fixUrls", "mostRecentDirectoryFiles", "doubleSided", "image_to_string", "client_id", "removeDateStamp", "createKwargs", "findCssFile", "dD", "27sMathTutoring", "resume_toc", "ONE_MINUTE", "gradeLevel", "getCaller", "pickFileFromDir", "fixFileName", "chunkSize", "defaultDest", "versionControl", "emptyTrash", "googleTranslate", "SVG_chess_pieces", "linebreakPY", "file_name", "openLastGoogleDoc", "f_locals", "FFmpegExtractAudio", "MyDrive", "obj_filter", "delagoogleEmail", "parseTime", "getWords", "moveToWorkSpace", "findInDir", "deleteKey", "toCallable", "codeJS", "appendVariable", "isRecentFile", "newPath", "revertFromTrash", "deleteRE", "TextEditor", "appendFileName", "cleanupJS", "SystemCommand", "created_utc", "overrideFile", "arrToDict", "16gpifAlQhHxBHr3SP0IbRiwnGLwbmF59", "toJSON", "getArgsKwargs", "googleAction", "client_secret", "consumableParse", "commentPY", "partitionByFunction", "cleanupPY", "openLastFile", "measurementId", "getPokemonData", "htmlBodyParser", "liParser", "isCurrentDir", "crostini_25bd1ae3ef71bac8d459747ce670faa67d509f14_termina_penguin", "objectClassName", "resetGit", "show_categories", "find_all", "regexFlags", "PageStorage", "nameRE", "normFileToDir", "dueTime", "isNestedArray", "googlePrint", "getFilesByTimeStamp", "writeFiles", "ignoreRE", "createShellArgs", "byteWrite", "recentFiles", "rB", "isEmptyDir", "isImage", "dirFromFile2", "incorporateCss", "rename_file", "scrapeHTML", "deepEqual", "randomColor", "generate_multiple_choice", "storeType", "writeBuffer", "unknownWords", "checkpoint_factory", "RequestLimiter", "toSeconds", "renameColoringFilesInDir", "readRaw", "downloadIt", "queryString", "firebaseConfig", "isFunction", "vimFiles", "getPureHtml", "normMove", "depfindFile", "doCleanup", "googleCreateVariable", "TargetVersion", "gitInit", "AbstractState", "__repr__", "seeVersions", "isIgnoredFile", "presetClipFiles", "outboundData", "dollarPrompt", "unstable_diffusion", "urlRE", "callableRE", "promptSplit", "swapFiles", "textEdit", "isWebsite", "aopsAMC_10problems", "history_data", "gatherArgs", "ParserConfigs", "isUrl", "isMacbook", "downloadWebsite", "__main__", "getFileName", "v_name", "makeEmojis", "googleYouTubeVideosFromUrl", "functionRE", "toArray", "alwaysDelete", "stringInfo", "lastAcceptableTime", "getMathDir", "isPublicFile", "nlanguageString", "file_table_cleanup", "appendVim", "alignLeft", "seeClipKeys", "changeFileName2", "______", "scheduledDate", "allGoogleDocs", "WriteMode", "originalPath", "uploadResumeAndCoverLetter", "fixUrl", "inboundData", "v_val", "hammyDialogue", "node_modules", "1_000_000", "fixWrongPaths", "staticClass", "find_file", "users_get_current_account", "topposts_eli5", "superComment", "status_code", "saveMathFileByFolder", "handleError", "BROWSER_AGENT", "toStringArgument", "resumeIt", "styleString", "googleAppScript", "topposts_passtimemath", "makeNodePDF", "namePY", "earlyReturn", "normWrite", "backupMostPopular", "initializeApp", "codeRE", "minLength", "StateContext", "openOrPrint", "noDots", "scheduledTime", "currentFile", "auth_uri", "currentDate", "doDirectories", "reWrap", "mainCommand", "newList", "openIt", "raw_reddit_mementomoriok", "oneLine", "externalId", "snakeCase", "mimeTypeFromFile", "removeExtension", "raw_reddit_photoshopbattles", "get_text", "saveToDrive", "removeLastFile", "saveClip", "deleteExtensions", "knownWords", "partitionMove", "dreplace_error", "seeRecent", "recentPdfs", "configString", "secondLineSpaces", "baseFiles", "trackProgress", "DS_Store", "htmlRE", "topposts_explainlikeimfive", "downloadYoutube", "aopsAMC_12answers", "strType", "prePostParser", "cleanupFileName", "readLastReversion", "prettyTable", "isArray", "dataFile", "findFile", "1COY_z29tbRHH3ZX0pmpmNDn_6UE_KOXRxsIQRcTm1bY", "isJson", "normDirPath", "getLast", "toNumber", "renameLastFile", "domainName", "moveFilesByTimeStamp", "lastQuarter", "PLACE_HOLDER", "scrapeRef", "codePY", "mathchaReplace", "resetRegex", "normRead", "THRESH_BINARY", "codeOrganizer", "moveFilesToDriveTodoDir", "zipToDir", "mostRecentFileGroups", "rA", "lambdaNorm", "camelCase", "dT", "mM", "normAppend", "macPrint", "toPdf", "files_upload", "downloadGithubFile", "tempGoogleDocJson", "tMczAwn9aZcZlIplwP4vo", "AIzaSyCOTawJsonmn", "youtube_dl", "newItems", "deleteExtensionsList", "RegexLib", "variablePY", "watchMovie", "GoogleDrive", "google_request", "getFunctionNames", "sendTextMessages", "onlyFiles", "pythonTest", "DropBox", "backupDirectories", "ignoreWords", "makePDF", "target_versions", "mainScrape", "fixBrowserPath", "partitionByDate", "googleWrite", "_deep_dict_eq", "appId", "getAnalytics", "dirFromFile", "quoteRE", "dumpJson", "revertFile", "builtInFunctions", "getNumbers", "coerceArray", "deleteItems", "1CACCBQ_enUS943US943", "callablePY", "gitRemote", "sortByNumber", "variableJS", "getFileDependencies", "rawFiles", "runMacbook", "gitCloner", "createPokemonTemplateComponents", "lastDate", "pokemonJsonSample", "rigidSort", "githubUrlToUserContent", "changeFileName", "JavascriptAppCommand", "google_client_id", "getSaturdayDir", "cleanupRE", "parseJSON", "upcomingDateObject", "newFile", "renameFile", "create_pdfdict_from_pdf_files", "newName", "getFirstWord", "removeDateString", "imageToText", "removeFileParens", "isEnglish", "scrapeLinks", "functionJS", "hasKey", "build_my_functions", "myFunctions", "moveClipToLogJson", "getLastPdf", "MyFiles", "toLocalFile", "googleValue", "renameLocalClipFile", "removeComments", "__init__", "_cleanup_base", "dirName", "messagingSenderId", "toRoot", "getJspy", "getFunctionName", "smartDedent", "DateObject", "iter_content", "isMovie", "writeAllFunctions", "addWordsToDictionaryf", "arrayToObject", "camel_case", "smartRead", "_setup_chromebook", "openFirstFile", "getTime", "normOpen", "isNumber", "chooseIndex", "getPath", "BeforeAfter", "deleteFiles", "filterTwice", "fileName", "gitUrl", "addExtension", "LineEdit", "unescapeHtml", "aopsAMC_12problems", "childDir", "createGoogleSecret", "isGunk", "isChinese", "get_results", "aopsAHSMEanswers", "keepOrDelete", "CraigslistJobs", "deleteIt", "hasLookAround", "sentenceRE", "ab_channel", "onlyFolders", "lastDestination", "lineCount", "variableRE", "proliferateClassNames", "toKwargs", "authDomain", "CodeOrganizer", "createVariable", "_deep_iter_eq", "filePicker", "pdfIt", "compileRE", "isUtf", "__len__", "isLibraryFile", "promptRenameFile", "YoutubeDL", "functionPY", "normFactory", "zA", "__exit__", "mwrite_base", "googleLogs", "getYearNumber", "childKey", "removeRE", "datestampRE", "NewYear", "doYesterday", "npmResetNode", "numFiles", "dueDateObject", "emptyBlockRE", "incrementName", "isString", "1_linux_x64", "askToRemove", "toFactory", "parseDiff", "client_secrets", "myFile", "storageBucket", "functionBodyJS", "smart_path", "aopsAHSMEproblems", "pickFiles", "toVariable", "dueDate", "redirect_uris", "getNodeFile", "toString", "dateSearch", "downloadDirectoryFromExcel", "snapshotOfDirectory", "chooseAndOpen", "makeGitIgnore", "BeautifulSoup", "deleteList", "stringCall", "renameClipFile", "google_url", "cvtColor", "zipCheck", "argString", "gradeRef", "changeLastJsonFileToJavascriptAsset", "saveToSandisk", "getBindingNames", "TypeError", "projectId", "isSameDate", "scrapeEmojis", "writeNpmInit", "fileListings", "isJsonParsable", "code_context", "vueData", "11PzEB137TPCDX4xr8Hcy3ysJ4FPRwm24jRMhIb7Lb6k", "yearRE", "getUntil", "makeRootDir", "upcomingDate", "changeExtension", "COLOR_BGR2GRAY", "eE", "maxLength", "recentFileCache", "hasNewline", "getLoggerData", "TextIOWrapper", "is_json", "printDiff", "infoRunner", "uploadDirectoryToExcel", "googleDocsJson", "stateCache", "smallerThan", "newDir", "functionBodyRE", "sendToDrive", "npmInstall", "functionBodyPY", "isRecent", "fixChromebookFilePath", "printIt", "renameFiles", "isPdf", "inferKeyFromText", "GOOGLE_APPSCRIPT_FILE", "callableJS", "googleId", "fixFileNameFactory", "recursiveIgnoreRE", "gitNames", "writeStringToCurrentFile", "token_uri", "regexPrefix", "promptOutpath", "publishScratchpad", "CraigslistServices", "extract_text", "isWord"]
+#ff(json=1)
+#ff(name='svg')
+
+#uploadResumeAndCoverLetter()
+
+#mlf('Kevin Lee Resume')
+
+
+def rlf():
+    rfile(glf())
+
+
+
+
+def clf(name):
+    f = glf()
+    file = dldir + addExtension(name, getExtension(f))
+    cfile(f, file)
+
+
+#cfile('/home/kdog3682/CWF/jch/utils.js', '.utils.js')
+#append('foobar.txt', ff(js=1, sort=True, info=1))
+
+def man(files=0):
+    return 
+    a = resourcedir2023
+    b = dir2023
+    #files = ff(a, js=1, css=1, html=1, anti=1, json=1)
+    #files = ff(a, css=1, html=1)
+    prompt(files)
+    mfiles(files, b)
+
+
+    
+
+
+def mkgitdir(name, user='kdog3682'):
+    #assert(' ' not in name, 'no spaces')
+    dir = npath(rootdir, name)
+    dprompt('making directory', dir)
+    chdir(mkdir(dir))
+    if isdir('.git'):
+        print('git already exists')
+        print('early return')
+        return 
+    write('README.md', datestamp())
+    url = f"https://github.com/{user}/{name}"
+    remote = f"{url}.git"
+    sys = SystemCommand(f"""
+        cd {dir}
+        git init
+        echo 'successful init'
+        git add README.md
+        echo 'readme added'
+        git commit -m "Initial commit"
+        echo 'successful commit'
+        git remote add origin {remote}
+        echo 'successful remote added'
+        git push -u origin main
+        echo 'done'
+    """)
+    print(sys.success)
+
+#mkgitdir('Resources2023')
+#printdir(')
+
+
+def gitPushResources():
+    dir = rootdir + 'Resources2023'
+    chdir(dir)
+    SystemCommand(f'''
+        git add .
+        git commit -m "commit"
+        echo 'done!'
+    ''')
+
+url = f"https://github.com/{'kdog3682'}/{'Resources2023'}"
+remote = f"{url}.git"
+remote =f"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@github.com/kdog3682/Resources2023"
+remote=f'git@github.com:kdog3682/Resources2023'
+
+gitaddstring = f"""
+    cd {dir}
+    #git init
+    #echo 'successful init'
+    #echo 'readme added'
+    #git add README.md
+    #git commit -m "Initial commit"
+    #echo 'successful commit'
+    #git remote rm origin
+    #echo 'removed the remote'
+    #git remote add orr
+    #git push -u origin master
+    #echo 'done'
+    #echo "# Resources2023" >> README.md
+    #git init
+    #git add README.md
+    #git commit -m "first commit"
+    #git branch -M main
+    #git remote add origin git@github.com:kdog3682/Resources2023.git
+    #git push -u origin master
+"""
+#print(sys.success, sys.error)
+#man()
+#pprint(parseDiff())
+#appendjson('git.json', [{'a': 1}, {'a': 1}])

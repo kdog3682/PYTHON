@@ -1,8 +1,8 @@
 chatgptjsonfile = '/home/kdog3682/2023/chatgpt.json'
 departurejsonfile = '/home/kdog3682/2023/departures.json'
 
-
 from base import *
+#from next import *
 from announce import announce
 import time
 import inspect
@@ -19,19 +19,13 @@ def drivePicturesToHammyArtContestFolder(contestNumber):
     for a,b in items:
         heicToJpg(a, b)
 
-def email(to=0, subject="", body="", files=0, debug=0):
-    if debug:
-        body = files
-        to = "self"
-        ids = None
 
-    elif files:
+def email(to=0, subject="", body="", files=0):
+    ids = None
+    if files:
         files = toArray(files)
-
         drive = GoogleDrive()
         ids = map(files, drive.uploadFile)
-        if not body:
-            body = files
 
     emailBody = {
         "attachments": ids,
@@ -40,9 +34,23 @@ def email(to=0, subject="", body="", files=0, debug=0):
         "body": body,
         "subject": subject,
     }
-    if debug:
-        prompt(emailBody)
-    googleAppScript("Action2", "email", emailBody)
+
+    appscript('email', emailBody)
+
+def to_callable(s, *args):
+    arg_str = ', '.join(map(args, to_argument))
+    output = f"{s}({arg_str})"
+    return output
+def to_argument(s):
+    return json.dumps(s)
+
+def appscript(s, *args):
+    s = to_callable(s, *args)
+    s = f"Finish({s})"
+    #print(s)
+    #return
+    googleAppScript(s)
+
 
 
 def emailLastFile():
@@ -53,28 +61,55 @@ def yuma(a, b, c):
 
 
 
-def pythonWithState(fnKey, mode, state):
-    fn = globals().get(fnKey)
-    assert(fn)
+def pythonWithState(s, state):
 
-    value = fn()
-    if mode == 'append':
-        lang = state.get('lang')
-        name = re.sub('^(?:add|get|remove|find)', '', fnKey.lower())
-        append(state.get('file'), createVariable(name, value, lang))
+    args, kwargs = getArgsKwargs(s)
+    fn = 0
+    file = 0
+    text = 0
+
+    if kwargs.get('write'):
+        fn = write
+        file = kwargs.get('write')
+    elif kwargs.get('append'):
+        fn = append
+        file = kwargs.get('append')
     else:
-        print(value)
+        fn = identity 
+    
+    if 'block' in args:
+        text = state.get('blockText')
+    else:
+        text = read(state.get('file'))
+
+    if isString(text) and fn and file:
+        fn(file, text)
+        webbrowser.open(file)
+    else:
+        print("'not done yet'")
+
+
+
+    #if mode == 'append':
+        #lang = state.get('lang')
+        #name = re.sub('^(?:add|get|remove|find)', '', fnKey.lower())
+        #append(state.get('file'), createVariable(name, value, lang))
+    #else:
+        #print(value)
 
 def python(argv = sys.argv[1:]):
     if not argv:
         return print("requires shell")
 
     key, *args = argv
-    args = map(list(args), shellunescape)
+
     if key == 'pythonWithState':
-        return pythonWithState(*args)
+        return pythonWithState(*read('pythonWithState.json'))
+
+    args = map(list(args), shellunescape)
     key = env.basepyref.get(key, key)
     fn = globals().get(key)
+    #print(fn, args)
     fn(*args)
 
 
@@ -378,8 +413,10 @@ def gitPush(dir=dir2023, message='autopush'):
         cleandir(dir)
         time.sleep(1)
 
-    nameObject = gitNames(dir)
-    time.sleep(1)
+    if dir == dir2023:
+        diff = parseDiff(dir=dir)
+        appendjson('git.json', diff)
+        time.sleep(1)
 
     mainCommand = f"""
         cd {dir}
@@ -393,9 +430,10 @@ def gitPush(dir=dir2023, message='autopush'):
         'success': response.success,
         'error': response.error,
     }
+    pprint(gitData)
     if message != 'autopush':
         gitData['message'] = message
-    logger(**nameObject, action='gitpush', message=message, gitData=gitData)
+    #logger(**nameObject, action='gitpush', message=message, gitData=gitData)
 
 
 def gitManager(
@@ -967,5 +1005,70 @@ def imagePrompt(prompt= 'hamster snail baking cake', size=512):
 
     url = response['data'][0]['url']
     downloadImage(url, 'gpt.png', openIt=True)
+
 env.basepyref['gpw'] = 'gitPushWorking'
+
+
+
+def testingvimimagePrompt(prompt= 'hamster snail baking cake', size=512):
+    
+    if isNumber(size):
+        pass
+    response = openai.Image.create(
+      prompt=prompt,
+      size=size,
+      response_format='url'
+    )
+
+    url = response['data'][0]['url']
+    downloadImage(url, 'gpt.png', openIt=True)
+
+def vxcv():
+    pass
+
+def gitNames(dir):
+    s = SystemCommand('git status --short', dir=dir).success
+    pairs = unique(re.findall('(\S+) (\w+(?:\.\w+)+)', s))
+    store = [[], []]
+    for a,b in pairs:
+        if a == 'M':
+            store[0].append(b)
+        else:
+            store[1].append(b)
+    a, b = store
+    return {
+        'modified': a,
+        'created': b,
+    }
+def blackify(s):
+    import black
+
+    return black.format_str(
+        s,
+        mode=black.Mode(
+            target_versions={black.TargetVersion.PY36}
+        ),
+    )
+
+
+def block_to_browser(s, mode):
+    # mode is implicit from visualBTB.dict
+    s = re.sub('\\\\n', '\n', s)
+    if not s:
+        print("'no text early rert")
+        return 
+    if mode == 'text':
+        write('temp.txt.js', s, open=1)
+    elif mode == 'email':
+        email(body=s)
+
+    elif mode == 'gdoc':
+        name = prompt('what is the name for this gdoc file?')
+        appscript('gdoc', name, s)
+
+#block_to_browser('hi\nbye', mode='email')
+#appscript('emailLastDocToSelf')
 python()
+#print(appscript('hi', 'a\nb', [1]))
+
+#pprint("appscript('emailLastDocToSelf')", 1072)

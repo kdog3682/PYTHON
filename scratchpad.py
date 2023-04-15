@@ -1,30 +1,139 @@
+from base import *
+from zipscript import unzip
+import requests
+fonts = [
+    #"Open Sans",
+    "Roboto",
+    "Lato",
+    "Ubuntu",
+    "Montserrat",
+    "Raleway",
+    "Source Sans Pro",
+    "Poppins",
+    "Merriweather",
+    "Playfair Display",
+    "Oswald",
+    "Nunito",
+    "Crimson Text",
+    "Fira Sans",
+    "PT Sans",
+    "Droid Sans",
+    "Noto Sans",
+    "Josefin Sans",
+    "Quicksand",
+    "Archivo Narrow",
+    "Bitter",
+    "Vollkorn",
+    "Cabin",
+    "Comfortaa",
+    "Exo",
+    "Inconsolata",
+    "Lobster",
+    "Pacifico",
+    "Poiret One",
+    "Roboto Condensed",
+    "Signika",
+    "Titillium Web",
+    "Yantramanav",
+    "Abel",
+    "Asap",
+    "Baloo",
+    "Cabin Condensed",
+    "Dosis",
+    "Ek Mukta",
+    "Francois One",
+    "Glegoo",
+    "Hind",
+    "Istok Web",
+    "Jaldi",
+    "Karla",
+    "Lora",
+    "Muli",
+    "Noticia Text",
+    "Old Standard TT",
+    "Philosopher"
+  ]
+
+chdir(dldir)
+
+def get_media(x):
+    
+    if isUrl(x):
+        r = requests.get(url, allow_redirects=True)
+        if r.status_code != 200:
+            raise Exception('not valid download')
+        return r.content
+    e = getExtension(x)
+    if e:
+        if isfile(x):
+            return read(x)
+
+def write_media(outpath, data):
+    with open(outpath, 'wb') as f:
+        f.write(data)
+        print('successfully wrote to dldir:', outpath)
 
 
 
+def download_google_fonts():
+    
+    fontdir2023 = dir2023 + 'fonts/'
+    fontfile = 'font.zip'
 
-from __future__ import annotations
-cents = 30
-denominations = [25, 10, 5, 1]
-names = {25: "quarter(s)", 10: "dime(s)", 5 : "nickel(s)", 1 : "pennies"}
+    for font in fonts:
+        font_name = font.replace(' ', '+')
+        url = f'https://fonts.google.com/download?family={font_name}'
+    
+        dirname = dash_case(font)
+        outdir = fontdir2023 + dirname
+        dprompt(dirname, outdir)
+        data = get_media(url)
+        write_media(fontfile, data)
+        unzip(fontfile, mkdir(outdir))
+    
 
-def count_combs(left, i, comb, add):
-    if add: comb.append(add)
-    if left == 0 or (i+1) == len(denominations):
-        if (i+1) == len(denominations) and left > 0:
-           if left % denominations[i]:
-               return 0
-           comb.append( (left/denominations[i], denominations[i]) )
-           i += 1
-        while i < len(denominations):
-            comb.append( (0, denominations[i]) )
-            i += 1
-        print(" ".join("%d %s" % (n,names[c]) for (n,c) in comb))
-        return 1
-    cur = denominations[i]
-    print(list(((x,cur)) for x in range(0, int(left/cur)+1)))
-    return 
-    #return
-    return sum(count_combs(left-x*cur, i+1, comb[:], (x,cur)) for x in range(0, int(left/cur)+1))
 
-#count_combs(cents, 0, [], None)
+#ff(fontdir2023)
 
+
+#files = zipscript.unzipLatest()
+#pprint(files)
+
+#files = prompt(mostRecentFileGroups())
+
+#If it is under a "'", it should look for a '
+#Dont create temporary inroeabs because it hurts later.
+#printdir(fontdir)
+
+
+def dash_case(s):
+    items = re.split('\W|(?=[A-Z]+[a-z])', s)
+    return join(filter(items), delimiter='-').lower()
+
+#pprint(dash_case('AAAhiBob'))
+
+
+#mfiles(mostRecentFileGroups(), fontdir2023 + 'open-sans')
+
+
+def unzipLatest():
+    f = glf()
+    readzip(
+        f,
+        flatten=True,
+        outpath=normpath(dldir, removeExtension(tail(f))),
+    )
+
+    return flatdir(mostRecent(dldir))
+
+
+
+# backup('oldpy')
+# backup('recent')
+# consolidate.js
+# backup(jsondir)
+# backup(txtdir)
+# printdir(jsdir)
+# print(os.listdir(sandir))
+# copydir(zipdir, sandir)
+# the difficulties can be solved.

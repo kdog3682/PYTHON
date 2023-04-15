@@ -183,48 +183,53 @@ class RedditAPI(Reddit):
             "is_image": not submission.is_self,
         }
 
+    def get_submissions(self, subreddit=0, redditor=0, limit=0):
+
+        channel = (
+            self.reddit.subreddit(subreddit)
+            if subreddit
+            else self.reddit.redditor(redditor)
+        )
+        return channel.new(limit=limit)
+
+    def get_sub_data(self, post, fields=0):
+        if not submission.is_self:
+            return subm
+            "is_image": not submission.is_self,
+            "url": submission.url,
+            "upvote_ratio": submission.upvote_ratio,
+    
+    def fast(self, **kwargs):
+        posts = self.get_submissions(**kwargs)
+        data = map(posts, self.get_sub_data, fields='image')
+        write('temp.reddit.json', data)
+
     def getSubmissionDataItems(
-        self, subreddit, limit=10, **kwargs
+        self, subreddit=0, redditor=0, limit=10, **kwargs
     ):
 
         with BeforeAfter(
-            "reddit.json", key=subreddit
+            "reddit.temp.json", key=subreddit or redditor
         ) as ba:
 
             items = []
-            after = ba.get("after", 0)
-            subreddit = self.reddit.subreddit(subreddit)
-            submissions = subreddit.top(limit=limit)
-
+            submissions = self.get_submissions(
+                subreddit, redditor, limit
+            )
             for s in submissions:
                 data = self.getSubmissionData(s, **kwargs)
                 if self.checkpoint(
                     s, after=after, **kwargs
                 ):
-                    print('got data')
                     items.append(data)
 
             if not items:
                 raise Exception("stop")
+
             after = items[0].get("timestamp")
             ba.set("after", after)
             ba.set("date", datestamp(after, "praw"))
             ba.set("size", len(items))
-            ba.set('items', items)
-
-
-tests = [
-    {
-        "subreddit": "unstable_diffusion",
-        "limit": 100,
-        "image": 1,
-        "score": 10,
-    }
-]
-
-#api = RedditAPI()
-#for test in tests:
-    #api.getSubmissionDataItems(**test)
-"reddit.json"
+            ba.set("items", items)
 
 
