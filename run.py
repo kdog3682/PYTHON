@@ -20,7 +20,7 @@ def drivePicturesToHammyArtContestFolder(contestNumber):
         heicToJpg(a, b)
 
 
-def email(to=0, subject="", body="", files=0):
+def email(body='', to=0, subject="", files=0):
     ids = None
     if files:
         files = toArray(files)
@@ -34,6 +34,7 @@ def email(to=0, subject="", body="", files=0):
         "body": body,
         "subject": subject,
     }
+    prompt(emailBody)
 
     appscript('email', emailBody)
 
@@ -619,7 +620,8 @@ def addPythonImports(s):
     return f"from {extra} import *\n{s}" if extra else s
 
 def pythonAppController():
-    items = split(removeComments(read('pac.txt')), '\n\n+')
+    resourcedir = rootdir + 'Resources2023/'
+    items = split(removeComments(read(resourcedir + 'pac.txt')), '\n\n+')
     cmd = dollarPrompt(items)
     cmd = addPythonImports(cmd)
     try:
@@ -1057,7 +1059,7 @@ def block_to_browser(s, mode):
     if not s:
         print("'no text early rert")
         return 
-    if mode == 'text':
+    if mode == 'text' or mode == 'clip':
         write('temp.txt.js', s, open=1)
     elif mode == 'email':
         email(body=s)
@@ -1072,3 +1074,7 @@ python()
 #print(appscript('hi', 'a\nb', [1]))
 
 #pprint("appscript('emailLastDocToSelf')", 1072)
+#email(read('changelog.md'))
+
+#cfile(budir + 'class.js11-08-2022', dir2023 + 'class.js')
+#untouched 1080

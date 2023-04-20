@@ -1,4 +1,5 @@
 from base import *
+from next import *
 import openai
 import env
 openai.api_key = env.openaiapikey
@@ -44,11 +45,14 @@ def ask(s):
     pprint(completion)
     return completion.choices[0].text
 
-def aiprompt(prompt):
+def aiprompt(q):
     completion = openai.Completion.create(
-        **defaultKwargs, prompt=prompt
+        **defaultKwargs, prompt=q
     )
-    return completion.choices[0].text
+    s = completion.choices[0].text
+    if s and prompt(gpt_result=s):
+        clipsave(s)
+
 
 #"https://platform.openai.com/docs/api-reference/completions/create"
 

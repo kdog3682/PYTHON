@@ -7,24 +7,27 @@ class Github:
 
     def __init__(
         self,
-        key='kdog3682',
+        key=0,
         repo=0,
         private=0,
         **kwargs
     ):
-        ref = env.REPOS[key]
-        self.token = ref.get('token')
+
+        key = getattr(self, 'user', 0) or getattr(self, 'key', 0) or key
+        actions = getattr(self, 'actions', kwargs)
+
+        self.ref = env.REPOS[key]
+        assert(self.ref)
+        self.token = self.ref.get('token')
         self.github = github.Github(self.token)
-        self.user = ref.get('user')
-        self.ref = ref.get('ref', 'main')
-        self.setRepo(repo or ref.get('repo'))
+        repo = repo or getattr(self, 'repo') or self.ref.get('repo')
+        self.branch = self.ref.get('branchRef', {}).get(repo.lower(), 'main')
+        self.setRepo(repo)
         self.private = private
         self.isFirstTime = False
 
-        prompt(kwargs, repo=self.Service)
-
-        if kwargs:
-            for k,v in kwargs.items():
+        if actions:
+            for k,v in actions.items():
                 m = getattr(self, k)
                 if m:
                     try:
@@ -37,6 +40,7 @@ class Github:
 
         if self.isFirstTime:
             pprint(self.getInfo())
+            pprint('getting info because first time')
 
     def getInfo(self):
         print('Getting Repository Info because firstTime')
@@ -107,11 +111,14 @@ class Github:
         if isString(repo):
             self.repo = repo
             self._Service = self.getService(repo)
+
         else:
             self._Service = repo
             self.repo = repo.name
 
-        print(f"loading repo: {self.repo}")
+        self.branch = self._Service.default_branch
+        print(f"setting repo: {self.repo}")
+        print('setting branch as', self.branch)
 
     def getService(self, repo):
         print('getting service for', repo)
@@ -141,18 +148,16 @@ class Github:
         name = tail(args[0])
         content = ''
 
-        ref = self.ref
-        branch = self.ref
+        branch = self.branch
         if len(args) == 1:
             if isfile(args[0]):
                 content = read(args[0])
             else:
-                content = prompt(message='The file does not exist. Write something. This will be the content', fallback=args[0])
+                raise Exception('need a valid file')
         else:
             content = textgetter(args[1])
-        if not content:
-            print('no content')
-            return 
+
+        assert(content)
 
         if name == 'clip.html':
             name = prompt('Choose a file name. fallback=index.html')
@@ -162,21 +167,18 @@ class Github:
 
         result = 0
         try:
-            server = self.Service.get_contents(
-                name, ref=ref
-            )
+            service = self.Service.get_contents(name, ref=self.branch)
             result = self.Service.update_file(
-                server.path,
+                service.path,
                 "--",
                 content,
-                server.sha,
-                branch=branch,
+                service.sha,
+                branch=self.branch
             )
-        except:
+        except Exception as e:
             result = self.Service.create_file(
-                name, "--", content, branch=branch
+                name, "--", content, branch=self.branch
             )
-
         print(result)
         return result
 
@@ -273,3 +275,104 @@ class Github:
             pprint(store)
         elif prompt(f"delete {self.name} because it is empty repo?"):
             self.deleteRepo(self.name)
+
+
+class MyPublicRepo(Github):
+    user = 'kdog3682'
+    repo = 'public'
+
+class UploadJsbinCss(MyPublicRepo):
+    actions = {
+        'upload': {
+            'jsbin2.css': 'clip.js',
+        }
+    }
+
+
+
+
+def get_repo_files(user, repo=0, start='', mode=''):
+    if not repo:
+        user, repo = split(user, '/')
+
+    g = github.Github()
+    #dprompt(user,repo)
+    repo = g.get_repo(f"{user}/{repo}")
+    default_branch = repo.default_branch
+    contents = repo.get_contents(start, ref=default_branch)
+    prompt(repo=repo, contents=contents, message='starting... press anything to continue')
+    files = []
+    while contents:
+        file_content = contents.pop(0)
+        if file_content.type == "dir":
+            print('path', file_content.path)
+            contents.extend(repo.get_contents(file_content.path, ref=default_branch))
+        else:
+            files.append(file_content)
+
+    if mode == str:
+        f = lambda x: x.decoded_content.decode("utf-8")
+        s = join([f(x) for x in files])
+        clip(s)
+        return
+
+    return [file.path for file in files]
+
+#clip(get_repo_files('3b1b/manim'))
+def jsdelivr(file, src=0, user=0, repo=0):
+    if src:
+        src = re.sub('/$', '', src)
+    elif user:
+        src = f"{user}/{repo}"
+    else:
+        url = f"https://cdn.jsdelivr.net/gh/{file}"
+        clip(url)
+        return 
+        return ofile(url)
+
+    url = f"https://cdn.jsdelivr.net/gh/{src}/{file}"
+    ofile(url)
+
+
+
+
+def github_file_url(
+    file, src='', user="kdog3682", repo="codemirror"
+):
+    if src:
+        user, repo = src.split('/')
+    url = "https://raw.githubusercontent.com/$1/$2/main/$3"
+    url = templater(url, [user, repo, file])
+    return url
+#ofile(github_file_url("docs/source/documentation/utils/index.rst", src='3b1b/manim'))
+#jsdelivr('3b1b/manim/manimlib/shaders/true_dot/vert.glsl')
+
+#jsdelivr("3b1b/manim/manimlib/mobject/types/vectorized_mobject.py")
+def plf():
+    f = glf()
+    print(fileInfo(f))
+    print(read(f))
+
+#plf()
+#olf()
+
+def github_usercontent_url(user, repo, *args, master='master'):
+    base = 'https://raw.githubusercontent.com'
+    file = '/'.join(args)
+    return f"{base}/{user}/{repo}/{master}/{file}"
+
+def manim(*args):
+    ofile(github_usercontent_url('3b1b', 'manim', *args))
+
+#manim('manimlib/mobject/types/vectorized_mobject.py')
+
+#UploadJsbinCss()
+
+
+s = """
+box
+reset
+"""
+
+#get_repo_files(user='alexbol99', repo='flatten-js', start='src', mode=str) # works every file is taken and merged together.
+

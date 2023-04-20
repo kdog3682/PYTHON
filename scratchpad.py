@@ -1,6 +1,6 @@
 from base import *
-from zipscript import unzip
-import requests
+#from zipscript import unzip
+#import requests
 fonts = [
     #"Open Sans",
     "Roboto",
@@ -54,7 +54,7 @@ fonts = [
     "Philosopher"
   ]
 
-chdir(dldir)
+#chdir(dldir)
 
 def get_media(x):
     
@@ -137,3 +137,32 @@ def unzipLatest():
 # print(os.listdir(sandir))
 # copydir(zipdir, sandir)
 # the difficulties can be solved.
+
+
+#printdir(jsondir)
+
+
+#printdir(rootdir)
+
+# This works
+def makeRepo(repo):
+    from githubscript import KDOG3682
+    KDOG3682(repo=repo)
+    dir = rootdir + repo
+    assert(not isdir(dir) and not isfile(dir))
+    mkdir(dir)
+    dprompt(dir)
+    chdir(dir)
+    write('README.md', 'howdy')
+    gitaddstring = f"""
+        cd {dir}
+        git init
+        git add .
+        git commit -m "Initial commit"
+        git remote add origin git@github.com:kdog3682/{repo}.git
+        git push -u origin master
+    """
+    result = SystemCommand(gitaddstring, dir=dir)
+    print(result.success, result.error)
+
+#makeRepo('PUBLIC')

@@ -1734,5 +1734,5 @@ def send_goc_to_pdf():
     fileResponse = self.files.create(
         body=metaData, media_body=media, fields="id"
     ).execute()
-#GoogleEmail().email('hi\bye')
-
+#-------------------------------------------------
+#GoogleEmail().email('hi\bye') # DOESNT WORK

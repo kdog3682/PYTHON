@@ -1207,8 +1207,9 @@ def wrap(a, b="()"):
 
 def templater(template, ref):
 
-    if isString(ref):
-        ref = [ref]
+    template = template.strip()
+    if isPrimitive(ref):
+        ref = [str(ref)]
     regex = "\$(\w+)"
 
     def parser(x):
@@ -5327,6 +5328,7 @@ def ff(
         rawFiles = dir
     elif recursive:
         rawFiles = getFilesRecursive(dirgetter(dir))
+        prompt(rawFiles)
     else:
         rawFiles = absdir(dirgetter(dir)) 
 
@@ -5360,6 +5362,10 @@ def ff(
         printdir(dir)
     elif mode == "filetable":
         return write('file-table.txt', tabular(map(sorted(files, key=mdate), nameAndDate)))
+
+    elif mode == "bring":
+        prompt(files=files)
+        map(files, lambda x: cfile(x, dir2023))
 
     elif mode == "rename":
         map(files, promptRenameFile)
@@ -5617,8 +5623,6 @@ def getFilesRecursive(dir):
             elif isdir(file):
                 runner(file)
             else:
-                if len(store) > 100:
-                    raise Exception('not allowed to many')
                 store.append(file)
     runner(dir)
     return store
@@ -7913,6 +7917,11 @@ samplehtml = '''
 #ff(html=1)
 
 def fa(s, r, flags=0, **kwargs):
+    ref = {
+        'numbers': '-?\d+',
+        'integers': '-?\d+',
+    }
+    r = ref.get(r, r)
     s = s if isArray(s) else textgetter(s)
     #print(len(s))
     #print(currentFile())
@@ -7925,8 +7934,6 @@ def fa(s, r, flags=0, **kwargs):
 
     if kwargs.get('fn'):
         m = map(m, kwargs.get('fn'))
-    else:
-        pprint(m)
 
     if kwargs.get('choose'):
         pass
@@ -8383,7 +8390,7 @@ def getNewGitFiles():
     return re.findall(r, s, flags=re.M)
 
 
-def parseDiff():
+def parseDiff(dir=dir2023):
     
     new = getNewGitFiles()
     rfile = '^diff --git a/(.*?) b.*\nindex (\w+)\.\.(\w+)'
@@ -8523,21 +8530,6 @@ def mkgitdir(name, user='kdog3682'):
 #mkgitdir('Resources2023')
 #printdir(')
 
-
-def gitPushResources():
-    dir = rootdir + 'Resources2023'
-    chdir(dir)
-    SystemCommand(f'''
-        git add .
-        git commit -m "commit"
-        echo 'done!'
-    ''')
-
-url = f"https://github.com/{'kdog3682'}/{'Resources2023'}"
-remote = f"{url}.git"
-remote =f"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@github.com/kdog3682/Resources2023"
-remote=f'git@github.com:kdog3682/Resources2023'
-
 gitaddstring = f"""
     cd {dir}
     #git init
@@ -8563,3 +8555,14 @@ gitaddstring = f"""
 #man()
 #pprint(parseDiff())
 #appendjson('git.json', [{'a': 1}, {'a': 1}])
+#-------------------------------
+
+#ff(budir, name='app-main.js', mode='bring', recursive=1)
+def rename(a, b):
+    dir = dirFromFile(a)
+    a = npath(dir, a)
+    b = npath(dir, addExtension(b, getExtension(a)))
+    dprompt(a, b)
+    mfile(a, b)
+
+#rename('app-main.js', 'appscript')
