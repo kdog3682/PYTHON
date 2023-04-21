@@ -2,7 +2,7 @@ chatgptjsonfile = '/home/kdog3682/2023/chatgpt.json'
 departurejsonfile = '/home/kdog3682/2023/departures.json'
 
 from base import *
-#from next import *
+from next import *
 from announce import announce
 import time
 import inspect
@@ -1028,20 +1028,6 @@ def testingvimimagePrompt(prompt= 'hamster snail baking cake', size=512):
 def vxcv():
     pass
 
-def gitNames(dir):
-    s = SystemCommand('git status --short', dir=dir).success
-    pairs = unique(re.findall('(\S+) (\w+(?:\.\w+)+)', s))
-    store = [[], []]
-    for a,b in pairs:
-        if a == 'M':
-            store[0].append(b)
-        else:
-            store[1].append(b)
-    a, b = store
-    return {
-        'modified': a,
-        'created': b,
-    }
 def blackify(s):
     import black
 

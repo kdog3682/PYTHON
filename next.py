@@ -1,6 +1,7 @@
 import env
 import inspect
 from base import *
+firedir = rootdir + 'FIREBASE/'
 
 def is_empty(x):
     if x == 0:
@@ -284,3 +285,99 @@ def count_params(f):
 
 #print(SystemCommand('npm i @flatten-js/core').success)
 #printdir(nodedir2023 + '@flatten-js/core/dist')
+
+
+
+import os
+
+def hashbang(filename):
+    assert(isfile(filename))
+    # Add a hashbang line to the file if it doesn't already have one
+    with open(filename, 'r') as f:
+        first_line = f.readline().strip()
+    
+    if not first_line.startswith('#!'):
+        print('adding hasbang line')
+        with open(filename, 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write('#!/usr/bin/env python3\n' + content)
+    
+    # Set the execute permission for the file
+    os.chmod(filename, 0o755)
+
+
+
+#chdir(pydir)
+#hashbang('goo.py')
+#SystemCommand('./goo.py', dir=pydir)
+
+#ofile(firedir + 'index.html')
+#ofile(firedir + '.gitignore')
+
+#SystemCommand('npm i firebase', dir=firedir)
+#SystemCommand('npm ls firebase', dir=dir2023)
+#printdir(firedir)
+
+
+
+def git_push_dir(dir):
+
+    names = gitNames(dir)
+    mainCommand = f"""
+        cd {dir}
+        git add .
+        git commit -m "'message'"
+        git push
+    """
+
+    response = SystemCommand(mainCommand, dir=dir)
+    gitData = {
+        'success': response.success,
+        'error': response.error,
+    }
+
+    pprint(gitData)
+    pprint(names)
+
+
+def dprompt(*variables, **kwargs):
+    
+    strings = []
+    caller = getCaller()
+    store = OrderedDict()
+    store['caller'] = caller
+
+    for v in variables:
+        try:
+            vars = inspect.currentframe().f_back.f_locals.items()
+            name = [v_name for v_name, v_val in vars if v_val is v][0]
+            store[name] = v
+        except Exception as e:
+            strings.append(v)
+        
+
+    for a,b in kwargs.items():
+        store[a] = b
+
+    if strings: 
+        store['strings'] = strings
+
+    pprint(store)
+    return input('')
+
+
+def gitNames(dir):
+    s = SystemCommand('git status --short', dir=dir).success
+    pairs = unique(re.findall('(\S+) (\w+(?:\.\w+)+)', s))
+    store = [[], []]
+    for a,b in pairs:
+        if a == 'M':
+            store[0].append(b)
+        else:
+            store[1].append(b)
+    a, b = store
+    return {
+        'modified': a,
+        'created': b,
+    }

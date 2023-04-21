@@ -5116,14 +5116,14 @@ class SystemCommand:
         self.error = error
         self.success = success.strip()
 
-        #pprint(
-            #{
-                #"getCaller": "SystemCommand",
-                #"command": command,
-                #"error": error,
-                #"success": success,
-            #}
-        #)
+        pprint(
+            {
+                "getCaller": "SystemCommand",
+                "command": command,
+                "error": error,
+                "success": success,
+            }
+        )
 
 def gitCloner(url):
     chdir(jsdir)
