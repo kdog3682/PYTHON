@@ -1,60 +1,6 @@
 from base import *
 #from zipscript import unzip
 #import requests
-fonts = [
-    #"Open Sans",
-    "Roboto",
-    "Lato",
-    "Ubuntu",
-    "Montserrat",
-    "Raleway",
-    "Source Sans Pro",
-    "Poppins",
-    "Merriweather",
-    "Playfair Display",
-    "Oswald",
-    "Nunito",
-    "Crimson Text",
-    "Fira Sans",
-    "PT Sans",
-    "Droid Sans",
-    "Noto Sans",
-    "Josefin Sans",
-    "Quicksand",
-    "Archivo Narrow",
-    "Bitter",
-    "Vollkorn",
-    "Cabin",
-    "Comfortaa",
-    "Exo",
-    "Inconsolata",
-    "Lobster",
-    "Pacifico",
-    "Poiret One",
-    "Roboto Condensed",
-    "Signika",
-    "Titillium Web",
-    "Yantramanav",
-    "Abel",
-    "Asap",
-    "Baloo",
-    "Cabin Condensed",
-    "Dosis",
-    "Ek Mukta",
-    "Francois One",
-    "Glegoo",
-    "Hind",
-    "Istok Web",
-    "Jaldi",
-    "Karla",
-    "Lora",
-    "Muli",
-    "Noticia Text",
-    "Old Standard TT",
-    "Philosopher"
-  ]
-
-#chdir(dldir)
 
 def get_media(x):
     

@@ -1,7 +1,14 @@
 import env
+from collections import OrderedDict
 import inspect
 from base import *
 firedir = rootdir + 'FIREBASE/'
+pipdir = "/usr/lib/python3/dist-packages/pip/"
+def to_array(x):
+    if isArray(x):
+        return x
+    return [x]
+
 
 def is_empty(x):
     if x == 0:
@@ -152,7 +159,6 @@ def filter(items, x):
 
     return [el for el in items if f(el)]
 
-#pyargs()
 
 s = """
 zip
@@ -162,7 +168,6 @@ html
 css
 """
 t = """
-# This is a map Target
 def is_$1(s):
     return getExtension(s) == "$1"
 """
@@ -274,17 +279,10 @@ def fn(key, value):
 def count_params(f):
     data = inspect.signature(f)
     return len(data.parameters)
-#print(lines('rel', ref=pillars))
-#fa(s, '\w+', map=fn, save=1)
-#len(test)
 "pillars.py"
 
-#import pillars
-#pprint(flat(lines(str1681989658, ref=pillars)))
 
 
-#print(SystemCommand('npm i @flatten-js/core').success)
-#printdir(nodedir2023 + '@flatten-js/core/dist')
 
 
 
@@ -308,16 +306,8 @@ def hashbang(filename):
 
 
 
-#chdir(pydir)
-#hashbang('goo.py')
-#SystemCommand('./goo.py', dir=pydir)
 
-#ofile(firedir + 'index.html')
-#ofile(firedir + '.gitignore')
 
-#SystemCommand('npm i firebase', dir=firedir)
-#SystemCommand('npm ls firebase', dir=dir2023)
-#printdir(firedir)
 
 
 
@@ -381,3 +371,160 @@ def gitNames(dir):
         'modified': a,
         'created': b,
     }
+
+
+def mwrite(inpath, outpath, regex, flags=0):
+    inpath = smart_path(inpath)
+    outpath = smart_path(outpath, inpath)
+    text = read(inpath)
+    assert text
+
+    a, payload = mget(regex, text, flags=flags, mode=list)
+    assert payload
+
+    append(outpath, payload)
+    cfile(inpath, "temp.py")
+    write(inpath, a)
+
+
+def smart_path(file, refpath=0):
+    if refpath:
+        dir = dirFromFile(refpath)
+        file = addExtension(file, getExtension(refpath))
+        alert(dir, file)
+    else:
+        dir = dirFromFile(file)
+    return npath(dir, file)
+
+
+
+def tesseractExtractText(imageFile):
+    from PIL import Image
+    import pytesseract
+
+    return pytesseract.image_to_string(Image.open(imageFile))
+
+
+
+
+def foo1682173868():
+    """
+        google -> clip -> delete based on comments = delete
+        googleclip
+    """
+     
+    files = clip()
+    chdir(pydir)
+    for file in files:
+        if file.get('comments').startswith('dele'):
+            rfile(file.get('name'))
+
+
+
+
+def get_media(x):
+    
+    if isUrl(x):
+        r = requests.get(url, allow_redirects=True)
+        if r.status_code != 200:
+            raise Exception('not valid download')
+        return r.content
+    e = getExtension(x)
+    if e:
+        if isfile(x):
+            return read(x)
+
+def write_media(outpath, data):
+    with open(outpath, 'wb') as f:
+        f.write(data)
+        print('successfully wrote to dldir:', outpath)
+
+
+
+def download_google_fonts():
+    
+    fontdir2023 = dir2023 + 'fonts/'
+    fontfile = 'font.zip'
+
+    for font in fonts:
+        font_name = font.replace(' ', '+')
+        url = f'https://fonts.google.com/download?family={font_name}'
+    
+        dirname = dash_case(font)
+        outdir = fontdir2023 + dirname
+        dprompt(dirname, outdir)
+        data = get_media(url)
+        write_media(fontfile, data)
+        unzip(fontfile, mkdir(outdir))
+    
+
+
+
+def dash_case(s):
+    items = re.split('\W|(?=[A-Z]+[a-z])', s)
+    return join(filter(items), delimiter='-').lower()
+
+
+def unzipLatest():
+    f = glf()
+    readzip(
+        f,
+        flatten=True,
+        outpath=normpath(dldir, removeExtension(tail(f))),
+    )
+
+    return flatdir(mostRecent(dldir))
+
+#printdir(pipdir + '_internal/')
+
+def foo1682177487(r, type=str):
+    """
+        collectGlobalVariables
+    """
+     
+    store = {}
+    dir_vars = [var for var in globals() if test(r, var)]
+    for var in dir_vars:
+        value = globals().get(var)
+        if isinstance(value, type):
+            store[var] = value
+
+    if store:
+        appendVariable(dumpJson(store))
+
+
+def strftime(strife=0):
+    strife = "%A %B %d %Y, %-I:%M:%S%p"
+    return datetime.now().strftime(strife)
+def coerceToObject(x):
+    return x if isObject(x) else {'value': x}
+
+
+def ensure_object(func):
+    def decorator(self, obj, *args, **kwargs):
+        return func(self, coerceToObject(obj), *args, **kwargs)
+    return decorator
+
+
+def empty(x, key):
+    try:
+        return not hasattr(x, key)
+    except Exception as e:
+        return x == None or len(x) == 0
+
+
+def info(var):
+    var_info = {}
+    var_info['class_instance'] = type(var)
+    var_info['type'] = type(var).__name__
+    var_info['type_str'] = str(type(var))
+    var_info['name'] = var.__class__.__name__
+    var_info['constructor'] = var.__init__.__func__
+    return var_info
+
+def t2s(x):
+    return type(x).__name__
+    return x.__class__.__name__
+
+def isObjectArray(x):
+    return isArray(x) and isObject(x[0])

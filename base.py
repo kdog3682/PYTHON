@@ -297,6 +297,7 @@ def every(items, fn):
             return False
     return True
 
+
 def datestamp(x=None, strife="%m-%d-%Y"):
     if hasattr(x, 'created_utc'):
         x = x.created_utc
@@ -1465,7 +1466,8 @@ def googleAppScript(f="", *args):
     data = google_request(s)
     try:
 
-        pprint(data)
+
+        print({'data': data})
         print("starting google appscript function series")
         for k, v in data.items():
             if v and ref[k]:

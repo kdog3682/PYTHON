@@ -3,7 +3,6 @@ departurejsonfile = '/home/kdog3682/2023/departures.json'
 
 from base import *
 from next import *
-from announce import announce
 import time
 import inspect
 import env
@@ -52,6 +51,68 @@ def appscript(s, *args):
     #return
     googleAppScript(s)
 
+def appscript2():
+    s = read(env.GOOGLE_APPSCRIPT_FILE).strip()
+    r = "^(?:(?:// *|import).+)(?:\n+(?:// *|import).+)*"
+    s, imports = mget(r, s, flags=re.M, mode=str)
+
+    store = []
+    if imports:
+        imports = re.findall(
+            "^import (\S+)", imports, flags=re.M
+        )
+        for i in imports:
+            if i == "clip":
+                print("adding clip import")
+                store.append(
+                    createVariable("clip", clip(), "js")
+                )
+            elif i == "clip2":
+                store.append(
+                    createVariable("clip2", clip(2), "js")
+                )
+            elif getExtension(i) == "js":
+                store.append(normRead(i))
+            else:
+                file = normRead(i + ".temp.json")
+                data = createVariable(
+                    camelCase(i), file, "js"
+                )
+                store.append(data)
+
+        s = join(store) + "\n\n" + s
+
+    s += "\n\nFinish2()"
+
+    ref = {
+        "print": googlePrint,
+        "open": googleOpen,
+        "write": googleWrite,
+        "clip": googlePrint,
+        "clip": googlePrint,
+        "value": googleValue,
+        "vim": googleVim,
+        "logs": googleLogs,
+        "error": lambda x: print(x),
+        "createVariable": googleCreateVariable,
+        "appendVariable": googleCreateVariable,
+    }
+
+    data = google_request(s)
+    try:
+
+        print({'data': data})
+        print("starting google appscript function series")
+        for k, v in data.items():
+            if v and ref[k]:
+                print('::' + k + '::\n')
+                ref[k](v)
+    
+        print(linebreak)
+        print('done with google appscript')
+    except Exception as e:
+        print(data)
+    
 
 
 def emailLastFile():
@@ -1064,3 +1125,4 @@ python()
 
 #cfile(budir + 'class.js11-08-2022', dir2023 + 'class.js')
 #untouched 1080
+

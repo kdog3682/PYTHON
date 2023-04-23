@@ -16,12 +16,17 @@ class Github:
         key = getattr(self, 'user', 0) or getattr(self, 'key', 0) or key
         actions = getattr(self, 'actions', kwargs)
 
-        self.ref = env.REPOS[key]
-        assert(self.ref)
-        self.token = self.ref.get('token')
-        self.github = github.Github(self.token)
-        repo = repo or getattr(self, 'repo') or self.ref.get('repo')
-        self.branch = self.ref.get('branchRef', {}).get(repo.lower(), 'main')
+        self.ref = env.REPOS.get(key, None)
+        if self.ref:
+            self.token = self.ref.get('token')
+            self.github = github.Github(self.token)
+            repo = repo or getattr(self, 'repo') or self.ref.get('repo')
+            self.branch = self.ref.get('branchRef', {}).get(repo.lower(), 'main')
+        else:
+            self.token = env.kdogtoken
+            self.github = github.Github(self.token)
+            self.user = 'kdog3682'
+
         self.setRepo(repo)
         self.private = private
         self.isFirstTime = False
@@ -82,6 +87,9 @@ class Github:
         return stringify({ 'user': a, 'repo': b })
 
     @property
+    def service(self):
+        return self.Service
+    @property
     def Service(self):
         if not hasattr(self, "_Service"):
             self._Service = self.getService(self.repo)
@@ -127,17 +135,16 @@ class Github:
         try:
             return self.github.get_repo(query)
         except Exception as e:
-            handleError(e)
+            log(e)
             try:
                 self.isFirstTime = True
                 return self.User.create_repo(
                     repo, private=self.private
                 )
             except Exception as e:
-                print('errror 2')
-                handleError(e)
+                log(e)
                 self.auth()
-                time.sleep(5)
+                time.sleep(2)
                 return self.github.get_repo(query)
 
     def getFile(self, name):
@@ -376,3 +383,39 @@ reset
 
 #get_repo_files(user='alexbol99', repo='flatten-js', start='src', mode=str) # works every file is taken and merged together.
 
+def create(dir, private=False):
+    name = tail(dir).lower()
+    #dprompt(name, dir)
+
+    g = Github(repo=name)
+    g.service.edit(private=private)
+
+    SystemCommand(f"""
+        git init 
+        git branch -m master main
+        git add .
+        git remote add origin git@github.com:kdog3682/{name}.git
+        git commit -m "Initial commit"
+        git push -u origin main
+    """, dir=dir)
+
+    url = 'https://github.com/kdog3682/' + name
+    ofile(url)
+
+def log(x):
+    try:
+        print(x, 'error')
+    except Exception as e:
+        pass
+    
+        
+    
+
+firedir = rootdir + 'FIREBASE/'
+playdir = rootdir + 'PLAYGROUND/'
+#mkdir(playdir)
+#chdir(playdir)
+#write('index.html', 'aooola')
+#create(playdir)
+#printdir(playdir)
+# '/home/kdog3682/PLAYGROUND/index.html'
