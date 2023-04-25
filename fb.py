@@ -258,7 +258,7 @@ class FireStore:
         return data
 
 
-    def recursive2(self, data):
+    def recursive_upload(self, data):
         def isRoot(parent):
             name = t2s(parent)
             return name == "Client" or name == "WriteBatch"
@@ -393,23 +393,103 @@ recursiveData = {
         }
     }
 }
+
+userAccounts = {
+  "users": {
+    "kevinlee": {
+      "name": "Kevin",
+      "password": "1234",
+      "role": "teacher",
+      "email": "kevin@hammymath.com",
+    },
+    "hammy": {
+      "name": "hammy",
+      "role": "hammy",
+      "age": 10,
+      "email": "hammy@hammymath.com"
+    },
+    "bobj": {
+      "name": "Bob Johnson",
+      "age": 40,
+      "email": "bobjohnson@example.com"
+    }
+  }
+}
+
+assignments = {
+  "assignments": [
+    {
+      "title": "Algebraic Expressions",
+      "description": "Simplify and evaluate algebraic expressions",
+      "dueDate": "2023-05-01T23:59:59Z",
+      "points": 20,
+      "questions": [
+        {
+          "text": "Simplify: 3x + 5 - 2x + 7",
+          "answer": "x + 12"
+        },
+        {
+          "text": "Evaluate: 2x^2 - 3x + 1, when x = 4",
+          "answer": "21"
+        },
+        {
+          "text": "Simplify: (x + 2)(x - 3) + (x + 2)(4 - x)",
+          "answer": "-2x - 10"
+        }
+      ]
+    },
+    {
+      "title": "Functions and Graphs",
+      "description": "Graph and analyze functions",
+      "dueDate": "2023-05-08T23:59:59Z",
+      "points": 30,
+      "questions": [
+        {
+          "text": "Graph the function y = 2x + 1",
+          "answer": "(insert graph image here)"
+        },
+        {
+          "text": "Find the domain and range of the function f(x) = x^2 - 4",
+          "answer": "Domain: all real numbers; Range: y ≤ -4 or y ≥ 0"
+        },
+        {
+          "text": "Find the x-intercept(s) of the function y = x^3 - 3x^2 - 9x",
+          "answer": "x = -3, 0"
+        }
+      ]
+    },
+    {
+      "title": "Trigonometry",
+      "description": "Solve problems using trigonometric functions",
+      "dueDate": "2023-05-15T23:59:59Z",
+      "points": 40,
+      "questions": [
+        {
+          "text": "Find the value of sin 60°",
+          "answer": "0.866"
+        },
+        {
+          "text": "Find the length of the side opposite the angle θ in the right triangle below: (insert image of right triangle)",
+          "answer": "8"
+        },
+        {
+          "text": "Solve for x: tan x = 1",
+          "answer": "x = π/4 or 45°"
+        }
+      ]
+    }
+  ]
+}
+
+def get_hammy_data():
+    data = assignments
+    prompt(data=data, message='Proceed to HammyMathClass data upload?')
+    return data
+
 class HammyMathClass(FireStore):
-    collectionName = "books"
     actions = [
-        {"name": "recursive2", "args": [recursiveData]},
-        {"name": "json"},           
-
-        # Only gets db.collectionName (which is not javascript)
-        # Therefore fails to retrieve javascript.js1
-
-        #{"name": "delete_everything"},
-        #{"name": "get_all_docs_v2"},
-        #{'name': 'add', 'args': 123},
-        #{'name': 'add', 'args': 123},
-        #{'name': 'add', 'args': 123},
-        #{"name": "get_all_docs_v2"},  # gets as dict 
-        #{"name": "get_all_docs"},     # gets as typed dict
+        {"name": "recursive_upload", "args": [get_hammy_data()]},
+        {"name": "get_all_docs_v2"}, 
     ]
-
-
-#HammyMathClass()
+        
+HammyMathClass()

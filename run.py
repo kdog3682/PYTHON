@@ -467,13 +467,34 @@ def gitDelete(file):
 
 
 
-def gitPushWorking():
-    gitPush(message='everything is working')
+def pushAll():
+    dirs = [dir2023, pydir, resourcedir]
+    for dir in dirs:
+        cleandir(dir)
+
+        if dir == dir2023:
+            #diff = parseDiff(dir=dir)
+            #appendjson('git.json', diff)
+            time.sleep(1)
+
+
+        mainCommand = f"""
+            cd {dir}
+            git add .
+            git commit -m "'autopush'"
+            git push
+        """
+        response = SystemCommand(mainCommand, dir=dir)
+
+        gitData = {
+            'success': response.success,
+            'error': response.error,
+        }
+        pprint(gitData)
 
 def gitPush(dir=dir2023, message='autopush'):
     if dir == dir2023 or dir == pydir:
         cleandir(dir)
-        time.sleep(1)
 
     if dir == dir2023:
         diff = parseDiff(dir=dir)
@@ -1126,3 +1147,4 @@ python()
 #cfile(budir + 'class.js11-08-2022', dir2023 + 'class.js')
 #untouched 1080
 
+pushAll()

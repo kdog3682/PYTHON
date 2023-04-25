@@ -3,6 +3,7 @@ from collections import OrderedDict
 import inspect
 from base import *
 firedir = rootdir + 'FIREBASE/'
+resourcedir = rootdir + 'Resources2023/'
 pipdir = "/usr/lib/python3/dist-packages/pip/"
 def to_array(x):
     if isArray(x):
@@ -528,3 +529,8 @@ def t2s(x):
 
 def isObjectArray(x):
     return isArray(x) and isObject(x[0])
+
+#write('dl.html', request('https://garden.bradwoods.io/notes/css/blend-modes'))
+
+
+#ff(resourcedir, text='grocery', flags=re.I, mode='open')
