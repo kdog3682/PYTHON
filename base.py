@@ -3,6 +3,7 @@ resourcedir2023 = "/home/kdog3682/Resources2023"
 hammyfirebasehtml = "/home/kdog3682/FIREBASE/public/index.html"
 localbackupdir= "/home/kdog3682/LOCALBACKUP/"
 publishdir= "/home/kdog3682/PUBLISHED/"
+resdir = '/home/kdog3682/Resources2023'
 firebasedir= "/home/kdog3682/FIREBASE/"
 publicfirebasedir= "/home/kdog3682/FIREBASE/public"
 latexdir = '/home/kdog3682/LATEX/'
@@ -2473,6 +2474,8 @@ def getFunctionNames(s):
     return unique(re.findall(r, textgetter(s), flags=re.M))
 
 def textgetter(x):
+    if isArray(x):
+        return x
     if x == 'self':
         return read(currentFile())
     if len(x) > 100:
@@ -4540,6 +4543,7 @@ def shell(cmd):
 
 def normDirPath(file):
     dir = dirFromFile(file)
+    print(dir)
     return npath(dir, file)
 
 def normFactory(fn):
@@ -5295,6 +5299,7 @@ def ff(
     mode=0,
     once=0,
     sort=0,
+    partition=0,
     reverse=0,
     recursive=0,
     **kwargs,
@@ -5358,12 +5363,19 @@ def ff(
             reverse=reverse,
         )
 
+    if partition:
+        files = Partitioner2(files)()
+    if mode == 'transfer-to-resources':
+        return mfiles(files, resdir)
     if mode == "smallclean":
         prompt(files, "remove?")
         rfiles(files)
         printdir(dir)
     elif mode == "filetable":
         return write('file-table.txt', tabular(map(sorted(files, key=mdate), nameAndDate)))
+
+    elif mode == "partition":
+        return Partitioner2(files)()
 
     elif mode == "bring":
         prompt(files=files)

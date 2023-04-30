@@ -170,9 +170,12 @@ def python(argv = sys.argv[1:]):
 
     args = map(list(args), shellunescape)
     key = env.basepyref.get(key, key)
-    fn = globals().get(key)
-    #print(fn, args)
-    fn(*args)
+    try:
+        fn = globals().get(key)
+        fn(*args)
+    except Exception as e:
+        print('eeeeeeeeeeeee @ python', e)
+    
 
 
 
@@ -493,13 +496,12 @@ def pushAll():
         pprint(gitData)
 
 def gitPush(dir=dir2023, message='autopush'):
+
     if dir == dir2023 or dir == pydir:
         cleandir(dir)
-
-    if dir == dir2023:
-        diff = parseDiff(dir=dir)
-        appendjson('git.json', diff)
-        time.sleep(1)
+        #diff = parseDiff(dir=dir)
+        #appendjson('git.json', diff)
+        #time.sleep(1)
 
     mainCommand = f"""
         cd {dir}
@@ -514,9 +516,8 @@ def gitPush(dir=dir2023, message='autopush'):
         'error': response.error,
     }
     pprint(gitData)
-    if message != 'autopush':
-        gitData['message'] = message
     #logger(**nameObject, action='gitpush', message=message, gitData=gitData)
+    ofile('https://github.com/kdog3682/2023')
 
 
 def gitManager(
@@ -569,11 +570,6 @@ def gitManager(
     # return print('debugging', cmd)
     SystemCommand(cmd)
 
-def gitPushAll():
-    pass
-    #gitPushPython()
-    #time.sleep(1)
-    #gitPush()
 
 
 env.basepyref["gp"] = "gitPush"
@@ -729,12 +725,10 @@ def execPython(s=''):
 
 env.basepyref['pac'] = 'pythonAppController'
 env.basepyref['sm'] = 'smartManager'
-#pprint(smartManager())
 
 
 exclude = ['decimals', 'percentages', 'exponents', 'square roots']
 chatgptPrompts = f"""
-#Samantha walks a total of 2/3 miles to and from school every day. Finish the text for this math question. Create 4 possible answer choices. Only one of them should be correct. Output the results in a json containing keys: "problem", "choices", "answer."
 
 Use the following instructions for all further prompts. The instructions are: Finish the text for the math question based on the given prompt. Then, create 4 possible answer choices. Only one answer choice should be correct. Output the results in a json containing keys: "problem", "choices", "answer", and "tags". The tags should describe what type of math question it is.
 
@@ -767,9 +761,7 @@ def opener(s):
     s = removeComments(s).strip()
     return write('ofile.js', s, 1)
 
-#opener(chatgptPrompts)
 
-#pprint(smartManager())
 
 def getChatGptPrompt():
     def runner(x):
@@ -817,7 +809,6 @@ def previewMaterials():
 
 
 env.basepyref['pm'] = 'previewMaterials'
-#pprint(runChatgpt())
 
 
 def masterFileInfo(dir=dir2023):
@@ -840,8 +831,6 @@ def masterFileInfo(dir=dir2023):
 def gitPushPython():
     gitPush(dir=pydir)
 
-#masterFileInfo()
-#pprint(len(map(filter(read('2023.directory.json'), lambda x: x.get('extension')=='js'), lambda x: x.get('name'))))
 env.basepyref['gpy'] = 'gitPushPython'
 def copyToBrowser(s):
     return write(dldir + 'ofile.js', removeComments(s).strip(), 1)
@@ -892,14 +881,8 @@ def revertjs(file):
 def deleteFinishedPDFS():
     ff(dldir, pdf=1, mode='delete', weeks=2)
 
-# The file is reverted from 
-#smartManager()
 
-#runChatgpt("""
-#Explain what the function below does:
-#def copyToBrowser(s):
     #return write(dldir + 'ofile.js', removeComments(s).strip(), 1)
-#""")
 
 
 def shonitProject():
@@ -941,7 +924,6 @@ def downloadImage(url, name, openIt=0):
     else:
         print("Image Couldn't be retreived", name)
 
-#printdir()
 
 
 
@@ -974,7 +956,6 @@ def surmonChinese(links):
     store = filter(map(links, runner))
     return store
 
-#pprint(surmonChinese())
 
 
 def subprocessRun(s):
@@ -1121,7 +1102,7 @@ def blackify(s):
     )
 
 
-def block_to_browser(s, mode):
+def block_to_browser(s, mode='text'):
     # mode is implicit from visualBTB.dict
     s = re.sub('\\\\n', '\n', s)
     if not s:
@@ -1136,15 +1117,6 @@ def block_to_browser(s, mode):
         name = prompt('what is the name for this gdoc file?')
         appscript('gdoc', name, s)
 
-#block_to_browser('hi\nbye', mode='email')
-#appscript('emailLastDocToSelf')
+
 python()
-#print(appscript('hi', 'a\nb', [1]))
-
-#pprint("appscript('emailLastDocToSelf')", 1072)
-#email(read('changelog.md'))
-
-#cfile(budir + 'class.js11-08-2022', dir2023 + 'class.js')
-#untouched 1080
-
-pushAll()
+#'/home/kdog3682/2023/comments.py'

@@ -1,8 +1,12 @@
 import env
+import requests
 from collections import OrderedDict
 import inspect
 from base import *
 firedir = rootdir + 'FIREBASE/'
+npmdir = nodedir2023
+firedir = rootdir + 'FIREBASE/'
+playdir = rootdir + 'PLAYGROUND/'
 resourcedir = rootdir + 'Resources2023/'
 pipdir = "/usr/lib/python3/dist-packages/pip/"
 def to_array(x):
@@ -113,7 +117,8 @@ def toString(s):
     return str(s)
 
 def fa(s, r, flags=0, **kwargs):
-    s = s if isArray(s) else textgetter(s)
+        
+    s = textgetter(s)
     m = re.findall(r, s, flags=flags)
     if kwargs.get('filter'):
         m = filter(m, kwargs.get('filter'))
@@ -134,6 +139,9 @@ def fa(s, r, flags=0, **kwargs):
     if kwargs.get('append'):
         if kwargs.get('append') == 'self':
             appendVariable(dumpJson(m))
+
+    if kwargs.get('clip'):
+        clip(m)
 
     if kwargs.get('save'):
         prompt(m)
@@ -476,7 +484,6 @@ def unzipLatest():
 
     return flatdir(mostRecent(dldir))
 
-#printdir(pipdir + '_internal/')
 
 def foo1682177487(r, type=str):
     """
@@ -530,7 +537,224 @@ def t2s(x):
 def isObjectArray(x):
     return isArray(x) and isObject(x[0])
 
-#write('dl.html', request('https://garden.bradwoods.io/notes/css/blend-modes'))
 
 
-#ff(resourcedir, text='grocery', flags=re.I, mode='open')
+
+
+
+
+dateRE = '^#? *(?:\d{6,}|\d\d\D\d\d\D\d\d\d\d)'
+def makeRE(s):
+    r = s.strip()
+    r += '([\w\W]+?)'
+    r += '^#? *(?:\d{6,}|\d\d\D\d\d\D\d\d\d\d)'
+    return r
+
+def fn(file):
+    fileName = filePrompt(dir=resourcedir, e='txt', fallback='temp', ref=file)
+    s = "^04-13-2023 Code for Kids"
+    r = makeRE(s)
+    s = search(makeRE(s), read(file), flags=re.M).strip()
+    write(fileName, s)
+    
+def filePrompt(dir='', e='', fallback='temp', ref=0):
+    if not dir and ref:
+        dir = head(ref)
+
+    if not e and ref:
+        e = getExtension(ref)
+    name = prompt(dir=dir, message='name for file?') or fallback
+    name = addExtension(name, e)
+    name = os.path.join(dir, name)
+    logfile(name)
+    return name
+    
+
+def logfile(x):
+    if isArray(x):
+        s = join(map(x, lambda x: datestamp() + ' ' + x))
+        append('files.txt', s)
+        print('append to log file', s)
+    else:
+        print('logging file', x, 'to', 'files.txt')
+        append('files.txt', datestamp() + ' '  + x)
+
+
+
+
+
+
+r = 'https:.*?\.(?:css|js)'
+f = lambda x: x.strip() and not test('\\\\u', x)
+
+
+cmdir = "/home/kdog3682/CM/"
+def copy_dir_to_dir(f):
+    cfile(cmdir + f, dir2023)
+
+
+
+def map(items, fn, *args, filter=1, **kwargs):
+    if not items:
+        return []
+
+    if isString(fn):
+        _key = fn
+
+        arg = toArray(items)[0]
+        if isClassObject(arg):
+            fn = lambda x: getattr(x, _key)
+        elif isObject(arg):
+            fn = lambda x: x.get(_key)
+        elif '$' in _key:
+            fn = lambda x: templater(_key.strip(), [x])
+        else:
+            fn = lambda x: search(_key, x)
+
+    if isNestedArray(items):
+        return [fn(a, b) for a, b in items]
+
+    if isObject(items):
+        store = {}
+        for k, v in items.items():
+            value = fn(k, v)
+            if value:
+                store[k] = value
+            elif filter:
+                continue
+            else:
+                store[k] = v
+        return store
+
+    store = []
+    for item in toArray(items):
+        #print(item)
+        try:
+            value = fn(item, *args, **kwargs)
+            if not (filter and not value):
+                store.append(value)
+        except Exception as e:
+            prompt(item, error='ERROR AT MAP', message=e)
+            continue
+    return store
+
+def isClassObject(x):
+    return str(type(x)).startswith('<class')
+
+def first(x):
+    return x.values()[0] if isObject(x) else x[0]
+
+
+def node_dir_search(*args, root='@codemirror'):
+    path = os.path.join(npmdir, root, *args)
+    files = os.listdir(path)
+    if 'dist' in files:
+        files = os.listdir(os.path.join(path, 'dist'))
+    if 'index.js' in files:
+        path = os.path.join(path, 'dist', 'index.js')
+        return ofile(path)
+        cfile(path, os.path.join(dir2023, 'commands.js'))
+
+def getdir(*args):
+    ff(os.path.join(*args), isdir=1)
+
+
+
+
+def github_content_url(user, repo, file, master = 'master'):
+    base = 'https://raw.githubusercontent.com'
+    return f"{base}/{user}/{repo}/{master}/{file}"
+
+def textgetter(x):
+    if isArray(x):
+        return x
+    if x == 'self':
+        return read(currentFile())
+    if len(x) > 100:
+        return x
+    if isGithubUrl(x):
+        user, repo, file = x.split('/')[-3:]
+        dprompt(user, repo, file)
+        url = github_content_url(user, repo, file, 'master')
+        s = request(url)
+        if s == None:
+            url = github_content_url(user, repo, file, 'main')
+            s = request(url)
+            if s == None:
+                raise Exception('tried master & main -> both none')
+        return s
+    if isUrl(x):
+        return request(x)
+    if isfile(normDirPath(x)):
+        return normRead(x)
+    return x
+
+def request(url):
+    r = requests.get(fixUrl(url), {"user-agent": env.BROWSER_AGENT})
+    if r.status_code == 200:
+        return parseJSON(r.text)
+    else:
+        return None
+def removeComments(s):
+    r = "^ *(?:<!--|#|//).+\n*"
+    return re.sub(r, "", s, flags=re.M)
+def npm(s):
+    items = split(removeComments(s), '\s+')
+    cmd = join(items, delimiter=' ')
+    cmd = 'npm i ' + cmd
+    SystemCommand(cmd)
+    printdir(npmdir)
+
+
+str1682629691 = """
+    #@replit/codemirror-vim
+    #@codemirror/lang-markdown
+    #@codemirror/lang-javascript
+    #@codemirror/basic-setup
+
+    #@lezer/common
+    #@lezer/lr
+    #@lezer/highlight
+    #@lezer/generator
+    js-yaml
+"""
+
+s = """
+
+/mnt/chromeos/MyFiles/Downloads/vite-repro/tokens.js
+/mnt/chromeos/MyFiles/Downloads/vite-repro/yaml.js
+/mnt/chromeos/MyFiles/Downloads/vite-repro/yaml.terms.js
+/mnt/chromeos/MyFiles/Downloads/vite-repro/highlight.js
+"""
+
+
+r = '''(\w+)['"]? *[:=]['"]? *(/[^/].+/)'''
+
+
+
+s = """
+
+"""
+def isGithubUrl(x):
+    return 'https://github' in x
+
+
+
+def ffstring(s):
+    ref = {
+        'j': 'json',
+        'c': ['mode', 'partition'],
+        'res': ['mode', 'transfer-to-resources'],
+    }
+
+    def f(k):
+        val = ref.get(k, k)
+        if isArray(val):
+            return val
+        return val
+    kwargs = reduce(split(s, ' '), f)
+    kwargs['partition'] = True
+
+    ff(dir2023, **kwargs)
+    
+

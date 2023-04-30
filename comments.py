@@ -175,3 +175,70 @@
 #SystemCommand('git add git.js')
 #pprint(parseDiff())
 #mwrite('temp.py', 'comments.py', regex = '^# *.+')
+
+# 04-29-2023 
+
+
+#printdir(pipdir + '_internal/')
+#write('dl.html', request('https://garden.bradwoods.io/notes/css/blend-modes'))
+#ff(resourcedir, text='grocery', flags=re.I, mode='open')
+#file = '/home/kdog3682/Resources2023/changelog.md'
+#print(fn(file))
+#pprint(filePrompt(dir=dldir))
+#pprint(choose([1,2,3]))
+#store = Partitioner2(os.listdir(dldir))()
+#pprint(store)
+#clip(fa('https://cdnjs.com/libraries/codemirror', r=r, filter=f))
+#clip(linegetter(join(clip()), filter=f))
+#copy_dir_to_dir('codemirror.js')
+#file:///media/fuse/crostini_25bd1ae3ef71bac8d459747ce670faa67d509f14_termina_penguin/CM/codemirror-component.jsa
+#pprint(find(['a',2,3], 1))
+#write('temp.txt.js', first(read('repo.temp.json')))
+#logfile(Partitioner2(ff(cmdir, js=1, lib=0))())
+#pprint(map([None, None, 1], lambda x: x))
+#SystemCommand('npm i @codemirror/state')
+#SystemCommand('npm i @codemirror/view')
+#SystemCommand('npm i @codemirror/language')
+#SystemCommand('npm i @codemirror/lang-javascript')
+#SystemCommand('npm i @codemirror/commands')
+#SystemCommand('npm i @codemirror/theme-one-dark')
+#printdir(nodedir2023 + 'commands')
+#getdir(dldir)
+#node_dir_search('markdown')
+#SystemCommand('npm i rollup @rollup/plugin-node-resolve --save-dev')
+#SystemCommand('npm i @codemirror/basic-setup @lezer/highlight')
+#SystemCommand('lezer-generator yaml.grammar -o lang.js')
+#map(linegetter(s), lambda x: cfile(x, dir2023 + tail(x)))
+#npm(str1682629691)
+//var mathRE = /(\(?(?:d+\.)\w+(?:\^(?:d+\.)\w+)?\)?\/\(?(?:d+\.)\w+(?:\^(?:d+\.)\w+)?\)?|\(?(?:d+\.)\w+(?:\^(?:d+\.)\w+)?\)?(?:\/\(?(?:d+\.)\w+(?:\^(?:d+\.)\w+)?\)?)? *(?:(?:[+*=-] *|div +)\(?(?:d+\.)\w+(?:\^(?:d+\.)\w+)?\)?(?:\/\(?(?:d+\.)\w+(?:\^(?:d+\.)\w+)?\)?)?)+)/g
+#clip(join(fa('parse.js', r, map=lambda k,v: k + ' = ' + v + '')))
+#ffstring('js c')
+#SystemCommand('git check-ignore -v lang.terms.js')
+#SystemCommand('git rm --cached /home/kdog3682/2023/')
+
+# 04-30-2023 
+
+#pprint(smartManager())
+#Samantha walks a total of 2/3 miles to and from school every day. Finish the text for this math question. Create 4 possible answer choices. Only one of them should be correct. Output the results in a json containing keys: "problem", "choices", "answer."
+#opener(chatgptPrompts)
+#pprint(smartManager())
+#pprint(runChatgpt())
+#masterFileInfo()
+#pprint(len(map(filter(read('2023.directory.json'), lambda x: x.get('extension')=='js'), lambda x: x.get('name'))))
+# The file is reverted from 
+#smartManager()
+#runChatgpt("""
+#Explain what the function below does:
+#def copyToBrowser(s):
+#""")
+#printdir()
+#pprint(surmonChinese())
+#block_to_browser('hi\nbye', mode='email')
+#appscript('emailLastDocToSelf')
+#print(appscript('hi', 'a\nb', [1]))
+#pprint("appscript('emailLastDocToSelf')", 1072)
+#email(read('changelog.md'))
+#cfile(budir + 'class.js11-08-2022', dir2023 + 'class.js')
+#untouched 1080
+#pushAll()
+

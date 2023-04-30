@@ -2,6 +2,7 @@ import time
 import base64
 import github
 from base import *
+from next import*
 
 class Github:
 
@@ -298,7 +299,95 @@ class UploadJsbinCss(MyPublicRepo):
 
 
 
+class Github2:
+    def __init__(self):
+        self.token = env.kdog_github_token
+        self.github = github.Github(self.token)
+
+    def clone_repo(self, path, dir):
+        dir = rootdir + dir
+        dprompt('cloning path to dir', path, dir)
+        repo = self.github.get_repo(path)
+        SystemCommand(f"git clone {repo.clone_url} {dir}")
+        logfile(dir)
+
+    def set_repo(self, path):
+        self.repo = self.github.get_repo(path)
+        self.branch = self.repo.default_branch
+        return self.repo
+    
+    def get_repo_contents(self, path = '', **kwargs):
+        contents = self.repo.get_contents(path, ref=self.branch)
+
+        if kwargs.get('filter'):
+            f = lambda x: tail(x.path) == kwargs.get('filter')
+            return filter(contents, f)
+        if kwargs.get('find'):
+            f = lambda x: tail(x.path) == kwargs.get('find')
+            return find(contents, f)
+
+        return contents
+
+    def _download_repo_src_contents(self, contents):
+        
+        def runner(item):
+            path = item.path
+            name = tail(path)
+            src = self.get_repo_contents(path, find='src')
+            assert src
+            target = self.get_repo_contents(src.path, find='index.ts')
+            if target:
+                return [name, get_text(target)]
+
+        store = map(contents, runner)
+        s = ''
+        for k,v in store:
+            s += comment('file: ' + k)
+            s += '\n'
+            s += v
+        write('repo.temp.json', store)
+        write('repo.temp.js', s, open=1)
+            
+        
+    def download_repo_contents(self, path, target=''):
+        dirName = tail(path)
+        self.set_repo(path)
+        contents = self.get_repo_contents(target)
+        if some(contents, lambda x: tail(x.path) == 'src'):
+            print('setting to src')
+            contents = self.get_repo_contents('src')
+
+        elif every(contents, lambda x: x.type == 'dir'):
+            return self._download_repo_src_contents(contents)
+
+        def runnerA(item):
+            if item.type == 'dir':
+                return runnerB(self.get_repo_contents(item.path))
+            elif ignore(item.path):
+                return 
+            else:
+                return item
+
+        def runnerB(contents):
+            return map(contents, runnerA)
+        
+        store = runnerB(contents)
+        files = flat(store)
+        paths = map(files, 'path')
+        names = map(paths, tail)
+        dir = mkdir(dldir + dirName)
+        filepaths = map(names, lambda name: npath(dir, name))
+        dprompt(files, paths, names, dir)
+        logfile(filepaths)
+
+        for i, filepath in enumerate(filepaths):
+            write(filepath, get_text(files[i]))
+
+
+
 def get_repo_files(user, repo=0, start='', mode=''):
+    if start == 'root':
+        start = ''
     if not repo:
         user, repo = split(user, '/')
 
@@ -316,6 +405,22 @@ def get_repo_files(user, repo=0, start='', mode=''):
             contents.extend(repo.get_contents(file_content.path, ref=default_branch))
         else:
             files.append(file_content)
+
+    if mode == list:
+        #files = (files, ignore=env.jslibraries)
+        f = lambda x: x.decoded_content.decode("utf-8")
+        for file in files:
+            name = tail()
+        s = join([f(x) for x in files])
+        clip(s)
+        return
+
+    if mode == dict:
+        f = lambda x: x.decoded_content.decode("utf-8")
+        s = join([f(x) for x in files])
+        clip(s)
+        return
+
 
     if mode == str:
         f = lambda x: x.decoded_content.decode("utf-8")
@@ -382,10 +487,11 @@ reset
 """
 
 #get_repo_files(user='alexbol99', repo='flatten-js', start='src', mode=str) # works every file is taken and merged together.
+#get_repo_files(user='kdog3682', repo='codemirror', start='root', mode='library') # works every file is taken and merged together.
 
-def create(dir, private=False):
+def create_new_repo(dir, private=False):
     name = tail(dir).lower()
-    #dprompt(name, dir)
+    dprompt(name, dir, 'creating a new repo for name @ dir')
 
     g = Github(repo=name)
     g.service.edit(private=private)
@@ -409,13 +515,35 @@ def log(x):
         pass
     
         
-    
-
-firedir = rootdir + 'FIREBASE/'
-playdir = rootdir + 'PLAYGROUND/'
 #mkdir(playdir)
 #chdir(playdir)
 #write('index.html', 'aooola')
 #create(playdir)
 #printdir(playdir)
-# '/home/kdog3682/PLAYGROUND/index.html'
+#'/home/kdog3682/PLAYGROUND/index.html'
+
+def get_text(x):
+    return x.decoded_content.decode("utf-8")
+
+#Github2().download_repo_contents('craftzdog/cm6-themes', target='packages') #works
+#Github2().clone_repo('kdog3682/codemirror') #works
+#Github2().manager()
+def ignore(x):
+    ignore = [
+        "ts",
+        "tsx",
+        "css",
+        "html",
+    ]
+
+    if isString(x):
+        if x in env.fileignore:
+            return True
+        if getExtension(x) in ignore:
+            return True
+    return False
+
+#Github2().download_repo_contents('replit/codemirror-vim', target='src')
+#Github2().download_repo_contents('teucer/vite-repro')
+
+#https://github.com/codemirror/commands/blob/main/src/comment.ts
