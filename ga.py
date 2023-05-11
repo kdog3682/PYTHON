@@ -113,13 +113,13 @@ class GoogleDocs():
 
 
 def getService(
-    key="classroom", reset=0, tokenfile="token.json"
+    key="classroom", reset=0
 ):
     global creds
     versionRef = {
         "classroom": {"version": "v1"},
         "drive": {"version": "v3"},
-        "gmail": {"version": "v1"},
+        "gmail": {"version": "v1", 'token_file': 'march2023credtoken'},
         "docs": {"version": "v1"},
         "youtube": {"version": "v3"},
         "search": {"version": "v1", "name": "customsearch"},
@@ -127,10 +127,11 @@ def getService(
 
     ref = versionRef.get(key)
     version = ref.get("version")
+    token_file = addExtension(ref.get("token_file", 'token'), 'json')
     if ref.get("name"):
         key = ref.get("name")
     #reset = 1
-    creds = getCreds(tokenfile, reset)
+    creds = getCreds(token_file, reset)
     service = build(key, version, credentials=creds)
     print("Service success: returning service for ", key)
     return service
@@ -198,6 +199,7 @@ class GoogleDrive:
         fh.seek(0)
         with open(fileName, "wb") as f:
             shutil.copyfileobj(fh, f, length=131072)
+        ofile(fileName)
         return {
             'id': fileId,
             'name': fileName,
@@ -870,9 +872,9 @@ def createMaterials(fileId):
 def getCreds(tokenfile, reset=0):
 
     global creds
+
     tokenfile1 = 'token.json'              # the default token file
     tokenfile2 = 'march2023credtoken.json' # gmail everything scope
-    tokenfile = tokenfile1
 
     ref = {
         tokenfile1: env.googleScopes,
@@ -1073,34 +1075,39 @@ class GoogleEmail:
 
         print(f'Created filter with id: {result.get("id")}')
 
+    def getEmails(self):
+        write('my-email-data.json', self.getFirstThreads())
+    
+    def getThreadMessage(self, threadId):
+        thread = self.getThread(threadId)
+        message = thread.get('messages')[0]
+        return parseEmailMessage(message)
+    
     def cleanupEmails(self):
+        store = []
+        for t in self.getThreads():
+            threadId = t.get('id')
+            message = self.getThreadMessage(threadId)
+            if shouldDeleteEmail(message):
+                s = f"{message.get('sender')} ... {message.get('sender')}"
+                store.append(s)
+                ids.append(threadId)
+        
+        prompt(deletions=store)
+        for id in ids:
+            self.deleteThread(id)
 
-        childKeys = ['keepInbox', 'removeInbox']
-        history = getLoggerData(key='cleanupEmails', childKeys=childKeys, fallback=[])
-        keepInbox, removeInbox = history
-        # do this later at some point
-        # it allows a history memory
+    def getFirstThreads(self):
+        store = []
+        for t in self.getThreads():
+            threadId = t.get('id')
+            thread = self.getThread(threadId)
+            message = thread.get('messages')[0]
+            data = parseEmailMessage(message)
+            data['threadId'] = threadId
+            store.append(data)
 
-        users = []
-        deleted = []
-
-        for m in self.getFirstThreads():
-            sender = m.get('sender')
-
-            if sender in keepInbox:
-                continue
-
-            elif sender in removeInbox:
-                deleted.append(m)
-
-            elif prompt(m, 'DELETE?'):
-                deleted.append(m)
-                removeInbox.append(sender)
-            else:
-                keepInbox.append(sender)
-
-        map(choose2(deleted, anti=1), self.deleteThread)
-        logger(action='cleanupEmails', keepInbox=keepInbox, removeInbox=removeInBox)
+        return store
 
     def testing(self):
         # it works
@@ -1115,6 +1122,7 @@ class GoogleEmail:
         messageStore = []
         for thread in threads:
             id = thread.get('id')
+            thread = self.getThread(id)
             messages = self.getThread(id)
             if len(messages > 1):
                 continue
@@ -1132,7 +1140,6 @@ class GoogleEmail:
         self.threads.delete(
             userId="me", id=id
         ).execute()
-        print("deleting thread", id)
     
 
     def deleteMessage(self, id):
@@ -1154,11 +1161,7 @@ class GoogleEmail:
 
     def getThread(self, id):
         if isObject(id): id = id.get('id')
-        thread = self.threads.get(userId="me", id=id).execute()
-        #self.currentThreadId = thread.get('id')
-        messages = thread.get('messages')
-        return messages
-        return messages[0]
+        return self.threads.get(userId="me", id=id).execute()
     
     def getThreads(self, labels=["INBOX"]):
         return (
@@ -1514,18 +1517,29 @@ class GoogleApp:
     
     def doJobApplication(self):
 
-        files = self.getLastDocFiles(2)
+        files = self.drive.getLastDocFiles(2)
+        #prompt(files)
+        resume = 0
+        cv = 0
         for file in files:
             fileId = file.get('id')
             name = removeDateString(file.get('name'))
 
-            if name == 'Resume':
-                name = 'Kevin Lee resume'
+            if test('resume', name, flags=re.I):
+                if resume:
+                    continue
+                else:
+                    resume = 1
+                    name = 'Kevin Lee Resume'
 
-            if name == 'CV':
-                name = 'Kevin Lee Cover Letter'
+            elif test('cv|cover letter', name):
+                if cv:
+                    continue
+                else:
+                    cv=1
+                    name = 'Kevin Lee Cover Letter'
 
-            self._download(fileId, name)
+            self.drive._download(fileId, name)
     
     def __init__(self):
         self.drive = GoogleDrive()
@@ -1567,7 +1581,6 @@ def parseEmailMessage(message):
             data["sender"] = h["value"]
 
     data["snippet"] = message["snippet"]
-    data["id"] = id
     return data
 
 
@@ -1735,4 +1748,11 @@ def send_goc_to_pdf():
         body=metaData, media_body=media, fields="id"
     ).execute()
 #-------------------------------------------------
-#GoogleEmail().email('hi\bye') # DOESNT WORK
+
+def shouldDeleteEmail(email):
+    sender = email.get('sender')
+    if test('(?:no|donot)\W*reply', sender, flags=re.I):
+        return True
+    for email in env.deleteEmails:
+        if email in sender:
+            return True

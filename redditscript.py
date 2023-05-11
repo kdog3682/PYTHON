@@ -232,4 +232,3 @@ class RedditAPI(Reddit):
             ba.set("size", len(items))
             ba.set("items", items)
 
-

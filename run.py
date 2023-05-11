@@ -497,11 +497,15 @@ def pushAll():
 
 def gitPush(dir=dir2023, message='autopush'):
 
-    if dir == dir2023 or dir == pydir:
+    if dir == dir2023:
         cleandir(dir)
-        #diff = parseDiff(dir=dir)
-        #appendjson('git.json', diff)
-        #time.sleep(1)
+        try:
+            diff = parseDiff(dir=dir)
+            appendjson('git-data.json', diff)
+            time.sleep(1)
+        except Exception as e:
+            print(str(e))
+        
 
     mainCommand = f"""
         cd {dir}
@@ -691,6 +695,7 @@ def addPythonImports(s):
     
     importRef = {
         'Github': 'githubscript',
+        'Reddit': 'redditscript',
         'Google': 'ga',
         'aiprompt': 'chatgpt',
     }
@@ -1055,41 +1060,6 @@ temp = [
     "/home/kdog3682/2023/index.html"
 ]
 
-def imagePrompt(prompt= 'hamster snail baking cake', size=512):
-    #openai
-    raise Exception('the images suck. and are creepy no go')
-    
-    if isNumber(size):
-        size = f"{size}x{size}"
-
-    response = openai.Image.create(
-      prompt=prompt,
-      size=size,
-      response_format='url'
-    )
-
-    url = response['data'][0]['url']
-    downloadImage(url, 'gpt.png', openIt=True)
-
-env.basepyref['gpw'] = 'gitPushWorking'
-
-
-
-def testingvimimagePrompt(prompt= 'hamster snail baking cake', size=512):
-    
-    if isNumber(size):
-        pass
-    response = openai.Image.create(
-      prompt=prompt,
-      size=size,
-      response_format='url'
-    )
-
-    url = response['data'][0]['url']
-    downloadImage(url, 'gpt.png', openIt=True)
-
-def vxcv():
-    pass
 
 def blackify(s):
     import black

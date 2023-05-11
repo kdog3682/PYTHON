@@ -520,7 +520,12 @@ def cfile(f, t):
 def mfile(f, t, mode="move"):
     assert isfile(f)
     if not getExtension(t) and not isdir(t):
-        mkdir(t)
+        a = prompt('no extension for', t, 'did you forget it?')
+        if a:
+            t = addExtension(t, getExtension(f))
+        else:
+            prompt('are you sure you want to make a directory?', t)
+            mkdir(t)
     elif not getExtension(t):
         t = normpath(t, f)
 
@@ -676,7 +681,6 @@ def openBrowser(f):
     if not f:
         return 
     f = fixBrowserPath(f)
-    print(f"opening file: {f}")
     webbrowser.open(f)
 
 def choose(x, mode=0, filter=0, auto=1):
@@ -1298,7 +1302,7 @@ def parseJSON(x):
     try:
         return json.loads(x) if isJsonParsable(x) else x
     except Exception as e:
-        prompt(text=x)
+        prompt(text=x, error=str(e))
     
 
 def isJsonParsable(x):
@@ -3148,11 +3152,13 @@ def scrapeEmojis():
     write("emojis.json", store, open=1)
 
 def srequest(url):
-    if isRecent("request.temp.txt", minutes=20):
+    if isRecent("request.temp.txt", minutes=50):
         print("returning recent file")
         return read("request.temp.txt")
 
     s = request(url)
+    if not s:
+        print('no text')
     write("request.temp.txt", s, open=1)
     return s
 
@@ -5122,14 +5128,14 @@ class SystemCommand:
         self.error = error
         self.success = success.strip()
 
-        pprint(
-            {
-                "getCaller": "SystemCommand",
-                "command": command,
-                "error": error,
-                "success": success,
-            }
-        )
+        #pprint(
+            #{
+                #"getCaller": "SystemCommand",
+                #"command": command,
+                #"error": error,
+                #"success": success,
+            #}
+        #)
 
 def gitCloner(url):
     chdir(jsdir)
@@ -5297,6 +5303,7 @@ def evaljs(s):
 def ff(
     dir=dir2023,
     mode=0,
+    recursion=0,
     once=0,
     sort=0,
     partition=0,
@@ -5333,11 +5340,17 @@ def ff(
 
     if isArray(dir):
         rawFiles = dir
+    elif recursion:
+        raise Exception('no recursion')
+        dir = dirgetter(dir)
+        rawFiles = getFilesRecursive(dir, recursion=recursion)
     elif recursive:
-        rawFiles = getFilesRecursive(dirgetter(dir))
-        prompt(rawFiles)
+        dir = dirgetter(dir)
+        rawFiles = getFilesRecursive(dir)
+        #prompt(rawFiles)
     else:
-        rawFiles = absdir(dirgetter(dir)) 
+        dir = dirgetter(dir)
+        rawFiles = absdir(dir)
 
     checkpoint = checkpointf(**kwargs)
     if once:
@@ -5372,7 +5385,8 @@ def ff(
         rfiles(files)
         printdir(dir)
     elif mode == "filetable":
-        return write('file-table.txt', tabular(map(sorted(files, key=mdate), nameAndDate)))
+        table = tabular(map(sorted(files, key=mdate), nameAndDate))
+        return write('file-table.txt', table)
 
     elif mode == "partition":
         return Partitioner2(files)()
@@ -5627,15 +5641,18 @@ def mergeFirstPageOfEachFile(files):
     f = lambda x: x.pages[0:1]
     return pdfCreate(files, f)
 
-def getFilesRecursive(dir):
+def getFilesRecursive(dir, recursion=0):
     store = []
-    def runner(dir):
+    def runner(dir, depth=0):
         files = absdir(dir)
         for file in files:
             if isIgnoredFile(tail(file)):
                 continue
             elif isdir(file):
-                runner(file)
+                if recursion and depth == recursion:
+                    store.append(file)
+                else:
+                    runner(file, depth + 1)
             else:
                 store.append(file)
     runner(dir)
@@ -5865,7 +5882,7 @@ def tabular(data):
     n = 25
     s = (f"{{: >{n}}}" * len(data[0])).strip()
     for row in data:
-        store.append(s.format(*row))
+        store.append(s.format(*row).strip())
     return join(store)
 
 
@@ -8404,36 +8421,6 @@ def getNewGitFiles():
     return re.findall(r, s, flags=re.M)
 
 
-def parseDiff(dir=dir2023):
-    
-    new = getNewGitFiles()
-    rfile = '^diff --git a/(.*?) b.*\nindex (\w+)\.\.(\w+)'
-    cmd = SystemCommand(f""" git diff --word-diff """)
-    date = datestamp()
-    matches = re.split(rfile, cmd.success, flags=re.M)
-    items = partition(filter(matches), 4)
-    def parse(x):
-        a, b, c, d = x
-        prefix = "[\[\{][-+]"
-        regex = "^\{\+(?:(?:async )?function[!*]?|def|class|const|var) ([\w\$]+)"
-        items = re.findall(regex, d, flags=re.M) or []
-        if not items:
-            return 
-
-        payload = { 'date': date, 'file': a, 'from': b, 'to': c, 'items': items }
-        return payload
-
-    items = filter([parse(x) for x in items])
-    for file in new:
-        payload = {
-            'date': date,
-            'file': file,
-            'new': True,
-            'items': getFunctionNames(read(file)),
-        }
-        items.append(payload)
-    return items
-
 #pprint(parseDiff())
 
 
@@ -8579,4 +8566,4 @@ def rename(a, b):
     dprompt(a, b)
     mfile(a, b)
 
-#rename('app-main.js', 'appscript')
+    #rename('app-main.js', 'appscript')

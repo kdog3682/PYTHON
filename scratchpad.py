@@ -112,3 +112,50 @@ def makeRepo(repo):
     print(result.success, result.error)
 
 #makeRepo('PUBLIC')
+
+
+def root_two_cf_expansion():
+    yield 1
+    while True:
+        yield 2
+
+def z(a,b,c,d, contfrac):
+    for x in contfrac:
+        while a > 0 and b > 0 and c > 0 and d > 0:
+            t = a // c
+            t2 = b // d
+            if not t == t2:
+                break
+            yield t
+            a = (10 * (a - c*t))
+            b = (10 * (b - d*t))
+            # continue with same fraction, don't pull new x
+        a, b = x*a+b, a
+        c, d = x*c+d, c
+    for digit in rdigits(a, c):
+        yield digit
+
+def rdigits(p, q):
+    while p > 0:
+        if p > q:
+           d = p // q
+           p = p - q * d
+        else:
+           d = (10 * p) // q
+           p = 10 * p - q * d
+        yield d
+
+def decimal(contfrac):
+    return z(1,0,0,1,contfrac)
+
+a = decimal((root_two_cf_expansion()))
+print(next(a))
+print(next(a))
+print(next(a))
+print(next(a))
+print(next(a))
+print(next(a))
+print(next(a))
+print(next(a))
+print(next(a))
+print(next(a))

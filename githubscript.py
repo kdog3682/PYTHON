@@ -22,7 +22,7 @@ class Github:
             self.token = self.ref.get('token')
             self.github = github.Github(self.token)
             repo = repo or getattr(self, 'repo') or self.ref.get('repo')
-            self.branch = self.ref.get('branchRef', {}).get(repo.lower(), 'main')
+            self.user = self.ref.get('user')
         else:
             self.token = env.kdogtoken
             self.github = github.Github(self.token)
@@ -169,10 +169,8 @@ class Github:
 
         if name == 'clip.html':
             name = prompt('Choose a file name. fallback=index.html')
-            name = addExtension(name, 'html')
-        elif name == 'hammy.html' or name == 'asdfsadf.html':
-            name = 'index.html'
 
+        name = addExtension(name, 'html')
         result = 0
         try:
             service = self.Service.get_contents(name, ref=self.branch)
@@ -468,13 +466,13 @@ def plf():
 #plf()
 #olf()
 
-def github_usercontent_url(user, repo, *args, master='master'):
-    base = 'https://raw.githubusercontent.com'
-    file = '/'.join(args)
-    return f"{base}/{user}/{repo}/{master}/{file}"
 
-def manim(*args):
-    ofile(github_usercontent_url('3b1b', 'manim', *args))
+
+
+def github_usercontent_url2(s):
+    s = re.sub('blob/(master|main)', lambda x: x.group(1), s, count=1)
+    s = re.sub('github.com', 'raw.githubusercontent.com', s, count=1)
+    return s
 
 #manim('manimlib/mobject/types/vectorized_mobject.py')
 
@@ -547,3 +545,21 @@ def ignore(x):
 #Github2().download_repo_contents('teucer/vite-repro')
 
 #https://github.com/codemirror/commands/blob/main/src/comment.ts
+
+
+#SystemCommand('node rollup.js ')
+
+#write('css-data.json', request(github_usercontent_url2("https://github.com/imba/imba/blob/master/packages/imba/scripts/docs/css-data.json")))
+    
+#print(github_usercontent_url2("https://github.com/imba/imba/blob/master/packages/imba/scripts/docs/css-data.json"))
+
+def upload(files):
+    Github(key = 'kdog3682', repo = 'kdog3682.github.io', upload=files)
+
+s = """
+<a href="/journal2">Go to Google</a>
+<a href="./journal2">Go to Google</a>
+<a href="https://kdog3682.github.io/journal2">Go to Google</a>
+"""
+
+#upload({'journal3': s})
