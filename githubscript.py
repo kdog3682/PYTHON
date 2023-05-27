@@ -2,7 +2,7 @@ import time
 import base64
 import github
 from base import *
-from next import*
+from next import *
 
 class Github:
 
@@ -21,7 +21,7 @@ class Github:
         if self.ref:
             self.token = self.ref.get('token')
             self.github = github.Github(self.token)
-            repo = repo or getattr(self, 'repo') or self.ref.get('repo')
+            repo = repo or getattr(self, 'repo', None) or self.ref.get('repo')
             self.user = self.ref.get('user')
         else:
             self.token = env.kdogtoken
@@ -382,7 +382,51 @@ class Github2:
             write(filepath, get_text(files[i]))
 
 
+def get_repo_files_from_url(url):
 
+    log = createLogger()
+
+    def parseContent(content):
+        name = tail(content.path)
+        if ignoreFile(name) or isImage(name):
+            return 
+
+        log(name)
+
+        try:
+            text = content.decoded_content.decode("utf-8")
+            return {'file': name, 'content': text}
+        except Exception as e:
+            print('Error', name, str(e))
+        
+
+    def parse(s):
+        s = re.sub('.*?github.com/', '', s)
+        parts = s.split('/')
+        if len(parts) == 2:
+            parts.append('')
+            return parts
+        else:
+            return [parts[0], parts[1], parts[-1]]
+
+    user, repo, start = parse(url)
+    g = github.Github()
+    repo = g.get_repo(f"{user}/{repo}")
+    ref = repo.default_branch
+    contents = repo.get_contents(start, ref=ref)
+    assert contents
+    store = []
+
+    while contents:
+        content = contents.pop(0)
+        if content.type == "dir":
+            contents.extend(repo.get_contents(content.path, ref=ref))
+        else:
+            push(store, parseContent(content))
+
+    return store
+
+#https://github.com/nbremer/freshdatashapes/tree/gh-pages/slides
 def get_repo_files(user, repo=0, start='', mode=''):
     if start == 'root':
         start = ''
@@ -390,7 +434,6 @@ def get_repo_files(user, repo=0, start='', mode=''):
         user, repo = split(user, '/')
 
     g = github.Github()
-    #dprompt(user,repo)
     repo = g.get_repo(f"{user}/{repo}")
     default_branch = repo.default_branch
     contents = repo.get_contents(start, ref=default_branch)
@@ -428,7 +471,6 @@ def get_repo_files(user, repo=0, start='', mode=''):
 
     return [file.path for file in files]
 
-#clip(get_repo_files('3b1b/manim'))
 def jsdelivr(file, src=0, user=0, repo=0):
     if src:
         src = re.sub('/$', '', src)
@@ -454,17 +496,12 @@ def github_file_url(
     url = "https://raw.githubusercontent.com/$1/$2/main/$3"
     url = templater(url, [user, repo, file])
     return url
-#ofile(github_file_url("docs/source/documentation/utils/index.rst", src='3b1b/manim'))
-#jsdelivr('3b1b/manim/manimlib/shaders/true_dot/vert.glsl')
 
-#jsdelivr("3b1b/manim/manimlib/mobject/types/vectorized_mobject.py")
 def plf():
     f = glf()
     print(fileInfo(f))
     print(read(f))
 
-#plf()
-#olf()
 
 
 
@@ -474,9 +511,7 @@ def github_usercontent_url2(s):
     s = re.sub('github.com', 'raw.githubusercontent.com', s, count=1)
     return s
 
-#manim('manimlib/mobject/types/vectorized_mobject.py')
 
-#UploadJsbinCss()
 
 
 s = """
@@ -484,8 +519,6 @@ box
 reset
 """
 
-#get_repo_files(user='alexbol99', repo='flatten-js', start='src', mode=str) # works every file is taken and merged together.
-#get_repo_files(user='kdog3682', repo='codemirror', start='root', mode='library') # works every file is taken and merged together.
 
 def create_new_repo(dir, private=False):
     name = tail(dir).lower()
@@ -513,19 +546,10 @@ def log(x):
         pass
     
         
-#mkdir(playdir)
-#chdir(playdir)
-#write('index.html', 'aooola')
-#create(playdir)
-#printdir(playdir)
-#'/home/kdog3682/PLAYGROUND/index.html'
 
 def get_text(x):
     return x.decoded_content.decode("utf-8")
 
-#Github2().download_repo_contents('craftzdog/cm6-themes', target='packages') #works
-#Github2().clone_repo('kdog3682/codemirror') #works
-#Github2().manager()
 def ignore(x):
     ignore = [
         "ts",
@@ -541,25 +565,232 @@ def ignore(x):
             return True
     return False
 
-#Github2().download_repo_contents('replit/codemirror-vim', target='src')
-#Github2().download_repo_contents('teucer/vite-repro')
-
-#https://github.com/codemirror/commands/blob/main/src/comment.ts
 
 
-#SystemCommand('node rollup.js ')
 
-#write('css-data.json', request(github_usercontent_url2("https://github.com/imba/imba/blob/master/packages/imba/scripts/docs/css-data.json")))
+
     
-#print(github_usercontent_url2("https://github.com/imba/imba/blob/master/packages/imba/scripts/docs/css-data.json"))
 
 def upload(files):
     Github(key = 'kdog3682', repo = 'kdog3682.github.io', upload=files)
 
-s = """
-<a href="/journal2">Go to Google</a>
-<a href="./journal2">Go to Google</a>
-<a href="https://kdog3682.github.io/journal2">Go to Google</a>
+
+def brooklyn(s=None, file = 'codeground.html'):
+    if not s: s = longstamp()
+    Github(key = 'brooklyn', upload={file: s})
+    ofile('https://brooklynlearning.github.io/codeground')
+
+#create_new_repo(markdowndir) # wonderful
+
+def uploadHammy(upload):
+    Github(key = 'hammy', upload=upload)
+    Github(key = 'hammy0', upload=upload)
+
+
+
+hammyV1="""
+
+
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    outline: none;
+  }
+  body,
+  html {
+    height: 100%;
+    width: 100%;
+    font-family: sans;
+  }
+  html {
+    font-size: 12pt;
+  }
+  body {
+    position: relative;
+  }
+</style>
+
+<style>
+  .boxed-number {
+    display: flex;
+    column-gap: 24pt;
+  }
+
+  .left {
+    color: #64b5f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    width: 16pt;
+    height: 16pt;
+    margin: auto 0;
+  }
+
+  .right {
+    margin: auto 0;
+  }
+</style>
+
+<style>
+  .v-modal {
+    padding: 5pt;
+    text-align: center;
+    font-size: 16pt;
+    font-weight: bold;
+  }
+
+  .error {
+    background: #ef9a9a;
+    border: 0.5px solid #e57373;
+  }
+
+  .success {
+    background: #a5d6a7;
+    border: 0.5px solid #81c784;
+  }
+</style>
+
+<body>
+  <div class="vndy">
+    <div style="padding: 40pt; background: rgb(100, 181, 246)">
+      <div
+        style="
+          background: white;
+          position: relative;
+          padding: 20pt;
+          border-radius: 10pt;
+        "
+      >
+        <div
+          style="
+            justify-content: space-between;
+            display: flex;
+            width: 100%;
+            padding: 10pt;
+          "
+        >
+          <h1>Still Under Construction</h1>
+          <h2
+            style="
+              padding-left: 20pt;
+              padding-right: 20pt;
+              color: rgb(100, 181, 246);
+            "
+          >
+            Hammy Math
+          </h2>
+        </div>
+        <div style="margin-top: 24pt; margin-bottom: 24pt; padding: 10pt">
+          <div class="text-container" style="margin-bottom: 30pt">
+            <p style="margin-bottom: 3pt">Hi everyone,</p>
+            <p style="margin-bottom: 3pt">
+              Mr. Lee is still working on Hammy's website, but it is not ready
+              yet.
+            </p>
+            <div style="margin-bottom: 3pt">
+              Hopefully a few more days, and everything will be ready.
+            </div>
+          </div>
+        </div>
+        <div class="v-list">
+          <div class="v-numbered boxed-number">
+            <div class="left">1</div>
+            <div class="right">
+              <div
+                class="file-tab"
+                style="
+                  border-bottom: 0.5px solid rgb(25, 118, 210);
+                  border-top: 0.5px solid rgb(25, 118, 210);
+                  width: fit-content;
+                  display: flex;
+                  align-items: center;
+                  column-gap: 12pt;
+                "
+              >
+                <p style="color: rgb(25, 118, 210); font-weight: bold">
+                  April 1st, 2023
+                </p>
+                <p>Extra Math Assignment 1 - Still Under Construction</p>
+                <button
+                  class="open-url"
+                  style="
+                    border-radius: 5pt;
+                    padding: 3pt 10pt;
+                    color: white;
+                    font-weight: bold;
+                    background: rgb(100, 181, 246);
+                  "
+                >
+                  open
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="v-numbered boxed-number">
+            <div class="left">2</div>
+            <div class="right">
+              <div
+                class="file-tab"
+                style="
+                  border-bottom: 0.5px solid rgb(25, 118, 210);
+                  border-top: 0.5px solid rgb(25, 118, 210);
+                  width: fit-content;
+                  display: flex;
+                  align-items: center;
+                  column-gap: 12pt;
+                "
+              >
+                <p style="color: rgb(25, 118, 210); font-weight: bold">
+                  April 8st, 2023
+                </p>
+                <p>Extra Math Assignment 2 - Still Under Construction</p>
+                <button
+                  class="open-url"
+                  style="
+                    border-radius: 5pt;
+                    padding: 3pt 10pt;
+                    color: white;
+                    font-weight: bold;
+                    background: rgb(100, 181, 246);
+                  "
+                >
+                  open
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="v-contact-fourth-grade"
+      style="
+        padding: 60pt;
+        background: rgb(100, 181, 246);
+        color: white;
+        height: 50vh;
+      "
+    >
+      <h1 style="margin-bottom: 12pt">Contact</h1>
+      <p style="padding-bottom: 12pt; font-weight: bold">
+        Hammy and Sammy are busy baking cakes at the moment.
+      </p>
+      <p class="available">Mr. Lee is available.</p>
+      <p>
+        <span>You can always email Mr. Lee at</span>
+        <span style="font-weight: bold"
+          ><a href="kevinlulee1@gmail.com">kevinlulee1@gmail.com</a></span
+        >
+      </p>
+    </div>
+  </div>
+</body>
 """
 
-#upload({'journal3': s})
+#uploadHammy({'version1.html': hammyV1})
+#clip(get_repo_files_from_url('https://github.com/nbremer/freshdatashapes/tree/gh-pages/slides'))
+
+

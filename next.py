@@ -1145,3 +1145,94 @@ def manim():
 
 #pprint(parseDiff())
 #printdir(pydir)
+
+
+def longstamp():
+    strife = "%A %B %d %Y, %-I:%M:%S%p"
+    return datestamp(strife=strife)
+
+def mdir(source_dir, dest_dir):
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+
+    for item in os.listdir(source_dir):
+        source = os.path.join(source_dir, item)
+        destination = os.path.join(dest_dir, item)
+
+        if os.path.isfile(destination):
+            a = input(f"Do you want to overwrite {destination}? (y/n): ")
+            if a.lower() == 'n':
+                continue
+
+        shutil.move(source, destination)
+
+    shutil.rmtree(source_dir)
+
+#mdir('/home/kdog3682/Resources2023/MARKDOWN', '/home/kdog3682/MARKDOWN/')
+#print(isdir('/home/kdog3682/Resources2023/MARKDOWN'))
+
+markdowndir = '/home/kdog3682/MARKDOWN/'
+
+class Save:
+    def __init__(self, file, fallback = {}):
+        self.file = file
+        self.data = read(self.file) or fallback
+
+    def __enter__(self):
+        return self.data
+
+    def __exit__(self, etype, value, traceback):
+        if etype:
+            return 
+        print(self.data)
+        #write(self.file, self.data)
+
+def generate_markdown_toc():
+    file = 'markdown-toc.json'
+    def runner(file):
+        print('file', file)
+
+    with Save(file, []) as prev:
+        prevFiles = map(prev, 'name')
+        g = lambda x: tail(x) not in prevFiles
+        files = filter(absdir(markdowndir), g)
+        data = map(files, runner)
+        prev.extend(data)
+        prompt(prev=prev)
+
+#pprint(generate_markdown_toc())
+#printdir(nodedir2023)
+#SystemCommand('npm run dev')
+
+def moveChangeLogFile():
+    changelogfile = '/home/kdog3682/2023/changelog.md'
+    url = f"{markdowndir}me.{datestamp()}.md"
+    mfile(changelogfile, url)
+
+
+#new = getNewGitFiles()
+#print(new)
+def push(store, x):
+    if x != None:
+        store.append(x)
+
+
+def ignoreFile(name):
+    r = '^(?:\W)|license|readme|rc|ignore'
+    return test(r, name, flags=re.I)
+
+
+def createLogger():
+
+    import logging
+
+    logging.basicConfig(filename='logging.txt', level=logging.INFO,
+        format='%(message)s')
+
+    logger = logging.getLogger()
+
+    def log(*args):
+        s = ' '.join(map(list(args), str))
+        return logger.info(s)
+    return log
+

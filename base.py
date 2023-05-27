@@ -604,7 +604,7 @@ def isIgnoredFile(name):
         ".git",
     ]
     ignoreRE = "^(?:\W)"
-    recursiveIgnoreRE = "^(?:LICNSE|README\.[mM][dD])$"
+    recursiveIgnoreRE = "^(?:LICENSE|README\.[mM][dD])$"
     return name in ignore or test(ignoreRE, name)
 
 def fileInfo(f, r=0):
@@ -8567,3 +8567,4 @@ def rename(a, b):
     mfile(a, b)
 
     #rename('app-main.js', 'appscript')
+
