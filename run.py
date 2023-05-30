@@ -501,8 +501,7 @@ def gitPush(dir=dir2023, message='autopush'):
         cleandir(dir)
         try:
             diff = parseDiff(dir=dir)
-            appendjson('git-data.json', diff)
-            time.sleep(1)
+            appendjson('git-data2.json', diff)
         except Exception as e:
             print(str(e))
         
@@ -521,7 +520,7 @@ def gitPush(dir=dir2023, message='autopush'):
     }
     pprint(gitData)
     #logger(**nameObject, action='gitpush', message=message, gitData=gitData)
-    ofile('https://github.com/kdog3682/2023')
+    #ofile('https://github.com/kdog3682/2023')
 
 
 def gitManager(
@@ -695,6 +694,7 @@ def addPythonImports(s):
     
     importRef = {
         'Github': 'githubscript',
+        'MyFireStore': 'fire',
         'Reddit': 'redditscript',
         'Google': 'ga',
         'aiprompt': 'chatgpt',

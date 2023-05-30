@@ -26,7 +26,6 @@ class FireStore:
             self.docId = None
 
         self.db = getDatabase()
-        self.run()
 
     def get_collection(self, name=None):
         if not name and self.collection:
@@ -320,52 +319,11 @@ class FireStore:
 
                         docParent.set({k: v}, merge=True)
 
-        # db = self.db
-        # with self.db.batch() as batch:
-        # runner(self.db, batch)
         runner(data, self.db)
 
 
-recursiveData2 = data = {
-    "books": {
-        "userId2": {
-            "name": "John Doe",
-            "age": 30,
-            "posts": [
-                {
-                    "title": "My First Post",
-                    "content": "Lorem ipsum dolor sit amet",
-                },
-            ],
-        }
-    }
-}
 recursiveData = data = {
     "books": {
-        "userId1": {
-            "name": "John Doe",
-            "age": 30,
-            "posts": [
-                {
-                    "title": "My First Post",
-                    "content": "Lorem ipsum dolor sit amet",
-                },
-                {
-                    "title": "My Second Post",
-                    "content": "Consectetur adipiscing elit",
-                },
-            ],
-            "comments": [
-                {
-                    "post": "postId1",
-                    "text": "Great post, John!",
-                },
-                {
-                    "post": "postId2",
-                    "text": "I really enjoyed this one too",
-                },
-            ],
-        },
         "userId2": {
             "name": "Jane Smith",
             "age": 25,
@@ -386,13 +344,6 @@ recursiveData = data = {
 }
 
 
-recursiveData = {
-    "javascript": {
-        'js1': {
-            'value': 'bogzor()'
-        }
-    }
-}
 
 userAccounts = {
   "users": {
@@ -416,80 +367,26 @@ userAccounts = {
   }
 }
 
-assignments = {
-  "assignments": [
-    {
-      "title": "Algebraic Expressions",
-      "description": "Simplify and evaluate algebraic expressions",
-      "dueDate": "2023-05-01T23:59:59Z",
-      "points": 20,
-      "questions": [
-        {
-          "text": "Simplify: 3x + 5 - 2x + 7",
-          "answer": "x + 12"
-        },
-        {
-          "text": "Evaluate: 2x^2 - 3x + 1, when x = 4",
-          "answer": "21"
-        },
-        {
-          "text": "Simplify: (x + 2)(x - 3) + (x + 2)(4 - x)",
-          "answer": "-2x - 10"
-        }
-      ]
-    },
-    {
-      "title": "Functions and Graphs",
-      "description": "Graph and analyze functions",
-      "dueDate": "2023-05-08T23:59:59Z",
-      "points": 30,
-      "questions": [
-        {
-          "text": "Graph the function y = 2x + 1",
-          "answer": "(insert graph image here)"
-        },
-        {
-          "text": "Find the domain and range of the function f(x) = x^2 - 4",
-          "answer": "Domain: all real numbers; Range: y ≤ -4 or y ≥ 0"
-        },
-        {
-          "text": "Find the x-intercept(s) of the function y = x^3 - 3x^2 - 9x",
-          "answer": "x = -3, 0"
-        }
-      ]
-    },
-    {
-      "title": "Trigonometry",
-      "description": "Solve problems using trigonometric functions",
-      "dueDate": "2023-05-15T23:59:59Z",
-      "points": 40,
-      "questions": [
-        {
-          "text": "Find the value of sin 60°",
-          "answer": "0.866"
-        },
-        {
-          "text": "Find the length of the side opposite the angle θ in the right triangle below: (insert image of right triangle)",
-          "answer": "8"
-        },
-        {
-          "text": "Solve for x: tan x = 1",
-          "answer": "x = π/4 or 45°"
-        }
-      ]
-    }
-  ]
-}
+class MyFireStore(FireStore):
+    def clearRootCollection(self, name):
+        actions = {"name": "delete_collection", "args": [name]},
+        print(self.run(actions=actions))
+    
+    def postMyClipData(self):
+        value = clip()
+        if not value:
+            print('no clip value - early return')
+            return 
+        value = stringify(value)
+        description = prompt(value, message='write a description') or ''
+        data = {'MyDataItems2': [{'value': value, 'description': description, 'date': longstamp()}]}
 
-def get_hammy_data():
-    data = assignments
-    prompt(data=data, message='Proceed to HammyMathClass data upload?')
-    return data
+        actions = {"name": "recursive_upload", "args": [data]},
+        self.run(actions=actions)
+        clear(clipfile)
 
-class HammyMathClass(FireStore):
-    actions = [
-        {"name": "recursive_upload", "args": [get_hammy_data()]},
-        {"name": "get_all_docs_v2"}, 
-    ]
-        
-HammyMathClass()
+    def getData(self):
+        actions = {"name": "get_all_docs_v2"},
+        result = self.run(actions)
+        pprint(result)
+

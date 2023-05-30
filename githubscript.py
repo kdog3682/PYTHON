@@ -794,3 +794,5 @@ hammyV1="""
 #clip(get_repo_files_from_url('https://github.com/nbremer/freshdatashapes/tree/gh-pages/slides'))
 
 
+def upload_kdog3682_main(files):
+    Github(key = 'kdog3682', repo = 'kdog3682.github.io', upload=files)

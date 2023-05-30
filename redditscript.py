@@ -9,7 +9,16 @@ class Reddit:
         reddit.validate_on_submit = True
         self.reddit = reddit
 
+    def askString(self, s):
+        r = '(\w+) (.*?)  ([\w\W]+)'
+        m = search(r, s)
+        if m:
+            return self.ask(*m)
+        else:
+            print('error because no match')
+    
     def ask(self, subreddit, title, body):
+        subreddit = env.subreddits.get(subreddit, subreddit)
         subreddit = self.reddit.subreddit(subreddit)
         submission = subreddit.submit(title, body)
         return submission

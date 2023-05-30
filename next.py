@@ -1236,3 +1236,17 @@ def createLogger():
         return logger.info(s)
     return log
 
+def renameClipToDriveFile():
+    newName = prompt('name for drive clip file?')
+    cfile(clipfile, drivedir + newName)
+
+def ask_reddit(s):
+    import redditscript
+    r = redditscript.Reddit()
+    try:
+        print(r.askString(s))
+    except Exception as e:
+        print(str(e))
+    
+
+#pprint(renameClipToDriveFile())
