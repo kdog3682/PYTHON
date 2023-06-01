@@ -390,3 +390,13 @@ class MyFireStore(FireStore):
         result = self.run(actions)
         pprint(result)
 
+    def pushGit(self, data):
+        self.push('git_data', data)
+            
+    def push(self, key, data):
+        if not data:
+            return 
+
+        args = {key: toArray(data)}
+        actions = {"name": "recursive_upload", "args": [args]},
+        self.run(actions=actions)

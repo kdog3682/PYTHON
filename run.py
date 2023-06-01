@@ -498,7 +498,7 @@ def pushAll():
 def gitPush(dir=dir2023, message='autopush'):
 
     if dir == dir2023:
-        cleandir(dir)
+        #cleandir(dir)
         try:
             diff = parseDiff(dir=dir)
             appendjson('git-data2.json', diff)

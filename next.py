@@ -1201,7 +1201,6 @@ def generate_markdown_toc():
         prompt(prev=prev)
 
 #pprint(generate_markdown_toc())
-#printdir(nodedir2023)
 #SystemCommand('npm run dev')
 
 def moveChangeLogFile():
@@ -1248,5 +1247,15 @@ def ask_reddit(s):
     except Exception as e:
         print(str(e))
     
+def toArray(x):
+    if not x:
+        return []
+    if isArray(x):
+        return x
+    if isString(x):
+        return split(x, "\n")
+    return [x]
+
 
 #pprint(renameClipToDriveFile())
+#printdir(nodedir2023)
