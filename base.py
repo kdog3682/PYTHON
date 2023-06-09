@@ -4777,13 +4777,13 @@ def appendjson(file, data, mode=0):
         store.update(data)
 
     #return pprint(stringify(store)) #debugAppendJson
-    write(file, store, open=1)
+    write(file, store)
 
 def readjson(file, placeholder={}):
-    if isfile(file):
+    try:
         with open(file) as f:
             return json.load(f)
-    else:
+    except Exception as e:
         return placeholder
 
 
@@ -5119,23 +5119,20 @@ class SystemCommand:
         data = process.communicate()
         success, error = [decode(d) for d in data]
 
-        clean = lambda x: re.sub(
-            "\.$", "", re.sub("^[eE]rror: ", "", x.strip())
-        )
-        if error:
-            error = clean(error)
+        #clean = lambda x: re.sub(
+            #"\.$", "", re.sub("^[eE]rror: ", "", x.strip())
+        #)
+        #if error:
+            #error = clean(error)
 
         self.error = error
         self.success = success.strip()
 
-        #pprint(
-            #{
-                #"getCaller": "SystemCommand",
-                #"command": command,
-                #"error": error,
-                #"success": success,
-            #}
-        #)
+        if kwargs.get('printIt'):
+            print({
+                'success': self.success,
+                'error': self.error,
+            })
 
 def gitCloner(url):
     chdir(jsdir)
@@ -7159,8 +7156,8 @@ def getUntil(items, checkpoint):
             break
     return store
 
-def watchMovie():
-    s = prompt('movie name from 123movies?').replace(' ', '+')
+def watchMovie(s):
+    s = s.replace(' ', '+')
     f = f"https://ww1.123moviesfree.net/search-query2/?q={s}"
     ofile(f)
 

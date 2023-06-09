@@ -169,6 +169,10 @@ def python(argv = sys.argv[1:]):
         return pythonWithState(*read('pythonWithState.json'))
 
     args = map(list(args), shellunescape)
+    callable = env.callableRef.get(key)
+    if callable:
+        print('executing callable', callable)
+        return exec(callable)
     key = env.basepyref.get(key, key)
     try:
         fn = globals().get(key)
@@ -495,34 +499,6 @@ def pushAll():
         }
         pprint(gitData)
 
-def gitPush(dir=dir2023, message='autopush'):
-
-    if dir == dir2023:
-        #cleandir(dir)
-        try:
-            diff = parseDiff(dir=dir)
-            appendjson('git-data2.json', diff)
-        except Exception as e:
-            print(str(e))
-        
-
-    mainCommand = f"""
-        cd {dir}
-        git add .
-        git commit -m "'{message}'"
-        git push
-    """
-
-    response = SystemCommand(mainCommand, dir=dir)
-    gitData = {
-        'success': response.success,
-        'error': response.error,
-    }
-    pprint(gitData)
-    #logger(**nameObject, action='gitpush', message=message, gitData=gitData)
-    #ofile('https://github.com/kdog3682/2023')
-
-
 def gitManager(
     file=0,
     files=0,
@@ -833,10 +809,9 @@ def masterFileInfo(dir=dir2023):
     write(outpath, payload, True)
 
 
-def gitPushPython():
-    gitPush(dir=pydir)
-
-env.basepyref['gpy'] = 'gitPushPython'
+env.callableRef={}
+env.callableRef['gpy'] = 'gitPush(pydir)'
+env.callableRef['gp'] = 'gitPush(dir2023)'
 def copyToBrowser(s):
     return write(dldir + 'ofile.js', removeComments(s).strip(), 1)
 

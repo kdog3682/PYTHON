@@ -1107,6 +1107,8 @@ def parseDiff(dir=dir2023):
     new = getNewGitFiles()
     rfile = '^diff --git a/(.*?) b.*\nindex (\w+)\.\.(\w+)'
     cmd = SystemCommand(f""" git diff --word-diff """)
+    print(cmd.success)
+    return 
     date = datestamp()
     matches = re.split(rfile, cmd.success, flags=re.M)
     items = partition(filter(matches), 4)
@@ -1123,6 +1125,10 @@ def parseDiff(dir=dir2023):
 
     items = filter([parse(x) for x in items])
     for file in new:
+        if fsize(file) < 50:
+            rfile(file)
+            continue
+
         payload = {
             'date': date,
             'file': file,
@@ -1209,7 +1215,6 @@ def moveChangeLogFile():
     mfile(changelogfile, url)
 
 
-#new = getNewGitFiles()
 #print(new)
 def push(store, x):
     if x != None:
@@ -1259,3 +1264,61 @@ def toArray(x):
 
 #pprint(renameClipToDriveFile())
 #printdir(nodedir2023)
+
+
+#os.system('''node --experimental-modules -e "import { fooga } from './utils.js'; console.log(fooga('a', 'b'));"''')
+#parseDiff()
+
+
+
+def removeSmallFiles(files):
+    for file in files:
+        if isfile(file) and fsize(file) < 50:
+            rfile(file)
+
+def parseDiff2(dir):
+
+    result = SystemCommand('git status --short', dir=dir)
+    r = '^(\?\?|M) (.+)'
+    m = re.findall(r, result.success, flags=re.M)
+    pprint(m)
+    if not m:
+        return 
+
+    modified = []
+    created = []
+    for a,b in m:
+        if removable(b):
+            continue
+
+        if a == '??':
+            created.append(b)
+        else:
+            modified.append(b)
+
+    date = datestamp()
+    payload = {'date': datestamp()}
+    if modified: payload['modified'] = modified
+    if created: payload['created'] = created
+    payload['directory'] = dir
+
+    pprint(payload)
+    appendjson('git-data3.json', payload, mode=list)
+
+def gitPush(dir):
+
+    mainCommand = f"""
+        cd {dir}
+        git add .
+        git commit -m "'autopush'"
+        git push
+    """
+
+    parseDiff2(dir=dir)
+    SystemCommand(mainCommand, dir=dir, printIt=1)
+
+def removable(f):
+    if isfile(f) and fsize(f) < 50:
+        rfile(f)
+        return True
+
