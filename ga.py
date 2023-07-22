@@ -1756,3 +1756,56 @@ def shouldDeleteEmail(email):
     for email in env.deleteEmails:
         if email in sender:
             return True
+
+
+class GoogleYoutube:
+    def __init__(self, **kwargs):
+
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+        service = getService("youtube")
+        self.youtube = service.search()
+
+    def getUserChannel(self, user):
+        response = self.youtube.channels().list(
+            part='contentDetails',
+            forUsername=user
+        ).execute()
+        pprint(response)
+        return response
+
+    def getUserChannelId(self, user):
+        response = self.getUserChannel(user)
+        return getResponseId(response)
+
+    def getUserPlayList(self, user):
+        response = self.youtube.list(
+            part='id',
+            channelId=self.getUserChannelId(user)
+        ).execute()
+        id = getResponseId(response)
+
+        videos = []
+        next_page_token = None
+
+        while True:
+            response = youtube.playlistItems().list(
+                part='snippet',
+                playlistId=id,
+                maxResults=50,
+                pageToken=next_page_token
+            ).execute()
+            videos.extend(response['items'])
+            next_page_token = response.get('nextPageToken')
+            if not next_page_token:
+                break
+            print('keep going')
+            break
+
+        return videos
+
+def getResponseId(response):
+    id = response['items'][0]['id']
+    return id
+
+yt = GoogleYoutube()
+pprint(yt.getUserPlayList('kevinlee8512'))

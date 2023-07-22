@@ -3,9 +3,20 @@ import time
 import zipfile
 
 
-def unzip(inpath, outpath):
+def getZipFiles(inpath, outpath):
+    with zipfile.ZipFile(inpath, "r") as z:
+        f = lambda x: npath(outpath, x.filename)
+        return map(z.filelist, f)
+
+def unzip(inpath, outpath = 0):
+    if not outpath:
+        outpath = head(inpath)
+        dprompt('inferring outpath via inpath', outpath)
+
     with zipfile.ZipFile(inpath, "r") as z:
         z.extractall(outpath)
+        f = lambda x: npath(outpath, x.filename)
+        return map(z.filelist, f)
 
 def readzip(inpath=None, outpath=None, flatten=0):
     if not inpath:

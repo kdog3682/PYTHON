@@ -85,7 +85,6 @@ jsdir = "/home/kdog3682/CWF/public/"
 dldir = "/mnt/chromeos/MyFiles/Downloads/"
 pdfdldir = dldir + 'PDFS/'
 sandir = "/mnt/chromeos/removable/Sandisk/"
-
 usbdir = "/mnt/chromeos/removable/"
 usbdrivedir = "/mnt/chromeos/removable/USB Drive/"
 pydir = "/home/kdog3682/PYTHON/"
@@ -101,21 +100,21 @@ colordir = "/home/kdog3682/COLORING/"
 colordistdir = "/home/kdog3682/COLORING/dist/"
 trashdir = "/home/kdog3682/TRASH/"
 fontdir = "/home/kdog3682/CWF/public/fonts/"
+fontdir = "/home/kdog3682/2023/fonts/"
 jchdir = "/home/kdog3682/CWF/jch/"
 pubdir = "/home/kdog3682/CWF/public/"
 budir = "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/"
 tempbudir = "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/TEMP/"
 
-bucurdir = (
-    "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/CURRENT/"
-)
-
+bucurdir = ( "/mnt/chromeos/GoogleDrive/MyDrive/BACKUP/CURRENT/" )
 currentdir = dir2023
 
 dirdict = {
     "root": rootdir,
+    "drive": drivedir,
     "math": mathdir,
     "home": rootdir,
+    "clips": rootdir + 'CLIPS',
     "js": jsdir,
     "html": jsdir,
     "py": pydir,
@@ -268,7 +267,7 @@ def identity(s):
 def getExtension(s):
     if "json.js" in s:
         return "json.js"
-    return search("\.([a-zA-Z]+)$", s).lower()
+    return search("\.([a-zA-Z]+\d*)$", s).lower()
 
 def unique(a, b=None):
     if b:
@@ -465,6 +464,10 @@ def npath(dir=0, file=0):
         return file
     elif not file:
         return os.path.join(os.getcwd(), dir)
+    if isfile(dir):
+        if not getExtension(file):
+            file = addExtension(file, getExtension(dir))
+        dir = head(dir)
     return os.path.join(dir, tail(file))
 
 def normpath(dir, file):
@@ -585,6 +588,11 @@ def chdir(d, force=0):
         os.chdir(d)
 
 def prompt(*args, **kwargs):
+    mode = kwargs.pop('mode', None)
+    if mode == 'clip':
+        clip(args[0])
+        return input('awaiting input:\n')
+
     for arg in args:
         if arg:
             if isString(arg):
@@ -624,7 +632,9 @@ def fileInfo(f, r=0):
 def dirgetter(dir=None):
     if not dir:
         return os.getcwd()
-    return dirdict.get(dir, dir)
+    value = dirdict.get(dir, dir)
+    assert isdir(value)
+    return value
     return dirdict.get(dir, os.path.expanduser(dir))
 
     key = "macbook" if isMacbook() else "chromebook"
@@ -822,6 +832,9 @@ def sort(x, f=int, reverse=0):
             )
         }
     else:
+        if isString(f):
+            prev = f
+            f = lambda x: x.get(prev)
         return sorted(list(x), key=f, reverse=reverse)
 
 def append(f, s):
@@ -1114,6 +1127,9 @@ def mkdir(dir):
 def write(f, s, open=0):
     try:
         _write(f, s, open)
+        r = '^/mnt'
+        if test(r, f):
+            save(f)
     except Exception as e:
         print(e)
         return
@@ -1274,12 +1290,15 @@ def raw(f):
 
 def read(file):
     e = getExtension(file)
-    mode = "rb" if e in imge else "r"
+    mode = "rb" if (e in imge or e == 'ssssrt') else "r"
     try:
         with open(file, mode) as f:
             return json.load(f) if e == "json" else f.read()
-    except Exception as error:
-        return None
+    except Exception as e:
+        if type(e) == UnicodeDecodeError:
+            raise e
+        else:
+            return None
 
 def snakeCase(s):
     return re.sub(
@@ -1554,38 +1573,6 @@ def force(arr, n=2):
         arr.append("")
     return arr
 
-def _dropbox(files, push=1, pull=0):
-    from dropbox import Dropbox
-    from dropbox.files import WriteMode
-
-    def _pull(file):
-        with open(file, "rb") as f:
-            dbx.files_upload(
-                f.read(),
-                "/" + file,
-                mode=WriteMode("overwrite"),
-            )
-
-    def _push(file):
-        with open(file, "rb") as f:
-            dbx.files_upload(
-                f.read(),
-                "/" + file,
-                mode=WriteMode("overwrite"),
-            )
-
-    with Dropbox(env.dropboxtoken) as dbx:
-        dbx.users_get_current_account()
-        return
-        if pull:
-            map(files, _pull)
-            print("Done at Pulling from Dropbox")
-        elif push:
-            print("Starting push")
-            return
-            map(files, _push)
-            print("Done at Posting to Dropbox")
-
 def _drive(files):
     map(files, cfile, drivedir)
 
@@ -1665,8 +1652,10 @@ def isSameDate(date, f):
     return date.day == fdate.day
 
 def checkpointf(
+    keepRE=0,
     contains=0,
     deleteIt=0,
+    deleteRE=0,
     include="",
     size=0,
     maxLength=0,
@@ -1682,6 +1671,7 @@ def checkpointf(
     ignoreRE="",
     css=0,
     js=0,
+    zip=0,
     py=0,
     txt=0,
     html=0,
@@ -1734,6 +1724,7 @@ def checkpointf(
     if css:
         extensions.append("css")
     if js: extensions.append("js")
+    if zip: extensions.append("zip")
     if json: extensions.append("json")
     if py:
         extensions.append("py")
@@ -1790,6 +1781,13 @@ def checkpointf(
         if regex and not test(regex, filename, flags=flags):
             return False
         if antiregex and test(antiregex, filename, flags=flags):
+            return False
+
+        if keepRE and not test(keepRE, filename, flags=flags):
+            return False
+
+        if deleteRE and test(deleteRE, filename, flags=flags):
+            rfile(f)
             return False
 
         if name and not test(name, filename, flags=flags):
@@ -2482,12 +2480,12 @@ def textgetter(x):
         return x
     if x == 'self':
         return read(currentFile())
+    if isfile(x):
+        return read(x)
     if len(x) > 100:
         return x
     if isUrl(x):
         return request(x)
-    if isfile(normDirPath(x)):
-        return normRead(x)
     return x
 
 def functiongetter(x, lang=None):
@@ -4549,7 +4547,6 @@ def shell(cmd):
 
 def normDirPath(file):
     dir = dirFromFile(file)
-    print(dir)
     return npath(dir, file)
 
 def normFactory(fn):
@@ -5055,7 +5052,6 @@ def rnc(s):
     s = appendFileName(s, "." + month)
     s = clipdir + tail(s)
     cfile(clipfile, s)
-    ofile(s)
 
 def clips():
     files = ff(dir=jsondir, name="\.clip")
@@ -6968,7 +6964,12 @@ def memoize(fn):
 
 def dollarPrompt(x):
     if isArray(x):
-        item = choose(x, mode=1)
+
+        os.system("clear")
+        number(x)
+        s = input('choose 1-based indexed\n')
+        a, b = splitonce(s, ' ')
+        item = x[int(a) - 1]
     elif isObject(x):
         item = choose(list(x.values()), mode=1)
     else:
@@ -6982,13 +6983,20 @@ def dollarPrompt(x):
     def g(x):
         return prompt(item, 'input:')
 
+    r1 = '\$([a-zA-Z]\w*)'
+    r2 = '\$(\d+)'
+    n = 0
+    r0 = '\$1'
+    if b and test(r0, item):
+        item = sub(item, r0, b)
+        n += 1
+
     while True:
-        if test('\$([a-zA-Z]\w*)', item):
-            item = sub(item, r, f, count=1)
+        if test(r1, item):
+            item = sub(item, r1, f, count=1)
         else:
             break
         
-    n = 0
     while True:
         n += 1
         r = '\$' + str(n)
@@ -8565,3 +8573,13 @@ def rename(a, b):
 
     #rename('app-main.js', 'appscript')
 
+
+def save(x, mode=0):
+    payload = x
+    if mode == 'python':
+        payload = f"file = '{x}'"
+
+    append('/home/kdog3682/2023/saved.txt', payload)
+
+#print(rangeFromString('1 23'))
+#print(isfile(read('base.py')))

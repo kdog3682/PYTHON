@@ -1,4 +1,9 @@
+hskjsondictfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/hsk-dict.json'
 import env
+import time
+import os
+import traceback
+import sys
 from collections import OrderedDict
 #import requests
 #import inspect
@@ -49,24 +54,36 @@ def clipsave(s):
 
 
 class FileState:
+    def getZipFiles(self):
+        from zipscript import getZipFiles
+        return getZipFiles(self.file, self.head)
+    
+    def __repr__(self):
+        return self.file
+    
     def __init__(self, file):
         self.file = file
-        self.tail = tail(file)
+        head, tail = headAndTail(file)
+        self.head = head
+        self.tail = tail
         self.name = removeExtension(self.tail)
         self.extension = getExtension(file)
         self.is_zip = self.extension == "zip"
         self.is_js = self.extension == "js"
         self.is_py = self.extension == "py"
         self.is_html = self.extension == "html"
-        pprint(self.file)
 
-    def unzip(self):
-        if self.is_zip:
-            from zipscript import unzip
+    def remove(self):
+        rfile(self.file)
+    
+    def unzip(self, dest=0, **kwargs):
+        if not self.is_zip:
+            return 
 
-            unzip(
-                self.file,
-            )
+        from zipscript import unzip
+        files = unzip(self.file, dest or self.head)
+        if kwargs.get('save'):
+            save(files)
 
     @property
     def data(self):
@@ -619,6 +636,7 @@ def copy_dir_to_dir(f):
 
 
 def map(items, fn, *args, filter=1, **kwargs):
+    _promptOnce = kwargs.pop('promptOnce', None)
     if not items:
         return []
 
@@ -652,11 +670,12 @@ def map(items, fn, *args, filter=1, **kwargs):
         return store
 
     store = []
-    for item in toArray(items):
-        # print(item)
+    for i, item in enumerate(toArray(items)):
         try:
             value = fn(item, *args, **kwargs)
             if not (filter and not value):
+                if i == 0 and _promptOnce:
+                    promptOnce(value, _promptOnce)
                 store.append(value)
         except Exception as e:
             prompt(item, error="ERROR AT MAP", message=e)
@@ -1102,43 +1121,6 @@ def prosemirrorFileTable():
 
 
 
-def parseDiff(dir=dir2023):
-    
-    new = getNewGitFiles()
-    rfile = '^diff --git a/(.*?) b.*\nindex (\w+)\.\.(\w+)'
-    cmd = SystemCommand(f""" git diff --word-diff """)
-    print(cmd.success)
-    return 
-    date = datestamp()
-    matches = re.split(rfile, cmd.success, flags=re.M)
-    items = partition(filter(matches), 4)
-    def parse(x):
-        a, b, c, d = x
-        prefix = "[\[\{][-+]"
-        regex = "^\{\+(?:(?:async )?function[!*]?|def|class|const|var) ([\w\$]+)"
-        items = re.findall(regex, d, flags=re.M) or []
-        if not items:
-            return 
-
-        payload = { 'date': date, 'file': a, 'from': b, 'to': c, 'items': items }
-        return payload
-
-    items = filter([parse(x) for x in items])
-    for file in new:
-        if fsize(file) < 50:
-            rfile(file)
-            continue
-
-        payload = {
-            'date': date,
-            'file': file,
-            'new': True,
-        }
-        if getExtension(file) == 'js':
-            payload['items'] = getFunctionNames(read(file))
-
-        items.append(payload)
-    return items
 
 def github_usercontent_url(user, repo, *args, master='master'):
     base = 'https://raw.githubusercontent.com'
@@ -1276,12 +1258,11 @@ def removeSmallFiles(files):
         if isfile(file) and fsize(file) < 50:
             rfile(file)
 
-def parseDiff2(dir):
+def parseDiff(dir):
 
     result = SystemCommand('git status --short', dir=dir)
-    r = '^(\?\?|M) (.+)'
+    r = '^ *(\?\?|M) (.+)'
     m = re.findall(r, result.success, flags=re.M)
-    pprint(m)
     if not m:
         return 
 
@@ -1303,7 +1284,7 @@ def parseDiff2(dir):
     payload['directory'] = dir
 
     pprint(payload)
-    appendjson('git-data3.json', payload, mode=list)
+    appendjson('/home/kdog3682/2023/git-data3.json', payload, mode=list)
 
 def gitPush(dir):
 
@@ -1314,7 +1295,7 @@ def gitPush(dir):
         git push
     """
 
-    parseDiff2(dir=dir)
+    parseDiff(dir=dir)
     SystemCommand(mainCommand, dir=dir, printIt=1)
 
 def removable(f):
@@ -1322,3 +1303,960 @@ def removable(f):
         rfile(f)
         return True
 
+def FixGitCache():
+    
+    SystemCommand('''
+        git rm --cached -r
+        git add .
+    ''')
+
+
+#FixGitCache()
+
+
+
+
+def moveRecentlyDownloadedFileToDrive(name):
+
+    def drivepath(file, ext):
+        return f"{drivedir}{name}.{timestamp()}.{getExtension(ext)}"
+
+    file = glf(dldir)
+    outpath = drivepath(name, ext=file)
+    dprompt(outpath)
+    mfile(file, outpath)
+
+#moveRecentlyDownloadedFileToDrive('chrome-history')
+
+def cleanupDldir():
+    chdir(dldir)
+    files = os.listdir()
+    
+    print(files)
+    #cleanupDldir()
+
+    #Do it via javascript and server ... yes.
+
+def foo():
+    print('hi')
+
+
+class Silence:
+    def __init__(self, silencer = True):
+        self.stdout = sys.stdout
+        self.silencer = silencer
+
+    def __enter__(self):
+
+        class NullWriter:
+            def write(self, s):
+                pass
+
+            def flush(self):
+                pass
+        
+        if self.silencer:
+            sys.stdout = NullWriter()
+
+    def __exit__(self, etype, value, traceback):
+        sys.stdout = self.stdout
+
+
+def sysArgs():
+    base = sys.argv[1:]
+    length = len(base)
+    if length == 0:
+        return ['', []]
+    if length == 1:
+        return [base[0], []]
+    return [base[0], base[1:]]
+
+def runModule(module=0):
+    
+    data = None
+    with Silence(True):
+        arg, args = sysArgs()
+
+        if not arg:
+            return
+
+        fn = None
+        if module:
+            if hasattr(module, arg):
+                fn = getattr(module, arg)
+        else:
+            fn = globals().get(arg, None)
+
+        if fn:
+            try:
+                data = {'success': fn(*args)}
+            except Exception as e:
+                error = {
+                    "type": type(e).__name__,
+                    "message": str(e),
+                    "stack": traceback.format_exc()
+                }
+                data = {'error':  error}
+
+    return json.dumps(data)
+
+
+def backupFolder(dir):
+    dir = dirgetter(dir)
+    for file in absdir(dir):
+        cfile(file, budir)
+
+#backupFolder('clips')
+def seeBackup(file):
+    file = f"{budir}{file}.backup"
+    print(read(file))
+
+#seeBackup('null.js')
+#printdir(budir)
+
+
+def driveWrite(file, s):
+     write(drivedir + addExtension(file, 'py'), s)
+
+class DropBox:
+    def __init__(self):
+        from dropbox.files import WriteMode
+        from dropbox import Dropbox
+        self.dropbox = Dropbox(env.dropboxtoken)
+        self.mode=WriteMode('overwrite')
+
+    def push(self, file):
+        path = '/' + tail(file)
+        with open(npath(file), 'rb') as f:
+            r = self.dropbox.files_upload(f.read(), path, mode=self.mode)
+            return r
+
+    def pull(self, file):
+        path = '/' + tail(file)
+        meta, response = self.dropbox.files_download(path)
+        return response.content.decode('utf-8')
+
+
+def npath(dir=0, file=0):
+    if isArray(file):
+        return map2(file, lambda x: npath(dir, x))
+    if not dir:
+        return file
+    elif not file:
+        return npath(dirFromFile(file), file)
+    if isfile(dir):
+        if not getExtension(file):
+            file = addExtension(file, getExtension(dir))
+        dir = head(dir)
+    return os.path.join(dirGetter(dir), tail(file))
+
+def gitCloneAndMove(repoUrl, move=1):
+    repoUrl = search('.*?github.com/[\w-]+/[\w-]+', repoUrl)
+    name = repoUrl.split('/')[-1]
+    #dprompt(repoUrl, name)
+    SystemCommand(f'''
+        cd {dldir}
+        git clone {repoUrl}
+    ''')
+
+
+    dir = npath(dldir, name)
+    save(dir)
+
+    if not move:
+        return 
+    if not isdir(dir):
+        return 
+
+    src = os.path.join(dir, 'src')
+    if not isdir(src):
+        src = dir
+    files = getFiles(src)
+    newdir = f'Git Repo - {name}'
+    newdir = npath(dldir, newdir)
+    shutil.move(src, newdir)
+    rmdir(dir, force=1)
+
+#gitCloneAndMove('https://github.com/sagalbot/vue-select/blob/master/src/scss/modules/_spinner.scss')
+
+def getFiles(dir, **kwargs):
+    recursive = kwargs.pop('recursive', False)
+    def runner(dir):
+        for file in absdir(dir):
+            if isIgnoredFile2(file):
+                continue
+            elif isfile(file) and checkpoint(file):
+                store.append(file)
+            elif recursive and isdir(file):
+                runner(file)
+
+    store = []
+    checkpoint = checkpointf(**kwargs)
+    runner(dirGetter(dir))
+    return store
+
+def isIgnoredFile2(file):
+    name = tail(file)
+    ignore = [
+        "vosk-api",
+        "__pycache__",
+        "node_modules",
+        ".git",
+        ".gitignore",
+    ]
+    ignoreRE = "^(?:\W)"
+    recursiveIgnoreRE = "^(?:LICENSE|README\.[mM][dD])$"
+
+    if fsize(file) < 100:
+        return True
+    if name in ignore:
+        return True
+    if test(ignoreRE, name):
+        return True
+
+def c2(s):
+    write('clip.js', s)
+
+#c2(getFiles(npath(dldir, 'Git Repo - vue-select')))
+
+
+
+class NYTimes:
+    def __init__(self):
+        pass
+
+    def articlesearch(self, topic, **kwargs):
+        base = 'https://api.nytimes.com/svc/search/v2/articlesearch.json?'
+        page = kwargs.get('page', 0)
+        curl = f'{base}q={topic}&api-key={env.nytimesApiKey}&page={page}'
+        data = request(curl)
+        docs = data.get('response').get('docs')
+        map(docs, ['abstract', 'web_url as url', 'pub_date as date', 'byline.original', 'word_count'])
+
+
+#ny = NYTimes()
+#clip(ny.articlesearch('food'))
+#clip(request())
+
+
+
+def incrementalName(s, dir = 'drive'):
+    override = 0
+    if s.endswith('!'):
+        s = s[:-1]
+        override = 1
+    front = removeExtension(s)
+    e = getExtension(s)
+    d = dirGetter(dir)
+    count = 1
+    while count < 50:
+        name = os.path.join(d, f'{front} {count}.{e}')
+        if override:
+            return name
+        if not isfile(name): return name
+        count += 1
+
+def dirGetter(dir=None):
+    if not dir:
+        return os.getcwd()
+    value = env.dirdict.get(dir, dir)
+    assert isdir(value)
+    return value
+
+
+def foo1689558041(f):
+    mfile(f, incrementalName(f))
+
+#foo1689558041('changelog.md')
+s='''NotoColorEmoji.ttf Sohne-Halbfett.otf'''
+def moveToActiveDir(s):
+    files = map(xsplit(s), lambda x: npath(dirGetter('dl'), x))
+    for file in files:
+        mfile(file, dir2023)
+
+#pprint(moveToActiveDir(s))
+
+def rpw(file, f):
+    write(file, f(read(file)))
+
+def relpath(s):
+    prefix = ''
+    return s.replace('/home/kdog3682/2023/', prefix)
+
+def foo1689563342(s):
+    def parser(x):
+        f = x.group(0)
+        name = addExtension(d[f], getExtension(f))
+        outpath = npath('fonts', name)
+        mfile(f, outpath)
+        return relpath(outpath)
+    r = 'font-family: \'(.*?)\'[\w\W]+?([\w-]+\.woff2)'
+    d = reverse(dict(findall(r, s)))
+    s = re.sub('[\w-]+\.woff2', parser, s)
+    return s
+
+
+
+#printdir(dirGetter('fontdir'))
+
+#rpw('material-icons.css', foo1689563342)
+
+def headAndTail(s):
+    a, b = os.path.split(s)
+    if a == '':
+        a = '/home/kdog3682/2023'
+    return a, b
+
+def unzipfilestodir(outdir):
+    files = getFiles('dl', zip=1, hours=1, recursive=0)
+    prompt(files)
+    for file in files:
+        f = FileState(file)
+        f.unzip(outdir)
+        f.remove()
+
+#printdir(fontdir)
+#files = getFiles('cwd')
+#clip(files)
+
+
+def extractAZipFile(file):
+    f = FileState(glf())
+    f.unzip(trashdir)
+    g = trashdir + file
+    mfile(g, dir2023)
+    return file
+
+#clip(read('conversations.json')[0])
+
+def fo():
+    def f(a):
+        message = a.get('message')
+        if not message:
+            return 
+
+        role = message.get('author').get('role')
+        if role == 'assistant':
+            parts = message.get('content').get('parts')
+            s = join(parts)
+            r = '```(\w+)\s+([\w\W]+?)```'
+            m = re.findall(r, s)
+            store.extend(m)
+
+    store = []
+    data = list(clip().get('mapping').values())
+    map(data, f)
+    #pprint(store)
+
+    chromeExtensionName = 'myFirstExtension'
+    dir = mkdir(dldir + chromeExtensionName)
+    chdir(dir)
+    for extension, contents in store:
+        if extension == 'js':
+            write('background.js', contents)
+
+        if extension == 'json':
+            write('manifest.json', parseJSON(contents))
+        #'/mnt/chromeos/MyFiles/Downloads/myFirstExtension/manifest.json'
+        #'/mnt/chromeos/MyFiles/Downloads/myFirstExtension/background.js'
+
+#fo()
+
+#gitCloneAndMove('https://github.com/an-object-is-a/chrome-ext-mv3-how-to', move=0)
+
+def linKeSong():
+    def getUrl(n):
+        return "jjwxc.net/onebook.php?novelid=2337210&chapterid={n}"
+
+    def parser(n):
+        url = fixUrl(getUrl(n))
+        s = request(url)
+        c2(s)
+
+    parser(1)
+
+#linKeSong()
+def oc():
+    ofile('clip.js')
+
+class LinKeSong:
+    def __init__(self):
+        pass
+
+    def run(self):
+        f = lambda x: int(findall('\d+(?!\))', x)[-1])
+        items = sort(mostRecent(dldir, 9), f)
+        store = []
+
+        for i,item in enumerate(items):
+            if i == 0:
+                store.append(self.foo1689880202(item))
+            else:
+                store.append(self.foo2(item))
+
+        clip(store)
+
+    def openLinKeSong(self):
+        items = list(range(1, 10, 1))
+        urls = map(items, lambda x: fixUrl(f"jjwxc.net/onebook.php?novelid=2337210&chapterid={x}"))
+        for url in urls:
+            time.sleep(1)
+            ofile(url)
+
+        
+    def parse(self, m):
+        def f(x):
+            return '\n' * len(findall('br', x.group(0))) 
+        
+        m = re.sub('[\t ]*(?:<br/?>\s*)+[\t ]*', f, m)
+        m = re.sub('。 *', '. ', m)
+        m = re.sub('”', '"', m)
+        m = re.sub('“', '"', m)
+        m = re.sub('“', '"', m)
+        m = re.sub(' +"', '"', m)
+        m = re.sub('^[\t ]+', '', m, flags=re.M)
+        return m
+    
+    def foo1689880202(self, file):
+        s = read(file)
+        r = 'class="readsmall".*?>[\w\W]+?</div>\s*([\w\W]+?)<div'
+        m = search(r, s)
+        return {
+            'title': 'aaaaaaaaaaaaaaaaaaaaaa',
+            'text': self.parse(m),
+        }
+
+    def todohsk():
+        hskjsonfile = "/mnt/chromeos/GoogleDrive/MyDrive/JSONS/hsk-master.json"
+        data = read(hskjsonfile)
+        store = {}
+        
+        for item in data:
+            id = item.get('id')
+            hanzi = item.get('hanzi')
+            pinyin = item.get('pinyin')
+            translations = item.get('translations')[0]
+
+    def remove(self):
+        files = getFiles('dl', recursive=0, name='jjwxc')
+        rfiles(files)
+    def check(self, n=0):
+        a = clip()[n]
+        if isObject(a):
+            a = a.get('text')
+        self.a(a)
+    def a(self, a):
+        write('a.txt', dumpJson(a))
+        ofile('a.txt')
+    
+
+    def gpt(self):
+        input_string = "<h2>舌尖上的吻</h2><br/></div> <div "
+        chinese_pattern = r'[\u4e00-\u9fff]+'
+        chinese_chars = re.findall(chinese_pattern, input_string)
+        print(chinese_chars)  # Output: ['舌尖上的吻']
+        return chinese_chars
+
+    def foo2(self, file):
+        r = r'<h2>([\u4e00-\u9fff]+.*?)<[\w\W]+?([\u4e00-\u9fff][\w\W]+?)</?div'
+        s = search(r, read(file))
+        assert(s)
+        a, b = s 
+        b = self.parse(b)
+        return {
+            'title': a,
+            'text': b
+        }
+
+    def pinyin(self):
+        from pypinyin import pinyin
+        items = clip()
+        for item in items:
+            s = item.get('text')
+            pinyinText = flat(pinyin(s))
+
+            s = item.get('title')
+            pinyinTitle = flat(pinyin(s))
+            return 
+
+    def jieba(self):
+
+        import jieba
+        from pypinyin import pinyin
+
+        out = []
+        items = clip()
+        seen = set()
+
+        for item in items:
+            s = item.get('text')
+            words = list(jieba.cut(s))
+            titleWords = list(jieba.cut(item.get('title')))
+            store = []
+            out['body'] = words
+            out['title'] = titleWords 
+            out['vocabulary'] = store
+
+            for i, item in enumerate(words):
+                if not isChinese(item):
+                    continue
+
+                if len(item) == 2 and item[0] == '地':
+                    item = item[1]
+
+                if item in seen:
+                    continue
+
+                p = flat(pinyin(item))
+                store.append({'index': i, 'pinyin': p, 'hanzi': item})
+                seen.add(item)
+
+        write('linKeSongData.json', out)
+        
+
+chineseRE = r'[\u4e00-\u9fff]+'
+notChineseRE = r'[^\u4e00-\u9fff]+'
+def isChinese(s):
+    return test(chineseRE, s)
+    
+
+#LinKeSong().check(2)
+
+
+def foo(self):
+    return 'export default ' + dumpJson(out)
+#write('a.txt', clip()[0].get('text'))
+
+#LinKeSong().jieba()
+
+def copyClipFileToDrive(name):
+    name = npath('drive', name)
+    cfile('clip.js', name)
+    save(name)
+
+def doStoryOfYangxiPalace():
+
+    outpath = npath('jsondrive', 'storyOfYangxiPalace.jieba.json')
+    touched = 0
+
+    def parser(file):
+        nonlocal touched
+        episode = search('S01E(\d+)', file)
+        if episode:
+            episode = int(episode)
+        else:
+            return 
+
+        print('doing file', file)
+        lines = linegetter(file, fn=jieba.cut)
+
+        if not touched:
+            touched = 1
+
+        return {
+            'episodeNumber': episode,
+            'lines': lines,
+        }
+
+    file = "drive-download-20230719T171808Z-001.zip"
+    file = FileState(npath('trash', file))
+    translations = file.getZipFiles()
+    jieba = Jieba()
+    payload = map2(translations, parser, sort='episodeNumber')
+    try:
+        write(outpath, payload)
+    except Exception as e:
+        clip(payload)
+    
+
+def skipPrompt(*args, **kwargs):
+    
+    import inspect
+    message = None
+    names = []
+
+    for i, arg in enumerate(args):
+        if i == 0 and arg != None:
+            return 
+        else:
+
+            try:
+                vars = inspect.currentframe().f_back.f_locals.items()
+                els = [v_name for v_name, v_val in vars if v_val is arg]
+                name = els[0]
+                names.push(name)
+            except Exception as e:
+                message = arg
+        
+    printItems = [ f"{names[0]} does not exist" ]
+    if message: printItems.append(message)
+    if kwargs: printItems.append(kwargs)
+    print(*printItems)
+    return input('')
+
+def initializeGlobalVariable(key=0):
+    global promptOnceTouched
+    try:
+        if promptOnceTouched:
+            print('already touched early return')
+            return 
+        promptOnceTouched = True
+        return True
+    except Exception as e:
+        if (type(e) == NameError):
+            promptOnceTouched = True
+            return True
+        else:
+            raise e
+        
+
+def promptOnce(x, mode=0):
+    if initializeGlobalVariable('promptOnceTouched'):
+        prompt(x, mode)
+
+
+
+class Jieba:
+    def __init__(self, convert=0):
+        import jieba
+        from pypinyin import pinyin
+
+        self.jieba = jieba
+        self.ref = read(hskjsondictfile)
+        self.pinyin = lambda x: ''.join(flat(pinyin(x)))
+        self.watcher = Watcher()
+        self.count = 0
+
+        if convert:
+            from opencc import OpenCC
+            cc = OpenCC(convert)
+            self.simpliefied = lambda x: cc.convert(x)
+
+
+    def cut(self, s, timestamp=0):
+        self.count += 1
+
+        store = []
+        tokens = self.jieba.cut(s.strip())
+
+        for i, item in enumerate(tokens):
+            data = {
+                'index': i,
+                'hanzi': item,
+            }
+
+            if not isChinese(item):
+                type = 'punctuation'
+                data['type'] = type
+                store.append(data)
+                continue
+
+            data['pinyin'] = self.pinyin(item)
+
+            if len(item) == 2 and item[0] == '地':
+                type = 'adjectiveConversion'
+                key = item[1]
+                if key not in self.watcher:
+                    data['new'] = True
+                store.append(data)
+                continue
+
+            data['new'] = item not in self.watcher
+            data['type'] = 'hanzi'
+            store.append(data)
+
+        chinesePinyin = ''
+        for item in store:
+            if item.get('type') == 'punctuation':
+                chinesePinyin = chinesePinyin.rstrip()
+                chinesePinyin += item.get('hanzi')
+            else:
+                chinesePinyin += item.get('pinyin')
+                chinesePinyin += ' '
+
+            if item.get('new'):
+                ref = self.ref.get(item.get('hanzi'))
+                if ref:
+                    item['level'] = ref['level']
+                    item['translation'] = ref['translations'][0]
+
+        data = {
+            'tokens': store,
+            'hanzi': s,
+            'pinyin': chinesePinyin.strip(),
+        }
+        if timestamp:
+            data['timestamp'] = timestamp
+        return data
+        return store
+
+def makehsk():
+    """ asdfd2 """
+    hskjsonfile = "/mnt/chromeos/GoogleDrive/MyDrive/JSONS/hsk-master.json"
+    path = npath(hskjsonfile, 'hsk-dict')
+    dprompt(path)
+    data = read(hskjsonfile)
+    store = {}
+    for item in data:
+        t = item.get('translations')[0]
+        store[item.get('hanzi')] = item
+
+    write(path, store)
+    save(path, mode='python')
+    return store
+    
+class Watcher:
+    def __init__(self):
+        self.seen = set()
+    def __contains__(self, x):
+        if x in self.seen:
+            return True
+        else:
+            self.seen.add(x)
+            return False
+
+
+#pprint(Jieba().cut("我们喜欢吃饭。你呢？我们吃地笑"))
+
+def help(fn):
+    return fn.__doc__
+
+#print(help(makehsk))
+#pprint(choose(alist))
+#pprint(dollarPrompt(['$1 aaa $1']))
+#When you miss the timing ... the timing is not recoverable ...
+#https://book.douban.com/subject/24526949/
+
+
+def zokarious():
+    write(npath('drive', 'foo.js'), 'aaa')
+
+def map2(items, fn, **kwargs):
+    store = []
+    for index, originalItem in enumerate(items):
+        try:
+            value = fn(originalItem)
+            if value == None:
+                continue
+            store.append(value)
+        except Exception as error:
+            errorPrompt(index, originalItem, error)
+    if kwargs.get('sort'):
+        return sort(store, kwargs.get('sort'))
+    return store
+        
+
+def errorPrompt(*args, **kwargs):
+    
+    import inspect
+    caller = getCaller()
+    message = 'Error at: ' + caller
+    for i, arg in enumerate(args):
+        try:
+            vars = inspect.currentframe().f_back.f_locals.items()
+            e = [v_name for v_name, v_val in vars if v_val is arg]
+            name = e[0]
+            kwargs[name] = arg
+        except Exception as e:
+            message += ': ' + arg
+        
+    print(message)
+    pprint(kwargs)
+    return input('')
+
+def makeFileDictResource():
+    s = json.dumps(env.dirdict)
+    appendVariable(s)
+
+def chooseMultiple(items):
+    indexes = rangeFromString(prompt(number(items), 'choose 1 based indexes'))
+    return map2(indexes, lambda x: items[x])
+
+#print(chooseMultiple(alist))
+
+
+#print(isfile(file))
+
+
+s = '''
+00:00:47,292 --> 00:00:49,487
+電視機前的觀眾朋友大家好
+'''
+
+def getCookUpAStormSubtitles():
+    
+    def f(x):
+        start, end, chinese = x
+        data = jieba.cut(chinese, timestamp=[start, end])
+        data['timestamp'] = {
+            'from': start,
+            'to': end,
+        }
+        promptOnce(data)
+        return data
+
+        
+
+    file = glf()
+    print(file)
+    return 
+    s = read(file)
+    return print(len(s))
+    r = r'(\d+:\d+:\d+).*?(\d+:\d+:\d+).*?\n([\u4e00-\u9fff]+)'
+    jieba = Jieba(convert='tw2s')
+    data = map2(re.findall(r, s), f)
+    outpath = 'cookUpAStorm.jieba.json'
+    path = npath('drive', addExtension(outpath, 'json'))
+    prompt(path)
+    write(path, data)
+
+
+class ReadParse:
+    def __init__(self, x):
+        self.text = read(x)
+        print(type(self.text))
+        prompt()
+        
+    def run(self, fn, outpath):
+        prompt(type(self.text))
+        results = fn(self.text)
+        path = npath('drive', addExtension(outpath, 'json'))
+        dprompt(path)
+        write(path, results)
+    
+def dprompt2(*args):
+    import inspect
+
+    store={}
+    for arg in args:
+        try:
+            vars = inspect.currentframe().f_back.f_locals.items()
+            name = [v_name for v_name, v_val in vars if v_val is arg][0]
+            store[name]=arg
+        except Exception as e:
+            store[arg] = True
+        
+    pprint(store)
+
+
+
+def stringBreaker(s, key):
+    r = '[\w\W]+?' + key + '\s*'
+    print(r)
+    return re.sub(r, '', s)
+
+def chineseMovieJiebaConverter(file, title, breaker=0):
+    assert(isfile(file))
+    name = camelCase(title)
+    outpath = npath('jsondrive', name + '.jieba.json')
+    
+    dprompt(name, outpath)
+    appleBreaker = 'face into\.\.\.'
+
+    s = read(file)
+    jieba = Jieba(convert='tw2s')
+
+    if breaker:
+        s = stringBreaker(s, breaker)
+    s = linegetter(s)
+    def parser(s):
+        x = split(s, ',')
+        a = x[1]
+        b = x[2]
+        c = x[-1]
+        c = re.sub(notChineseRE, '', c)
+        return jieba.cut(c, timestamp=[a,b])
+
+    items = map2(s, parser)
+    payload = {
+        'title': title,
+        'contents': items,
+    }
+    write(outpath, payload)
+
+#chineseMovieJiebaConverter('/home/kdog3682/TODO/You Are the Apple of My Eye_utf8.ass', 'You Are the Apple of My Eye')
+
+def filesFromString(s, e=''):
+    dir, *items = linegetter(s)
+    return map2(items, lambda x: npath(dir, addExtension(x, e)))
+
+def doFonts(s):
+
+    examplstr1689969711 = """
+    todo
+    ZCOOL_KuaiLe
+    Zhi_Mang_Xing
+    Liu_Jian_Mao_Cao
+    Long_Cang
+    """
+
+    def fonter(file):
+        files = FileState(file).unzip(fontdir)
+        prompt(files)
+        return files
+    
+    assert(isdir(fontdir))
+    files = filesFromString(s, e='zip')
+    allfiles = flat(map2(files, fonter))
+    save(allfiles)
+
+def hskPaperTests():
+    chdir(trashdir)
+    f = FileState(glf())
+    files = f.unzip()
+    names = map2(files, tail)
+    names.sort()
+    f = lambda x: toNumber(search('H\d(\d+)\.docx', x))
+    transcriptIds = map2(names, f)
+    checkpoint = checkpointf(extensions=['ogg', 'mp3'])
+    audios = filter(names, checkpoint)
+
+    checkpoint = checkpointf(extensions=['docx'])
+    transcripts = filter(names, checkpoint)
+
+    checkpoint = checkpointf(extensions=['pdf'], keepRE='answer', flags=re.I)
+    exams = filter(names, checkpoint)
+
+    checkpoint = checkpointf(extensions=['pdf'], keepRE='exam', flags=re.I)
+    answers = filter(names, checkpoint)
+    def boo(id, items):
+        r = str(id)
+        return find(items, lambda x: test(r, x))
+
+    def parser(id):
+        a = boo(id, audios)
+        b = boo(id, exams)
+        c = boo(id, answers)
+        if not a:
+            return 
+        if not b:
+            return 
+        if not c:
+            return 
+
+        d = boo(id, transcripts)
+        return [a, b, c, d]
+
+    filePacks = map2(transcriptIds, parser)
+    prompt(filePacks)
+
+    for filePack in filePacks:
+        files = npath(trashdir, filePack)
+
+def toNumber(x):
+    try:
+        return int(x)
+    except Exception as e:
+        return 
+        
+    
+
+
+#pprint(hskPaperTests()) # renames the files ... and does som stuff
+
+
+def sortByDate(files, reverse=0):
+    files.sort(key=mdate, reverse=reverse)
+    return files
+
+#pprint(sortByDate(getFiles('js'), 1))

@@ -796,3 +796,42 @@ hammyV1="""
 
 def upload_kdog3682_main(files):
     Github(key = 'kdog3682', repo = 'kdog3682.github.io', upload=files)
+
+def browse(file_name=0, reponame=0, username='kdog3682', filter=0):
+
+    g = github.Github(env.kdogtoken)
+    user = g.get_user(username)
+    if not reponame:
+        repos = user.get_repos()
+        names = [repo.name for repo in repos]
+        pprint(names)
+        reponame = choose(names)[0]
+
+    url = f"{username}/{reponame}"
+    repo = g.get_repo(url)
+    branch = repo.default_branch
+    try:
+        contents = repo.get_contents('', ref=branch)
+    except Exception as e:
+        print(e)
+        return browse()
+    
+    names = [tail(content.path) for content in contents]
+    if filter:
+        names = [name for name in names if test(filter, name, flags=re.I)]
+
+    chosenNames = choose(names)
+    for content in contents:
+        name = tail(content.path)
+        if name in chosenNames:
+            text = content.decoded_content.decode("utf-8")
+            if isfile(name):
+                print('skipping because exists on disk', name, 'writing as clip.js')
+                clip(text)
+            else:
+                path = '/mnt/chromeos/MyFiles/Downloads/' + name
+                write(path, text)
+                save(path)
+                # saves to saved.txt
+
+#browse(reponame='2023', filter='color')

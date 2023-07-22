@@ -1063,5 +1063,5 @@ def block_to_browser(s, mode='text'):
         appscript('gdoc', name, s)
 
 
-python()
-#'/home/kdog3682/2023/comments.py'
+if __name__ == '__main__':
+    python()

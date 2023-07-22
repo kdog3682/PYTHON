@@ -1,4 +1,5 @@
 from base import *
+from next import *
 import time
 import fitz
 from pikepdf import Pdf
@@ -238,8 +239,7 @@ def fitzSave(pdf, outpath, dir=0, openIt=1, incremental=0):
 
 def save(pdf, outpath="test", dir=dldir, openIt=1):
 
-    isFitz = strType(pdf) == "Document"
-    if isFitz:
+    if strType(pdf) == "Document":
         return fitzSave(pdf, outpath, dir, openIt)
 
     assert pdf.pages
@@ -247,22 +247,15 @@ def save(pdf, outpath="test", dir=dldir, openIt=1):
     if not outpath:
         outpath = str(pdf._original_filename)
     elif outpath and not isString(outpath):
-        if objectClassName(pdf) == "pdf":
-            outpath = pdf.filename
-        else:
-            raise Exception(
-                "outpath is neither string nor pdf"
-            )
+        outpath = pdf.filename
 
-    #prompt(outpath, 'doing the outpath')
     outpath = fixDest(outpath)
     outpath = addExtension(outpath, "pdf")
-    if dir:
+    if dir and not outpath.startswith('/'):
         outpath = npath(dir, outpath)
-    #prompt(outpath, 'doing the outpath')
+
     pdf.save(outpath)
-    if openIt:
-        ofile(outpath)
+    if openIt: ofile(outpath)
 
 
 payload = {
@@ -303,6 +296,10 @@ payload = {
 
 
 def pikeCreate(files, f=lambda x: x.pages):
+    if isNumber(f):
+        prev = f
+        f = lambda x: x.pages[prev]
+
     pdf = Pdf.new()
     for file in files:
         src = pikeOpen(file)
@@ -1258,5 +1255,16 @@ s = """
 
 
 #rlf()
-files = mostRecentFileGroups(minutes=1)
-mergepdf(files, outpath='my_resumes_and_cvs.pdf')
+#files = mostRecentFileGroups(minutes=1)
+#mergepdf(files, outpath='my_resumes_and_cvs.pdf')
+
+
+
+def combineDownloadedPdfs():
+    files = getFiles(dldir, pdf=1)
+    save(pikeCreate(files, 0))
+    results = chooseMultiple(files)
+    pdf = mergepdf(results, outpath=incrementalName('Bulk PDF.pdf!'))
+    prompt('Do you want to remove the files? ctrl-exit to depart')
+    rfiles(files)
+#combineDownloadedPdfs()
