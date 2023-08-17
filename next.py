@@ -54,6 +54,21 @@ def clipsave(s):
 
 
 class FileState:
+    def debug(self):
+
+        def zip(self):
+            return self.getZipFiles()
+            
+        def js(self):
+            return 
+
+        data = locals()
+        fn = data.get(self.extension)
+        if fn:
+            pprint(fn(self))
+            print(self.file)
+
+    
     def getZipFiles(self):
         from zipscript import getZipFiles
         return getZipFiles(self.file, self.head)
@@ -81,8 +96,18 @@ class FileState:
             return 
 
         from zipscript import unzip
-        files = unzip(self.file, dest or self.head)
-        if kwargs.get('save'):
+        target = kwargs.get('target', None)
+        saveIt = kwargs.get('save', None)
+
+        if target:
+            targetFile = findFile2(self.getZipFiles(), target)
+            assert targetFile
+            files = unzip(self.file, dest or self.head)
+            pprint(files)
+            targetFile = findFile2(files, target)
+            return targetFile
+
+        if saveIt:
             save(files)
 
     @property
@@ -116,6 +141,7 @@ def appendVim(value, name="temp"):
     value = dumpJson(value)
     s = f"let g:{name} = {value}"
     append("/home/kdog3682/.vimrc", s)
+
 
 
 def antichoose(items):
@@ -1304,14 +1330,15 @@ def removable(f):
         return True
 
 def FixGitCache():
-    
     SystemCommand('''
-        git rm --cached -r
-        git add .
+        #git rm --cached -r
+        #git add .
+        #git commit -m "Fixed .gitignore not ignoring files"
+        #git push
     ''')
+    print('Git Cache has been fixed. The next push will see these changes in action.')
 
 
-#FixGitCache()
 
 
 
@@ -1479,8 +1506,16 @@ def gitCloneAndMove(repoUrl, move=1):
 
 #gitCloneAndMove('https://github.com/sagalbot/vue-select/blob/master/src/scss/modules/_spinner.scss')
 
-def getFiles(dir, **kwargs):
+def getFiles(dir=dir2023, **kwargs):
     recursive = kwargs.pop('recursive', False)
+    sortIt = kwargs.get('sort', False)
+    promptIt = kwargs.get('prompt', False)
+    parser = kwargs.get('parser', False)
+    n = kwargs.get('n')
+    if n:
+        files = sortByDate(absdir(dir))
+        return getN(files, n)
+
     def runner(dir):
         for file in absdir(dir):
             if isIgnoredFile2(file):
@@ -1493,6 +1528,12 @@ def getFiles(dir, **kwargs):
     store = []
     checkpoint = checkpointf(**kwargs)
     runner(dirGetter(dir))
+    if sortIt:
+        store = sortByDate(store, reverse=kwargs.get('reverse'))
+    if promptIt:
+        prompt(store)
+    if parser:
+        return map2(store, parser)
     return store
 
 def isIgnoredFile2(file):
@@ -1540,7 +1581,9 @@ class NYTimes:
 
 
 
-def incrementalName(s, dir = 'drive'):
+def incrementalName(s=0, dir = 'drive'):
+    if not s:
+        s = prompt('choose a name because s is None')
     override = 0
     if s.endswith('!'):
         s = s[:-1]
@@ -1576,30 +1619,53 @@ def moveToActiveDir(s):
 
 #pprint(moveToActiveDir(s))
 
-def rpw(file, f):
-    write(file, f(read(file)))
+def rpw(file, f, check=0):
+    payload = f(read(file))
+    if check:
+        prompt(payload)
+    write(file, payload)
 
 def relpath(s):
     prefix = ''
     return s.replace('/home/kdog3682/2023/', prefix)
 
+def getStringArg(key, s):
+    r = f"{key}\([\'\"]?(.*?)[\'\"]\)"
+    return search(r, s, flags=re.M)
+
+def getStringAttr(key, s):
+    r = f"^ *[\'\"]?{key}[\'\"]? *: *[\'\"]?(.*?)[\'\"]?[,;]? *$"
+    return search(r, s, flags=re.M)
+
 def foo1689563342(s):
+
+    chunks = re.split('\n+(?=[^\s\]\}])', s)
+    d = {}
+    for c in chunks:
+        if test('^@font-face', c):
+            name = getStringAttr('font-family', c)
+            src = getStringArg('url', c)
+            d[src] = name 
+
     def parser(x):
         f = x.group(0)
+        if test('^\.?/?fonts/', f):
+            return f
+
         name = addExtension(d[f], getExtension(f))
         outpath = npath('fonts', name)
+        assert isfile(f)
+        cssPath = relpath(outpath)
         mfile(f, outpath)
-        return relpath(outpath)
-    r = 'font-family: \'(.*?)\'[\w\W]+?([\w-]+\.woff2)'
-    d = reverse(dict(findall(r, s)))
-    s = re.sub('[\w-]+\.woff2', parser, s)
+        return cssPath
+
+    s = re.sub('[\w_/-]+\.(?:woff2?|ttf|otf)', parser, s)
     return s
 
 
 
 #printdir(dirGetter('fontdir'))
 
-#rpw('material-icons.css', foo1689563342)
 
 def headAndTail(s):
     a, b = os.path.split(s)
@@ -2032,8 +2098,10 @@ def zokarious():
     write(npath('drive', 'foo.js'), 'aaa')
 
 def map2(items, fn, **kwargs):
+    if not fn:
+        return items
     store = []
-    for index, originalItem in enumerate(items):
+    for index, originalItem in enumerate(list(items)):
         try:
             value = fn(originalItem)
             if value == None:
@@ -2068,8 +2136,10 @@ def makeFileDictResource():
     s = json.dumps(env.dirdict)
     appendVariable(s)
 
-def chooseMultiple(items):
-    indexes = rangeFromString(prompt(number(items), 'choose 1 based indexes'))
+def chooseMultiple(items, fn=0):
+    display = map2(items, fn)
+    message = 'choose 1 based indexes'
+    indexes = rangeFromString(prompt(number(display), message))
     return map2(indexes, lambda x: items[x])
 
 #print(chooseMultiple(alist))
@@ -2136,7 +2206,8 @@ def dprompt2(*args):
         except Exception as e:
             store[arg] = True
         
-    pprint(store)
+    prompt(store)
+
 
 
 
@@ -2259,4 +2330,292 @@ def sortByDate(files, reverse=0):
     files.sort(key=mdate, reverse=reverse)
     return files
 
-#pprint(sortByDate(getFiles('js'), 1))
+
+
+def filePicker(dir=dldir, **kwargs):
+    saveIt = kwargs.pop('save', True)
+    files = getFiles(dir, **kwargs)
+    chosen = chooseMultiple(files, tail)
+    if saveIt:
+        save(chosen, mode='python', current=1)
+
+#filePicker(json=1, dir=dir2023)
+
+
+
+#FileState(files[1]).debug()
+
+f = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/storyOfYangxiPalace.jieba.json'
+#print
+#print(read(f)[0].get('episodeNumber'))
+#clip(read(files[0])[0])
+
+
+#rpw('clip.js', parseConversation, check=1)
+
+files = ["/mnt/chromeos/MyFiles/Downloads/2e1138925e9cc4385bf450593750cc57d2825701e8fc93a6a3ab1708ff2fc541-2023-05-06-03-43-21.zip", "/mnt/chromeos/MyFiles/Downloads/2e1138925e9cc4385bf450593750cc57d2825701e8fc93a6a3ab1708ff2fc541-2023-07-20-01-00-46.zip"]
+
+def parseChatgptZipFiles():
+    ''' gpt chat chatgpt openai '''
+
+    def parser(file):
+        promptIt = 1
+        file = FileState(file)
+        targetFile = file.unzip(trashdir, target='conversations.json')
+        cfile(npath(trashdir, 'chat.html'), incName('Chatgpt.html', dir='drive', prompt=promptIt))
+        data = read(targetFile)
+        payload = map2(data, parseConversation)
+        prompt(payload[0], 'first item of the payload')
+        incwrite('Chatgpt', payload, prompt=promptIt)
+        file.remove()
+        prompt('success')
+        return True
+
+    r = '\w+(?:-\d+){6}\.zip'
+    return getFiles(dldir, r=r, sort=1, prompt=0, parser=parser)
+
+def parseConversation(x):
+    def parser(item):
+        message = item.get('message')
+        if not message:
+            return 
+        author = message.get('author').get('role')
+        if author == 'system':
+            return 
+
+        timestamp = message.get('create_time')
+        id = item.get('id')
+        parentId = item.get('parent')
+        contentParts = message.get('content').get('parts')
+        content = join(contentParts)
+        return {
+            'author': author,
+            'id': id,
+            'parentId': parentId,
+            'timestamp': timestamp,
+            'text': content,
+        }
+
+    title = x.get('title')
+    id = x.get('id', None)
+    timestamp = x.get('create_time', None)
+    mapping = x.get('mapping')
+    contents = map2(mapping.values(), parser)
+    return {
+        'title': title,
+        'id': id,
+        'timestamp': timestamp,
+        'contents': contents,
+    }
+
+def incName(name, dir='jsondrive', **kwargs):
+    aliases = {
+        'ffr': 'File Function Ref',
+    }
+    name = aliases.get(name, name)
+    promptIt = kwargs.get('prompt', None)
+    name = incrementalName(npath(dir, addExtension(name, 'json')))
+    if promptIt:
+        dprompt2(name)
+    return name
+
+
+def incwrite(name=0, payload=0, prompt=0, save=1):
+    n = incName(name, dir='jsondrive', prompt=prompt)
+    write(n, payload, save=save)
+
+def findFile2(files, r):
+    fn = testf(r)
+    names = map(files, tail)
+    index = find(files, fn, mode=int)
+    if index == None:
+        return 
+    return files[index]
+
+#pprint(parseChatgptZipFiles())
+
+def moveFontsToFontDir():
+    fonts = getFiles(fonts=1)
+    prompt(fonts)
+    pprint(mfiles(fonts, dir=fontdir))
+
+
+def clickThrough(chunks):
+    for chunk in chunks:
+        prompt(chunk)
+
+
+ftpdir='/home/kdog3682/.vim/ftplugin/'
+#appendVariable(absdir(ftpdir))
+
+temp = [
+    "/home/kdog3682/.vim/ftplugin/vim.vim",
+    "/home/kdog3682/.vim/ftplugin/html.vim",
+    "/home/kdog3682/.vim/ftplugin/css.vim",
+    "/home/kdog3682/.vim/ftplugin/math.vim",
+    "/home/kdog3682/.vim/ftplugin/python.vim",
+    "/home/kdog3682/.vim/ftplugin/txt.vim",
+    "/home/kdog3682/.vim/ftplugin/markdown.vim",
+    "/home/kdog3682/.vim/ftplugin/javascript.vim"
+]
+'/home/kdog3682/.vim/after/ftplugin/vim.vim'
+'/home/kdog3682/.vim/after/ftplugin/python.vim'
+#mkdir()
+
+ftplugindir="/home/kdog3682/.vim/ftplugin/"
+
+def mfiles(files=0, dir=0, to=0):
+    if isArray(dir):
+        to = dir
+
+    if to:
+        assert len(files) == len(to)
+        for i, file in enumerate(files):
+            mfile(file, to[i])
+    elif dir:
+        for file in files:
+            mfile(file, dir)
+    
+
+
+
+def getSetStoreDecorator(file):
+    base = read(file) or {}
+
+    def wrapper(fn):
+        def decorator(*args, **kwargs):
+            value = fn(*args, **kwargs)
+            base.update(value)
+            write(file, base)
+            pprint(base)
+            return base
+        return decorator
+    return wrapper
+
+def htmlRE(key):
+    r = f'<{key}[\w\W]*?>([\w\W]+?)</{key}>'
+    return r
+
+@getSetStoreDecorator('svg-paths.json')
+def createSvgPathLibrary(files):
+    def parse(s):
+        r = htmlRE('svg')
+        r2 = htmlRE('style')
+        r3 = '\r\n\t'
+        value = re.sub(r3, '', re.sub(r2, '', search(r, s).strip()))
+        assert value
+        return value
+
+    store = {}
+    for file in toArray(files):
+        name = re.sub('-(?:svgrepo).*', '', tail(file))
+        s = read(file).decode()
+        store[name] = parse(s)
+        rfile(file)
+
+    return store
+
+temp = [
+    "/mnt/chromeos/MyFiles/Downloads/clipboard-list-svgrepo-com.svg",
+    "/mnt/chromeos/MyFiles/Downloads/clipboard-check-svgrepo-com.svg",
+]
+#pprint(createSvgPathLibrary(temp))
+
+def createVariable2(name, value, prefix=None):
+    value = dumpJson(value)
+    if prefix: prefix += ' '
+    s = f"{prefix}{name} = {value}"
+    return s
+
+def jsonToJavascript(file):
+    assert(isJson(file))
+    name = camelCase(removeExtension(file))
+    #value = list(read(file).values())[2]
+    print(json.dumps(read(file)))
+    return 
+    payload = 'export default ' + value
+    outpath = file + '.js'
+    write(outpath, payload)
+    save(outpath)
+
+
+#files = getFiles(dir='dldir', hours=100, svg=1)
+
+#createSvgPathLibrary(glf())
+#jsonToJavascript('svg-paths.json')
+
+def getN(items, n):
+    if n > 0:
+        return items[0:n]
+    else:
+        return items[n:]
+
+gitignorefile = '/home/kdog3682/2023/.gitignore'
+
+
+
+
+def appMoveLastFilesFromDownloadToMaindirAndGitIgnore(n):
+    
+    if n > 0:
+        print('maybe n should be less than 0 ... early return')
+        return 
+
+    files = getFiles(dldir, n)
+    def fn(file):
+        name = tail(file)
+        e = getExtension(name)
+        a = search('[a-zA-Z]\w+$', removeExtension(name))
+        return a + '.' + e
+    names = map(files, fn)
+    dprompt(names)
+    mfiles(files, names)
+    append(gitignorefile, join(names))
+
+temp = [
+    "/home/kdog3682/.vimrc",
+    "/home/kdog3682/2023/cm.esm.js",
+    "baseComponents.js",
+    "changelog.md",
+    "cm3.js",
+    "utils.js",
+    "/home/kdog3682/2023/cm-next.js",
+    "/home/kdog3682/2023/pl-htmlBuilder.js",
+    "/home/kdog3682/2023/pl-create.js",
+    "/home/kdog3682/2023/xmlString.js",
+    "class.js",
+    "raw.js",
+    "/home/kdog3682/2023/rp.js",
+    "/home/kdog3682/2023/codeOrganizer2.js",
+    "cm-lezer.js",
+    "Lezer2.js",
+    "save.txt",
+    "saved.txt",
+    "runVite.js",
+    "git-data3.json",
+    "/home/kdog3682/CLIPS/file-identifier-reference.june.json",
+    "/home/kdog3682/.vim/ftplugin/markdown.vim",
+    "/home/kdog3682/.vim/ftplugin/javascript.vim",
+    "/home/kdog3682/2023/browser-utils.js",
+    "/home/kdog3682/DIST/pl-htmlBuilder.js",
+    "./juneJson.json.js",
+    "/home/kdog3682/2023/setupComponent.js",
+    "/home/kdog3682/2023/next.js",
+    "/home/kdog3682/2023/variables.js",
+    "./pl-invivoVueBuilder.js",
+    "file-table.txt",
+]
+
+
+def rnc(s=None):
+    """
+        writes to jsondrive in an incremental manner
+        generally used for json type clips (like data aggregation)
+    """
+    incwrite(s, clip())
+
+def gjf():
+    # get javascript files
+    files = getFiles(js=1, sort=1, reverse=1)
+    s = join(comment(datestamp()), files)
+    append('files.txt', s)

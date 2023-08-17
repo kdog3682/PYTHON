@@ -407,14 +407,20 @@ def get_repo_files_from_url(url):
             parts.append('')
             return parts
         else:
-            return [parts[0], parts[1], parts[-1]]
+            return [parts[0], parts[1], '/'.join(parts[4:])]
 
     user, repo, start = parse(url)
     g = github.Github()
     repo = g.get_repo(f"{user}/{repo}")
     ref = repo.default_branch
-    contents = repo.get_contents(start, ref=ref)
-    assert contents
+    contents = None
+    try:
+        contents = repo.get_contents(start, ref=ref)
+    except Exception as e:
+        dprompt(repo, ref, start, 'the error is most likely with the start. One time in the past, for "https://github.com/vadimdemedes/thememirror/tree/main/source/themes", the start should have been "source/themes", but the parse only took themes')
+        raise e
+        assert contents
+
     store = []
 
     while contents:
@@ -793,7 +799,6 @@ hammyV1="""
 #uploadHammy({'version1.html': hammyV1})
 #clip(get_repo_files_from_url('https://github.com/nbremer/freshdatashapes/tree/gh-pages/slides'))
 
-
 def upload_kdog3682_main(files):
     Github(key = 'kdog3682', repo = 'kdog3682.github.io', upload=files)
 
@@ -835,3 +840,11 @@ def browse(file_name=0, reponame=0, username='kdog3682', filter=0):
                 # saves to saved.txt
 
 #browse(reponame='2023', filter='color')
+
+
+
+# "https://hammymathclass.github.io"
+
+
+#s = 'https://github.com/vadimdemedes/thememirror/tree/main/source/themes'
+#clip(get_repo_files_from_url(s))

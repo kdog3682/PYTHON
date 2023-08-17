@@ -738,6 +738,8 @@ def choose(x, mode=0, filter=0, auto=1):
             return unique(value)
 
 def find(arr, fn, mode=None, flags=0):
+    fn = testf(fn)
+
     if isObject(arr):
         for k, v in arr.items():
             if fn in v:
@@ -1086,6 +1088,8 @@ def _cleanup_base():
     breaker(3)
 
 def testf(r, flags=0, reverse=0):
+    if isFunction(r):
+        return r
     if reverse:
         return lambda x: not test(r, x, flags)
     else:
@@ -1124,11 +1128,11 @@ def mkdir(dir):
         return dir
         return True
 
-def write(f, s, open=0):
+def write(f, s, open=0, **kwargs):
     try:
         _write(f, s, open)
         r = '^/mnt'
-        if test(r, f):
+        if kwargs.get('save') or test(r, f):
             save(f)
     except Exception as e:
         print(e)
@@ -1142,14 +1146,7 @@ def _write(f, s, _open=0):
         return
     e = getExtension(f)
 
-    if e == "json.js":
-        name = camelCase(removeExtension(tail(f)))
-        value = createVariable(name, stringify(s), "js")
-        with open(f, "w") as _f:
-            _f.write(value)
-        # log(file = f)
-
-    elif e == "recent":
+    if e == "recent":
         with open(f, "w") as _f:
             if isString(s):
                 _f.write(s)
@@ -1205,7 +1202,7 @@ def removeExtension(s):
 def createVariable(name, s, lang="py"):
     if test("^(fun|def|class)", s):
         return s
-    prefix = "var " if lang == "js" else ""
+    prefix = "const " if lang == "js" else ""
     if not name:
         name = "PLACE_HOLDER"
     if isString(s) and not isJsonParsable(s):
@@ -1316,8 +1313,10 @@ def pop(x, key):
         return x.pop(key, None)
 
 def parseJSON(x):
-    if isString(x):
-        x = x.strip()
+    if not isString(x):
+        return x
+
+    x = x.strip()
     try:
         return json.loads(x) if isJsonParsable(x) else x
     except Exception as e:
@@ -1658,10 +1657,12 @@ def checkpointf(
     deleteRE=0,
     include="",
     size=0,
+    svg=0,
     maxLength=0,
     image=0,
     today=0,
     flags=re.I,
+    fonts=0,
     files=0,
     gif=0,
     weeks=0,
@@ -1713,10 +1714,13 @@ def checkpointf(
     if isf:
         onlyFiles = 1
     if r:
-        name = r
+        keepRE = r
     extensions = kwargs.get("extensions", [])
     if kwargs.get("isdir"):
         onlyFolders = 1
+
+    if fonts:
+        extensions.extend(fonte)
     if log:
         extensions.append("log")
     if math:
@@ -1724,6 +1728,7 @@ def checkpointf(
     if css:
         extensions.append("css")
     if js: extensions.append("js")
+    if svg: extensions.append("svg")
     if zip: extensions.append("zip")
     if json: extensions.append("json")
     if py:
@@ -2521,7 +2526,8 @@ def isLibraryFile(f):
         "parser-html.min.js",
     ]
     name = tail(f)
-    return name in library or ".min" in name
+    r = '\.(?:esm|min)'
+    return name in library or test(r, name)
 
 def reduce(items, fn):
     store = {}
@@ -8574,12 +8580,18 @@ def rename(a, b):
     #rename('app-main.js', 'appscript')
 
 
-def save(x, mode=0):
+def save(x, mode=0, current=0):
     payload = x
     if mode == 'python':
-        payload = f"file = '{x}'"
-
-    append('/home/kdog3682/2023/saved.txt', payload)
+        if isString(x):
+            payload = f"file = '{x}'"
+        elif isArray(x):
+            if len(x) == 1:
+                payload = f"file = '{x[0]}'"
+            else:
+                payload = f"files = {dumpJson(x)}"
+    outpath = self() if current  else '/home/kdog3682/2023/saved.txt'
+    append(outpath, payload)
 
 #print(rangeFromString('1 23'))
 #print(isfile(read('base.py')))
