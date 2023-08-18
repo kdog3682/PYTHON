@@ -1,0 +1,123 @@
+
+pipInstall("$1")
+
+individualAssignment() #Ella Wu and GLF by Default
+
+GoogleApp().openDoc('$1') #itest($1)
+
+GoogleApp().downloadDoc('$1', '$2') #$1 = findDocViaITest, $2=outName
+
+pprint(snapshotOfDirectory()) # Currently Just PDF
+
+Partitioner2(ff(dldir, pdf=1, sort=1))()
+
+Github(key = 'hammy', upload='$clip.html')
+
+Github(key = 'hammy', upload='flashcards.html')
+
+Github(key = 'brooklyn', repo = '', upload={'bkl.html': 'index.html', 'percents.html': 'percents.html'})
+
+printGithub()
+
+uploadProject('test2', 'test2.html')
+
+uploadMaterials(skipClassroom=0, skipEmail=0, official=0)
+
+Github(key = 'kdog3682', info = 1)
+
+gitInit() # Use to create a new git directory inside dir2023
+
+ff($1)
+
+Github(deleteRepo='$1')
+
+GoogleDrive().downloadFile()
+
+aiprompt()
+
+smartManager()
+drivePicturesToHammyArtContestFolder(contestNumber=$1)
+
+renameFile(npath(dldir, 'test.pdf'), "$1")
+GoogleEmail().cleanupEmails() # need to work on it
+
+individualAssignment()
+
+partitionMove(dldir, action='delete')
+
+partitionMove(dldir, to=pdfdldir, action='move')
+
+ff(pubdir, name="$1", mode='open', js=1) # view pubdir js files
+
+npmInstall('$1') # install npm package
+
+print('$1', 'just testing')
+
+SystemCommand("npm uninstall $1")
+
+saveToSandisk()
+
+ofile('test.pdf')
+
+Github(key='hammy', write='changelog.html')
+
+file_table_cleanup() # not working I think
+
+usb(ff(js=1, today=1))
+
+findFile('emoji.json')
+
+cfile('$1.js', '$1.v1.js')
+
+Github(key = 'kdog3682', repo = 'public', upload='jsbin.css')
+
+
+GoogleApp().doJobApplication()
+
+GoogleEmail().getEmails() 
+    # write('my-email-data.json', self.getFirstThreads())
+
+GoogleEmail().cleanupEmails()
+    # Cleans up the main inbox.
+
+upload_kdog3682_main($1)
+
+MyFireStore().postMyClipData()
+
+MyFireStore().clearRootCollection($1)
+
+
+DropBox().pull('$1')
+
+DropBox().push('$1') # usually a.py
+
+print(sayhi('$1'))
+
+copyClipFileToDrive('$1.json') # 07-20-2023 
+
+zokarious()
+
+printdir(dldir)
+
+
+
+# 08-08-2023 
+# Uploads index.html to hammymathclass.github.io
+Github(key = 'hammy0', upload='index.html') 
+
+# 08-08-2023 
+# Uploads both of the hammies
+Github(key = 'hammy', upload='index.html') 
+Github(key = 'hammy0', upload='index.html') 
+
+# Resets the git cache
+FixGitCache()
+
+
+buildViteFile('index2.html', 'magicscript')
+
+print('howdy!!')
+
+pprint(getRepoContents('projects'))
+
+print(fixViteHtmlContent(read('/home/kdog3682/2023/dist/index2.html')))

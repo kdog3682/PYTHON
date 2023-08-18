@@ -1700,6 +1700,7 @@ def checkpointf(
     isf=0,
     isp=0,
     onlyFolders=0,
+    folders=0,
     biggerThan=0,
     smallerThan=0,
     fn=0,
@@ -1776,6 +1777,8 @@ def checkpointf(
 
         if include and filename in include:
             return True
+        if folders and not isdir(f):
+            return False
         if ignore and filename in ignore:
             return False
         if isp and filename.startswith("."):

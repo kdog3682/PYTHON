@@ -1511,6 +1511,7 @@ def getFiles(dir=dir2023, **kwargs):
     sortIt = kwargs.get('sort', False)
     promptIt = kwargs.get('prompt', False)
     parser = kwargs.get('parser', False)
+    folders = kwargs.get('folders')
     n = kwargs.get('n')
     if n:
         files = sortByDate(absdir(dir))
@@ -1520,6 +1521,8 @@ def getFiles(dir=dir2023, **kwargs):
         for file in absdir(dir):
             if isIgnoredFile2(file):
                 continue
+            elif folders and isdir(file):
+                store.append(file)
             elif isfile(file) and checkpoint(file):
                 store.append(file)
             elif recursive and isdir(file):
@@ -1529,7 +1532,7 @@ def getFiles(dir=dir2023, **kwargs):
     checkpoint = checkpointf(**kwargs)
     runner(dirGetter(dir))
     if sortIt:
-        store = sortByDate(store, reverse=kwargs.get('reverse'))
+        store = sortByDate(store, reverse=kwargs.get('reverse', 0))
     if promptIt:
         prompt(store)
     if parser:
@@ -2195,8 +2198,14 @@ class ReadParse:
         write(path, results)
     
 def dprompt2(*args):
-    import inspect
+    dprint2(*args)
 
+    print('----------------------------')
+    print('@dprompt2: press anything to continue')
+    input()
+
+def dprint2(*args):
+    import inspect
     store={}
     for arg in args:
         try:
@@ -2206,7 +2215,8 @@ def dprompt2(*args):
         except Exception as e:
             store[arg] = True
         
-    prompt(store)
+    for k,v in store.items():
+        print('key:', k, '         value:', v)
 
 
 
@@ -2619,3 +2629,77 @@ def gjf():
     files = getFiles(js=1, sort=1, reverse=1)
     s = join(comment(datestamp()), files)
     append('files.txt', s)
+
+def folders():
+    files = getFiles(folders=1, sort=1)
+    pprint(files)
+
+#folders()
+a = 1
+b = 2
+#dprint2(a, b)
+
+
+
+def read2(file):
+    textExtensions = [
+        "js",
+        "css",
+        "html",
+        "py",
+        "txt",
+        "md",
+    ]
+
+    e = getExtension(file)
+    mode = "r" if e in textExtensions else "rb"
+    with open(file, mode) as f:
+        return f.read()
+
+def allFiles(dir):
+    store = []
+    for root, _, files in os.walk(dir):
+        for file in files:
+            path = os.path.join(root, file)
+            store.append(path)
+    return store
+
+def viteMover():
+    dir = "/home/kdog3682/2023/dist/"
+    indexFile = find(absdir(dir), 'html$')
+    mfile(indexFile, dir + 'index.html')
+    dir = "/home/kdog3682/2023/dist/assets/"
+    files = allFiles(dir)
+    def runner(file):
+        e = getExtension(file)
+        if e == 'js':
+            path = npath(dir, 'main.js')
+            mfile(file, path)
+            return path
+        elif e == 'css':
+            path = npath(dir, 'style.css')
+            mfile(file, path)
+            return path
+        else:
+            return file
+    results = map(files, runner)
+    return results
+
+#pprint(viteMover())
+
+
+def runjs(file, *args):
+    items = ['node', file, *args]
+    command = ' '.join(items)
+    dprint2(command)
+
+    from subprocess import Popen, PIPE
+    process = Popen(
+        command, stdout=PIPE, stderr=PIPE, shell=True
+    )
+
+    data = process.communicate()
+    success, error = [decode(d).strip() for d in data]
+    return dict(success=success, error=error)
+
+

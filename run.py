@@ -679,8 +679,8 @@ def addPythonImports(s):
     return f"from {extra} import *\n{s}" if extra else s
 
 def pythonAppController():
-    resourcedir = rootdir + 'Resources2023/'
-    items = split(removeComments(read(resourcedir + 'pac.txt')), '\n\n+')
+    pacFile='/home/kdog3682/PYTHON/pac.txt'
+    items = split(removeComments(read(pacFile)), '\n\n+')
     cmd = dollarPrompt(items)
     cmd = addPythonImports(cmd)
     try:
