@@ -121,3 +121,16 @@ print('howdy!!')
 pprint(getRepoContents('projects'))
 
 print(fixViteHtmlContent(read('/home/kdog3682/2023/dist/index2.html')))
+
+
+# 08-23-2023 # builds really quickly
+buildViteFile('clip.html', 'clip-turtle-demo')
+
+# 08-23-2023 Deletes unwanted files via choose
+from githubscript import updateRepo
+cleanupRepo('projects')
+
+# 08-23-2023
+from githubscript import updateRepo
+updateRepo('projects', index = "$1", readme = "readme.md")
+

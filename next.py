@@ -1513,20 +1513,25 @@ def getFiles(dir=dir2023, **kwargs):
     parser = kwargs.get('parser', False)
     folders = kwargs.get('folders')
     n = kwargs.get('n')
+
     if n:
         files = sortByDate(absdir(dir))
         return getN(files, n)
 
     def runner(dir):
         for file in absdir(dir):
-            if isIgnoredFile2(file):
-                continue
-            elif folders and isdir(file):
-                store.append(file)
-            elif isfile(file) and checkpoint(file):
-                store.append(file)
-            elif recursive and isdir(file):
-                runner(file)
+            try:
+                if isIgnoredFile2(file):
+                    continue
+                elif folders and isdir(file):
+                    store.append(file)
+                elif isfile(file) and checkpoint(file):
+                    store.append(file)
+                elif recursive and isdir(file):
+                    runner(file)
+            except Exception as error:
+                errorPrompt(file, error)
+            
 
     store = []
     checkpoint = checkpointf(**kwargs)
@@ -2424,9 +2429,9 @@ def incName(name, dir='jsondrive', **kwargs):
     }
     name = aliases.get(name, name)
     promptIt = kwargs.get('prompt', None)
-    name = incrementalName(npath(dir, addExtension(name, 'json')))
     if promptIt:
         dprompt2(name)
+    name = incrementalName(npath(dir, addExtension(name, 'json')))
     return name
 
 
@@ -2617,16 +2622,23 @@ temp = [
 ]
 
 
-def rnc(s=None):
+def rnc(newName=None):
     """
         writes to jsondrive in an incremental manner
         generally used for json type clips (like data aggregation)
     """
-    incwrite(s, clip())
+    name = incName(newName, dir='jsondrive', prompt=1)
+    mfile('clip.js', name)
 
-def gjf():
+def fileDate(f):
+    strife = "%A %B %d %Y, %-I:%M:%S%p"
+    return datestamp(mdate(f), strife)
+
+
+def gjf(hours=0):
     # get javascript files
-    files = getFiles(js=1, sort=1, reverse=1)
+    files = getFiles(js=1, sort=1, reverse=1, hours=int(hours))
+    files = map(files, lambda x: x + ' :: ' + fileDate(x))
     s = join(comment(datestamp()), files)
     append('files.txt', s)
 
@@ -2703,3 +2715,28 @@ def runjs(file, *args):
     return dict(success=success, error=error)
 
 
+#dir = "/home/kdog3682/2023/dist/node_modules/"
+#rmdir(dir)
+
+
+def findFileString(s):
+    r = '/\S+'
+    return search(r, s)
+
+def askof():
+    r = '^#.+'
+    s = read('files.txt')
+    item = re.split(r, s, flags=re.M)[-1]
+    files = unique(linegetter(item, fn=findFileString))
+    assert(every(files, isfile))
+    def runner(item):
+        if isLibraryFile(item):
+            return 
+        info = fileInfo(item)
+        identifiers = getFunctionNames(item)
+        info['identifiers'] = identifiers
+        return info
+    clip(map(files, runner))
+    #return files
+
+#pprint(askof())

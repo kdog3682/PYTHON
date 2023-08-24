@@ -1063,5 +1063,80 @@ def block_to_browser(s, mode='text'):
         appscript('gdoc', name, s)
 
 
+
+def fixViteHtmlContent(s):
+    vuesrc = '<script src="vue.min.js"></script>'
+    vuescriptsrc = '<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js" integrity="sha512-XdUZ5nrNkVySQBnnM5vzDqHai823Spoq1W3pJoQwomQja+o4Nw0Ew1ppxo5bhF2vMug6sfibhKWcNJsG8Vj9tg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>'
+    s = sub(s, vuesrc, vuescriptsrc)
+    def runner(s):
+        if s == 'js':
+            return './assets/main.js'
+        if s == 'css':
+            return './assets/style.css'
+        raise Exception(s)
+
+    s = sub(s, "/assets.*?\.(\w+)(?=\")", runner)
+    p = f"<!-- Last Updated On {strftime()} --------------->\n</html>"
+    s = sub(s, '</html>', p)
+    return s
+
+def buildViteFile(file, reponame):
+    """ the repo name is the projectname """
+    from githubscript import getRepo, pushContent, getRepoContents
+    assert(isfile(file))
+
+    if head(file) != dir2023:
+        cfile(file, npath(dir2023, 'temp.html'))
+        file = 'temp.html'
+        time.sleep(0.5)
+
+    aliases = {
+        'cm3.js': 'cm.html',
+        'cm3.js': 'cm.html',
+    }
+
+    file = aliases.get(file, file)
+    if getExtension(file) != 'html':
+        print('early return: not an html file. we only compile from html')
+        return 
+    
+
+    #prompt(dict(file=file, reponame=reponame))
+
+    results = runjs('viteBuild.js', file)
+    if not results.get('success').startswith('vite'):
+        return print('did not build due to error')
+
+    print('finished viteBuild getting the repo')
+    repo = getRepo('projects')
+    print('got the repo', repo)
+    time.sleep(1)
+    assert(repo)
+    dir = "/home/kdog3682/2023/dist/"
+
+    files = allFiles(dir)
+
+    def fixFile(s):
+        return sub(s, '-\w+(?=\.\w+$)', '')
+
+    for file in files:
+        e = getExtension(file)
+        content = read2(file)
+        path = None
+        if e == 'js':
+            path = f"{reponame}/assets/main.js"
+        elif e == 'css':
+            path = f"{reponame}/assets/style.css"
+        elif e == 'html':
+            content = fixViteHtmlContent(content)
+            path = f"{reponame}/index.html"
+        else:
+            path = f"{reponame}/assets/{fixFile(tail(file))}"
+
+        #print(path, content)
+        pushContent(repo, path, content)
+
+    pprint(getRepoContents(repo))
+
 if __name__ == '__main__':
     python()

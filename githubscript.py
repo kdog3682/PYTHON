@@ -1062,8 +1062,6 @@ def editSources(s, repo):
     return sub(s, "/assets", "/" + repo + "/assets")
 
 
-vuesrc = '<script src="vue.min.js"></script>'
-vuescriptsrc = '<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js" integrity="sha512-XdUZ5nrNkVySQBnnM5vzDqHai823Spoq1W3pJoQwomQja+o4Nw0Ew1ppxo5bhF2vMug6sfibhKWcNJsG8Vj9tg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>'
 
 # upload_kdog3682_test()
 
@@ -1114,78 +1112,27 @@ def getRepoContents(repo, start='', fn=identity):
 #create_project()
 
 
-def buildViteFile(file, reponame):
-    assert(isfile(file))
-
-    print(dict(file=file, reponame=reponame))
-
-    results = runjs('viteBuild.js', file)
-    if not results.get('success').startswith('vite'):
-        return print('did not build due to error')
-
-    repo = getRepo('projects')
-    dir = "/home/kdog3682/2023/dist/"
-
-    files = allFiles(dir)
-
-    def fixFile(s):
-        return sub(s, '-\w+(?=\.\w+$)', '')
-
-    for file in files:
-        e = getExtension(file)
-        content = read2(file)
-        path = None
-        if e == 'js':
-            path = f"{reponame}/assets/main.js"
-        elif e == 'css':
-            path = f"{reponame}/assets/style.css"
-        elif e == 'html':
-            content = fixViteHtmlContent(content)
-            path = f"{reponame}/index.html"
-        else:
-            path = f"{reponame}/assets/{fixFile(tail(file))}"
-
-        pushContent(repo, path, content)
-
-    def reader(item):
-        date = item.last_modified
-        path = item.path
-        print(date, path)
-
-    pprint(getRepoContents(repo, fn=reader))
-
-def fixViteHtmlContent(s):
-    s = sub(s, vuesrc, vuescriptsrc)
-    def runner(s):
-        if s == 'js':
-            return './assets/main.js'
-        if s == 'css':
-            return './assets/style.css'
-        raise Exception(s)
-
-    s = sub(s, "/assets.*?\.(\w+)(?=\")", runner)
-    p = f"<!-- Last Updated On {strftime()} --------------->\n</html>"
-    s = sub(s, '</html>', p)
-    return s
-
 def getRepo(repo):
     g = Github(key="kdog3682", repo=repo)
     return g.Repo
 
-
-def deleteProject(reponame, projectname):
-    repo = getRepo(reponame)
-    branch=repo.default_branch
-    contents = repo.get_contents(projectname)
-
-    for content in contents:
-        if content.type == 'file':
-            repo.delete_file(
+def deleteContent(repo, content):
+            branch=repo.default_branch
+            return repo.delete_file(
                 path=content.path,
                 message=f'Delete {content.name}',
                 sha=content.sha,
                 branch=branch
             )
+
+def deleteProject(reponame, projectname):
+    repo = getRepo(reponame)
+    contents = repo.get_contents(projectname)
+    branch=repo.default_branch
+
+    for content in contents:
+        if content.type == 'file':
+            deleteContent(repo, content)
 
     repo.delete_file(
         path=project,
@@ -1195,15 +1142,18 @@ def deleteProject(reponame, projectname):
     )
     print(f'Folder "{folder_path}" and its contents have been deleted.')
 
-brooklynlearning
-    volunteer
-    about
-    jobs 
-        school manager
-        software engineer
-        elementary & middle school english teacher
-        elementary & middle school math teacher
-        artist
+def cleanupRepo(reponame):
+     repo = getRepo(reponame)
+     contents = getRepoContents(repo)
+     chosen = chooseMultiple(contents)
+     prompt(chosen)
+     for content in chosen:
+         print(deleteContent(repo, content))
 
-    students
-        kayleechen
+
+def updateRepo(reponame, index=None, readme=None):
+     repo = getRepo(reponame)
+     if index:
+         print(pushContent(repo, 'index.html', read(index)))
+     if readme:
+         print(pushContent(repo, 'readme.md', read(readme)))
