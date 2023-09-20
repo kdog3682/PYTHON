@@ -1318,10 +1318,10 @@ def gitPush(dir):
         cd {dir}
         git add .
         git commit -m "'autopush'"
-        git push -f origin main
+        git push -f origin master
     """
 
-    parseDiff(dir=dir)
+    #parseDiff(dir=dir)
     SystemCommand(mainCommand, dir=dir, printIt=1)
 
 def removable(f):
