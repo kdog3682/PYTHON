@@ -1157,3 +1157,27 @@ def updateRepo(reponame, index=None, readme=None):
          print(pushContent(repo, 'index.html', read(index)))
      if readme:
          print(pushContent(repo, 'readme.md', read(readme)))
+
+
+def createRepo(dir, private=False, name=None):
+    if not name:
+        name = tail(dir)
+    dprompt2(name, dir)
+
+    g = Github(repo=name)
+    g.service.edit(private=private)
+
+    SystemCommand(
+        f"""
+        git init 
+        git branch -m master main
+        git add .
+        git remote add origin git@github.com:kdog3682/{name}.git
+        git commit -m "Initial commit"
+        git push -u origin main
+    """,
+        dir=dir,
+    )
+
+    url = "https://github.com/kdog3682/" + name
+    ofile(url)

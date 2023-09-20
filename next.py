@@ -2204,9 +2204,8 @@ class ReadParse:
     
 def dprompt2(*args):
     dprint2(*args)
-
     print('----------------------------')
-    print('@dprompt2: press anything to continue')
+    print('press anything to continue')
     input()
 
 def dprint2(*args):
@@ -3071,3 +3070,7 @@ def sprawldir(dir, folder):
             items = absdir(items[0])
         else:
             return items
+
+#rmdir(dir2023 + 'vite1')
+
+gitPush(pydir)
