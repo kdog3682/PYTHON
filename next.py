@@ -1318,7 +1318,7 @@ def gitPush(dir):
         cd {dir}
         git add .
         git commit -m "'autopush'"
-        git push
+        git push -f origin main
     """
 
     parseDiff(dir=dir)
