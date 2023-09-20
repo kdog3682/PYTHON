@@ -1255,7 +1255,6 @@ s = """
 
 
 #rlf()
-#files = mostRecentFileGroups(minutes=1)
 #mergepdf(files, outpath='my_resumes_and_cvs.pdf')
 
 
@@ -1267,4 +1266,9 @@ def combineDownloadedPdfs():
     pdf = mergepdf(results, outpath=incrementalName('Bulk PDF.pdf!'))
     prompt('Do you want to remove the files? ctrl-exit to depart')
     rfiles(files)
+
 #combineDownloadedPdfs()
+#sizes = map(files, fsize)
+#checkpoint = iqrf(sizes)
+#pdfs = filter(files, checkpoint)
+#pdf = mergepdf(results, outpath=incrementalName('Bulk PDF.pdf'))

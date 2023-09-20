@@ -134,3 +134,67 @@ cleanupRepo('projects')
 from githubscript import updateRepo
 updateRepo('projects', index = "$1", readme = "readme.md")
 
+
+# 08-24-2023 combine files and delete them
+from pdf import mergepdf
+files = antichoose(mostRecentFileGroups(minutes=50))
+mergepdf(files, lambda x: x.pages[0])
+rfiles(files)
+
+
+# 09-11-2023 
+files = getFiles('~/SVG', name='file')
+pprint(zipToDrive(files, 'chess-svgs'))
+
+
+
+# 09-18-2023 
+mathdir = '/home/kdog3682/MATH/'
+dir = mkdir(mathdir + 'Math PDFS')
+files = getFiles(mathdir, e='pdf')
+pprint(mfiles(files, dir=dir))
+
+
+# 09-18-2023 
+pprint("appscript('emailLastDocToSelf')", 1072)
+
+
+# 09-18-2023 
+cleanup10(pydir)
+
+
+# 09-19-2023 
+cfiles(getFiles('text'), dirGetter('res'))
+rmdir(dirGetter('text'))
+
+
+# 09-19-2023 
+zipToDrive(getFiles(getDrive('PY')), 'PYTHON')
+
+
+# 09-19-2023 Move all text files to resources
+mfiles(getFiles('2023', extensions='md txt'), dirGetter('res'))
+
+
+# moveDriveFilesToDriveFolders('pictures', images = 1)
+# moveDriveFilesToDriveFolders('gdocs', gdoc = 1)
+
+#files = getFiles(drivedir, pdf=1, kb=100)
+#files = getFiles(drivedir)
+#review(files)
+#prompt(files)
+#mfiles(files, dirGetter('res'))
+#rfiles(files)
+#review(files)
+#files = getFiles(drivedir, extensions='afpub tini zip')
+#rfiles(files)
+#emptyTrash()
+#moveDriveFilesToDriveFolders('pdfs', pdf=1)
+
+
+#mfiles(getFiles(mathdir), 'res', ask=1)
+#mfiles(getFiles(mathdir),
+#mdir(mathdir + 'Math PDFS', drivedir + 'Math PDFS 2023')
+
+#mfiles(sprawldir('2023', 'ham'), 'drivepics')
+#moveAllPicturesToDrive('res')

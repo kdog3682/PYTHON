@@ -1,3 +1,4 @@
+vimsavefile = '/home/kdog3682/RESOURCES/saved.txt'
 linebreak = '-' * 50
 resourcedir2023 = "/home/kdog3682/Resources2023"
 hammyfirebasehtml = "/home/kdog3682/FIREBASE/public/index.html"
@@ -203,7 +204,7 @@ utfe = [
     #"pdf",
 ]
 
-imge = ["jpg", "jpeg", "png", "svg"]
+imge = ["jpg", "jpeg", "png", "svg", 'heic']
 fonte = ["ttf", "otf", "woff", "woff2"]
 musice = ["m4a", "mp3", "mp4", "wav"]
 macdir = "/users/harfunmaterials/"
@@ -387,6 +388,11 @@ def filter(items, f=exists, *args, **kwargs):
             ignore = f
             f = lambda x: x not in ignore
 
+        if args and isFunction(args[0]):
+            return [
+                x for x in list(items) if f(x, **kwargs) and every(args, lambda check: check(x))
+            ]
+
         return [
             x for x in list(items) if f(x, *args, **kwargs)
         ]
@@ -493,27 +499,16 @@ def ofile(f):
         return openBrowser('https://redd.it/' + f.id)
     return map(f, openBrowser)
 
-def mfiles(files, dir, fn=0, ask=0):
-    if isString(files):
-        files = absdir(files)
-    if not isdir(dir):
-        dprompt('not a dir', dir, 'press a key to make it')
-        mkdir(dir)
-
-    if ask:
-        prompt(files, 'move these files to', dir, '?')
-    for f in files:
-        if fn:
-            dir = fn(dir + fn(tail(f)))
-        mfile(f, dir)
-
 def cfiles(files, dir, ask=0):
     if ask:
         prompt(files, tempbudir, 'are you sure you want to copy these files and overwrite existing files in the directory?')
 
     mkdir(dir)
     for f in files:
-        cfile(f, dir)
+        if isRemovableFile(f):
+            rfile(f)
+        else:
+            cfile(f, dir)
     if ask:
         printdir(dir)
 
@@ -522,6 +517,9 @@ def cfile(f, t):
 
 def mfile(f, t, mode="move"):
     assert isfile(f)
+    if t in env.dirdict:
+        t = env.dirdict[t]
+
     if not getExtension(t) and not isdir(t):
         a = prompt('no extension for', t, 'did you forget it?')
         if a:
@@ -1106,7 +1104,7 @@ def rmdir(dir, force=0, create=0):
     elif (
         len(os.listdir(dir)) == 0
         or force
-        or prompt("rmdir for sure?")
+        or prompt("rmdir for sure?",dir)
     ):
         shutil.rmtree(dir)
         print("removing dir", dir)
@@ -1651,8 +1649,10 @@ def isSameDate(date, f):
     return date.day == fdate.day
 
 def checkpointf(
+    kb=0,
     keepRE=0,
     contains=0,
+    gdoc=0,
     deleteIt=0,
     deleteRE=0,
     include="",
@@ -1660,6 +1660,7 @@ def checkpointf(
     svg=0,
     maxLength=0,
     image=0,
+    images=0,
     today=0,
     flags=re.I,
     fonts=0,
@@ -1708,6 +1709,8 @@ def checkpointf(
     json=0,
     **kwargs,
 ):
+    if kb:
+        smallerThan = kb * 1000
     if size:
         biggerThan = size
     if text:
@@ -1724,6 +1727,10 @@ def checkpointf(
         extensions.extend(fonte)
     if log:
         extensions.append("log")
+    if gdoc:
+        extensions.append("gdoc")
+        extensions.append("gsheet")
+
     if math:
         extensions.append("math")
     if css:
@@ -1742,7 +1749,7 @@ def checkpointf(
         extensions.append("pdf")
     if gif:
         extensions.append("gif")
-    if image:
+    if image or images:
         for e in imge:
             extensions.append(e)
     if isArray(e):
@@ -1820,6 +1827,9 @@ def checkpointf(
                 #return False
             
         elif extensions and e not in extensions:
+            return False
+
+        if minutes and not isRecent(f, minutes=minutes):
             return False
 
         if hours and not isRecent(f, hours=hours):
@@ -1977,21 +1987,6 @@ def getfiles(dir, recursive=0, mode=dict, sort=0, **kwargs):
     output = {} if mode == dict else []
     runner(dirgetter(dir))
     return output
-
-def printdir(dir=dldir, printIt=0):
-    dir = dirgetter(dir)
-    files = os.listdir(dir)
-    size = len(files)
-    if size < 30:
-        files = map(files, lambda f: normpath(dir, f))
-        pprint(map(files, fileInfo))
-    else:
-        pprint(sorted(files))
-
-    dprint(size, dir)
-    if printIt:
-        clip(files)
-    return files
 
 NCG_TEMPLATE_LIBRARY = {
     "b": "\\b(?:$1)\\b",
@@ -4686,7 +4681,7 @@ def changeLastJsonFileToJavascriptAsset():
     normAppend("json.js", s)
 
 
-def linegetter(s, trim=1, fn=0, filter=0, u=0):
+def linegetter(s, trim=1, fn=0, filter=0, u=0, skip=0):
     s = splitOnWord(s, "breaker")
     s = re.sub('^ *#.+\n+', '', s, flags=re.M)
     lines = re.split("\n+", smartDedent(textgetter(s)))
@@ -4694,6 +4689,8 @@ def linegetter(s, trim=1, fn=0, filter=0, u=0):
         lines = map(lines, lambda x: x.strip())
     if filter:
         lines = [x for x in lines if filter(x)]
+    if skip:
+        lines = lines[skip:]
     if fn:
         lines = map(lines, fn)
     if u:
@@ -6444,13 +6441,6 @@ def saveToDrive(file):
     cfile(file, tempbudir)
 
 
-def emptyTrash(dir=trashdir):
-    prompt(os.listdir(trashdir))
-    assert isdir(dir)
-    rmdir(dir, force=1)
-    mkdir(dir)
-    printdir(dir)
-
 def keepOrDelete(file):
     a = prompt(file)
     if a == "d":
@@ -6869,8 +6859,7 @@ def readjs(*args):
 def cleandir(dir):
     print('cleaning the dir', dir)
     files = filter(absdir(dir), alwaysDelete)
-    if len(files) > 10:
-        prompt(files, message='deleting these files')
+    prompt(files, message='deleting these files')
     map(files, rfile)
 
 def renameLastFile(file = 'Extra Worksheet'):
@@ -8593,7 +8582,7 @@ def save(x, mode=0, current=0):
                 payload = f"file = '{x[0]}'"
             else:
                 payload = f"files = {dumpJson(x)}"
-    outpath = self() if current  else '/home/kdog3682/2023/saved.txt'
+    outpath = self() if current  else vimsavefile
     append(outpath, payload)
 
 #print(rangeFromString('1 23'))

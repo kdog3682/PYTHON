@@ -882,8 +882,9 @@ def getCreds(tokenfile, reset=0):
         tokenfile2: env.onlyEmailScope,
     }
 
+    tokendir = '/home/kdog3682/RESOURCES/'
     googleScopes = ref.get(tokenfile)
-    tokenfile = jsondir + tokenfile
+    tokenfile = tokendir + tokenfile
 
     def get_creds(f):
         if isfile(f) and not reset:
@@ -1807,5 +1808,10 @@ def getResponseId(response):
     id = response['items'][0]['id']
     return id
 
-yt = GoogleYoutube()
-pprint(yt.getUserPlayList('kevinlee8512'))
+#yt = GoogleYoutube()
+#pprint(yt.getUserPlayList('kevinlee8512'))
+
+
+client_secrets.json
+g.py-oauth2.json
+credentials.json

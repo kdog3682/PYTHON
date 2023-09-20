@@ -1,19 +1,24 @@
 hskjsondictfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/hsk-dict.json'
+
+vimftfile = '/home/kdog3682/2023/file-table.txt'
+drivejsondir = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/'
 import env
 import time
 import os
 import traceback
 import sys
 from collections import OrderedDict
+from base import *
+
 #import requests
 #import inspect
-from base import *
 
 firedir = rootdir + "FIREBASE/"
 npmdir = nodedir2023
 firedir = rootdir + "FIREBASE/"
 playdir = rootdir + "PLAYGROUND/"
 resourcedir = rootdir + "Resources2023/"
+resdir = rootdir + 'RESOURCES/' 
 pipdir = "/usr/lib/python3/dist-packages/pip/"
 cm2dir = rootdir + "CM2/"
 
@@ -359,7 +364,6 @@ def count_params(f):
 "pillars.py"
 
 
-import os
 
 
 def hashbang(filename):
@@ -578,7 +582,9 @@ def ensure_object(func):
     return decorator
 
 
-def empty(x, key):
+def empty(x, key=0):
+    if not key:
+        return x == None or len(x) == 0
     try:
         return not hasattr(x, key)
     except Exception as e:
@@ -1122,10 +1128,6 @@ prosemirrorNpm = [
     "prosemirror-schema-table",
     "prosemirror-tables",
 ]
-#import time
-#print(int(time.time()))
-#1683830000
-
 #npm(prosemirrorNpm)
 
 
@@ -1172,6 +1174,7 @@ def mdir(source_dir, dest_dir):
     for item in os.listdir(source_dir):
         source = os.path.join(source_dir, item)
         destination = os.path.join(dest_dir, item)
+        print('moving', item)
 
         if os.path.isfile(destination):
             a = input(f"Do you want to overwrite {destination}? (y/n): ")
@@ -1181,6 +1184,7 @@ def mdir(source_dir, dest_dir):
         shutil.move(source, destination)
 
     shutil.rmtree(source_dir)
+    print('done')
 
 #mdir('/home/kdog3682/Resources2023/MARKDOWN', '/home/kdog3682/MARKDOWN/')
 #print(isdir('/home/kdog3682/Resources2023/MARKDOWN'))
@@ -1272,10 +1276,6 @@ def toArray(x):
 
 #pprint(renameClipToDriveFile())
 #printdir(nodedir2023)
-
-
-#os.system('''node --experimental-modules -e "import { fooga } from './utils.js'; console.log(fooga('a', 'b'));"''')
-#parseDiff()
 
 
 
@@ -1513,6 +1513,7 @@ def getFiles(dir=dir2023, **kwargs):
     parser = kwargs.get('parser', False)
     folders = kwargs.get('folders')
     n = kwargs.get('n')
+    dir = dirGetter(dir)
 
     if n:
         files = sortByDate(absdir(dir))
@@ -1524,7 +1525,8 @@ def getFiles(dir=dir2023, **kwargs):
                 if isIgnoredFile2(file):
                     continue
                 elif folders and isdir(file):
-                    store.append(file)
+                    if checkpoint(file):
+                        store.append(file)
                 elif isfile(file) and checkpoint(file):
                     store.append(file)
                 elif recursive and isdir(file):
@@ -1535,7 +1537,7 @@ def getFiles(dir=dir2023, **kwargs):
 
     store = []
     checkpoint = checkpointf(**kwargs)
-    runner(dirGetter(dir))
+    runner(dir)
     if sortIt:
         store = sortByDate(store, reverse=kwargs.get('reverse', 0))
     if promptIt:
@@ -1554,10 +1556,7 @@ def isIgnoredFile2(file):
         ".gitignore",
     ]
     ignoreRE = "^(?:\W)"
-    recursiveIgnoreRE = "^(?:LICENSE|README\.[mM][dD])$"
 
-    if fsize(file) < 100:
-        return True
     if name in ignore:
         return True
     if test(ignoreRE, name):
@@ -1610,6 +1609,7 @@ def incrementalName(s=0, dir = 'drive'):
 def dirGetter(dir=None):
     if not dir:
         return os.getcwd()
+    dir = dir.replace('~', '/home/kdog3682')
     value = env.dirdict.get(dir, dir)
     assert isdir(value)
     return value
@@ -2740,3 +2740,334 @@ def askof():
     #return files
 
 #pprint(askof())
+
+
+def getFiles2(dir=dir2023, **kwargs):
+
+    checkpoint = checkpointf(**kwargs)
+    dir = dirGetter(dir)
+
+    def parse(file, depth):
+        if isIgnoredFile2(file):
+            return 
+        elif isfile(file):
+            return tail(file)
+        elif checkpoint(file):
+            if depth > 3 and not prompt(file):
+                return log(file)
+            return runner(file, depth + 1)
+
+    def runner(dir, depth=0):
+        children = []
+        for file in absdir(dir):
+            try:
+                push(children, parse(file, depth))
+            except Exception as error:
+                errorPrompt(file, error)
+
+        if empty(children):
+            return 
+
+        return {
+            'dir': dir,
+            'items': children,
+        }
+
+    return runner(dir)
+
+def log(x=0):
+    if x == None:
+        return 
+
+    append('temp.txt', str(x))
+
+
+def zipToDrive(files, out):
+    outpath = incrementalName(npath('drivezip', addExtension(out, 'zip')))
+    from zipscript import zip
+    dprompt(files, outpath)
+    zip(files, outpath)
+
+def getDrive(x):
+    d = drivedir + x.upper()
+    assert isdir(d)
+    return d
+
+
+#getFiles2('~/', ignoreRE='2023|TRASH', recursive=1)
+
+def isPublic(x):
+    return test('^\w', tail(x))
+
+def rmdirs(dirs):
+    prompt('removing the following directories', dirs)
+    for dir in dirs:
+        rmdir(dir)
+
+class DirectoryManager:
+    def __init__(self):
+        self.dirs = filter(absdir(rootdir), isdir, isPublic)
+        dirs = chooseMultiple(self.dirs)
+        rmdirs(dirs)
+
+#DirectoryManager()
+
+#mfile('/home/kdog3682/PUBLISHED/quiz.txt.04-01-2023', '/home/kdog3682/MARKDOWN/quiz.txt.04-01-2023')
+
+
+
+def aaarenameClipToDriveFile():
+    newName = prompt('name for drive clip file?')
+    cfile(clipfile, drivedir + newName)
+
+#a = Partitioner2(absdir(pdfdir2))()
+#pprint(a)
+
+#rmdir('/home/kdog3682/FIREBASE')
+#cleandir(jsondir)
+
+
+    
+def mget2(r, s):
+    store = []
+    def parser(x):
+        m = x.groups()
+        m = m if m else x.group(0)
+        store.append(m)
+        return ''
+
+    text = re.sub(r, parser, s).strip()
+    return [text, smallify(store)]
+
+def doFileTable():
+    
+    def parseFileTable(s):
+        r = '(?:(d|res|del|skip)|(rn|Dialogue|dia): *(.+)) *$'
+        name, m = mget2(r, s)
+        if not m:
+            if isRemovableFile(name) or 'temp' in name:
+                return rfile(name)
+            return 
+
+        deleteIt, renameIt, newName = m
+        if deleteIt:
+            if deleteIt == 'res':
+                return mfile(name, resdir)
+            if deleteIt == 'skip':
+                return 
+            return rfile(name)
+        elif renameIt:
+            if renameIt == 'rn':
+                return mfile(name, changeName(newName, name))
+            else:
+                mathdir = '/home/kdog3682/MATH/'
+                outpath = npath(mathdir, addExtension(name, 'txt'))
+                return mfile(name, outpath)
+
+    s = lastItem(vimftfile, mode='date')
+    payload = linegetter(s, fn=parseFileTable)
+
+def changeName(newName, name):
+    head, tail = os.path.split(name)
+    base = os.path.join(head, newName)
+    return addExtension(base, getExtension(tail))
+
+#mdir('/home/kdog3682/JSONS', drivedir + 'JSONS 2023')
+
+
+
+def lastItem(x, mode=None):
+    s = textgetter(x)
+    if mode == 'date':
+        items = re.split('^\d+-\d+.*', s, flags=re.M)
+    else:
+        items = re.split('\n\n+', s)
+
+    return items[-1]
+
+def csvReader(file, fn=0):
+    def parse(s):
+        items = re.split(' *, *', s)
+        if fn:
+            return fn(items)
+        else:
+            return items
+    items = linegetter(file, fn=parse, skip=1)
+    return items
+
+def submit(name, value, debug=0):
+    if not value:
+        return 
+    if isString(value):
+        prompt('hmm not set up yet')
+        return 
+
+    if debug: return pprint(value)
+    outpath = npath(drivejsondir, addExtension(name, 'json'))
+    write(outpath, value, open=1)
+
+
+#from datetime import datetime, timedelta
+#input_date = datetime(2021, 10, 3)
+#result_date = input_date - timedelta(days=5)
+#print(result_date.strftime('%B %d, %Y'))
+ 
+data = [
+    {'name': 'Norah Wang', 'birthday': '9/28/2021'},
+]
+
+
+
+
+
+
+def emptyTrash():
+    dir = trashdir
+    assert isdir(dir)
+    rmdir(dir, force=1)
+    mkdir(dir)
+
+#emptyTrash()
+
+def cleanup10(dir, size=150):
+    files = getFiles(dir, smallerThan=size)
+    rfiles(files)
+
+def parseCsvBabyNameFrequencies():
+    
+    """
+        date: 09-14-2023 
+        entry: /home/kdog3682/TEXTS/yob2016.txt (deleted)
+        data:
+            Name,Sex,BirthCount
+            Emma,F,19414
+            Olivia,F,19246
+
+        output: Popular Baby Names with Frequencies
+        type: json
+        schema: {
+            boys: [(sam, 4)],
+            girls: [(samantha, 4)],
+        }
+
+        notes: 
+            cut off at frequencies less than 50
+    """
+
+    def parse(items):
+        try:
+            name, sex, count = items
+            count = int(count)
+            if count < 50:
+                return 
+        except Exception as e:
+            return 
+
+        if sex == 'F':
+            girls.append((name, count))
+        else:
+            boys.append((name, count))
+
+    boys = []
+    girls = []
+    items = csvReader(file, fn=parse)
+    payload = {'boys': boys, 'girls': girls}
+    submit('Popular Baby Names with Frequencies', payload)
+
+#doFileTable()
+
+
+def flattenAllDirectoriesWithinTheDirectory(dir):
+    dirs = getFiles(dir, folders=1)
+    for d in dirs:
+        mfiles(absdir(d), dir)
+        rmdir(d)
+
+#flattenAllDirectoriesWithinTheDirectory('res')
+
+def moveAllPicturesToDrive(dir):
+     pics = getFiles(dir, images=1)
+     if not pics:
+         printdir(dir)
+         return print('no pics')
+     print('a')
+     prompt(pics)
+     print('a')
+     mfiles(pics, drivedir + 'PICTURES 2023')
+
+
+def moveDriveFilesToDriveFolders(key, **kwargs):
+    files = getFiles(drivedir, **kwargs)
+    dir = f"{drivedir}{key.upper()} {getYearNumber()}"
+    prompt(files)
+    mfiles(files, dir)
+
+
+def iqr(data):
+    import numpy as np
+    q1 = np.percentile(data, 25)
+    q3 = np.percentile(data, 75)
+    iqr = q3 - q1
+
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+
+    def checkpoint(file):
+        return lower_bound <= fsize(file) <= upper_bound
+
+def review(files):
+    def runner(file):
+        a = prompt(file)
+        if a == 'm':
+            mfile(file, 'res')
+        elif a == 'd':
+            rfile(file)
+        elif a == 'o':
+            ofile(file)
+            return runner(file)
+
+    for file in files:
+        runner(file)
+
+
+def printdir(dir=dldir, printIt=0):
+    dir = dirGetter(dir)
+    files = os.listdir(dir)
+    size = len(files)
+    if size < 30:
+        files = map(files, lambda f: normpath(dir, f))
+        pprint(map(files, fileInfo))
+    else:
+        files = sorted(files)
+        pprint(files)
+
+    dprint(size, dir)
+    if printIt:
+        append(vimftfile, join(datestamp(), files))
+    return files
+
+def mfiles(files, dir, fn=0, ask=0):
+    files = absdir(files)
+    dir = dirGetter(dir)
+
+    if ask:
+        prompt(files, f"move the files to {dir}?")
+
+    for f in files:
+        if fn:
+            dir = fn(dir + fn(tail(f)))
+        if isfile(npath(dir, f)):
+            if prompt('the file exists: are you sure you want to overide? type [y]es to confirm', tail(f)):
+                mfile(f, dir)
+        else:
+            mfile(f, dir)
+
+
+mathdir = '/home/kdog3682/MATH/'
+def sprawldir(dir, folder):
+    items = getFiles(dir, name=folder, folders=1)
+    while 1:
+        if len(items) == 1 and isdir(items[0]):
+            items = absdir(items[0])
+        else:
+            return items
