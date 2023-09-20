@@ -1,5 +1,3 @@
-from base import *
-from next import *
 import openai
 import env
 

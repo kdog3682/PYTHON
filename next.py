@@ -22,6 +22,49 @@ resdir = rootdir + 'RESOURCES/'
 pipdir = "/usr/lib/python3/dist-packages/pip/"
 cm2dir = rootdir + "CM2/"
 
+def download_google_fonts():
+
+    def get_media(x):
+        
+        if isUrl(x):
+            r = requests.get(url, allow_redirects=True)
+            if r.status_code != 200:
+                raise Exception('not valid download')
+            return r.content
+        e = getExtension(x)
+        if e:
+            if isfile(x):
+                return read(x)
+
+    def write_media(outpath, data):
+        with open(outpath, 'wb') as f:
+            f.write(data)
+            print('successfully wrote to dldir:', outpath)
+    
+    fontdir2023 = dir2023 + 'fonts/'
+    fontfile = 'font.zip'
+
+    for font in fonts:
+        font_name = font.replace(' ', '+')
+        url = f'https://fonts.google.com/download?family={font_name}'
+    
+        dirname = dash_case(font)
+        outdir = fontdir2023 + dirname
+        dprompt(dirname, outdir)
+        data = get_media(url)
+        write_media(fontfile, data)
+        unzip(fontfile, mkdir(outdir))
+
+def unzipLatest():
+    f = glf()
+    readzip(
+        f,
+        flatten=True,
+        outpath=normpath(dldir, removeExtension(tail(f))),
+    )
+
+    return flatdir(mostRecent(dldir))
+
 
 def to_array(x):
     if isArray(x):
@@ -1318,10 +1361,13 @@ def gitPush(dir):
         cd {dir}
         git add .
         git commit -m "'autopush'"
-        git push -f origin master
+        git push
     """
 
-    #parseDiff(dir=dir)
+    # git push -f origin master
+    # use this when there is an error about different work
+
+    parseDiff(dir=dir)
     SystemCommand(mainCommand, dir=dir, printIt=1)
 
 def removable(f):
@@ -3072,5 +3118,3 @@ def sprawldir(dir, folder):
             return items
 
 #rmdir(dir2023 + 'vite1')
-
-gitPush(pydir)

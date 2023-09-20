@@ -1181,3 +1181,24 @@ def createRepo(dir, private=False, name=None):
 
     url = "https://github.com/kdog3682/" + name
     ofile(url)
+
+
+def makeRepo(repo):
+    from githubscript import KDOG3682
+    KDOG3682(repo=repo)
+    dir = rootdir + repo
+    assert(not isdir(dir) and not isfile(dir))
+    mkdir(dir)
+    dprompt(dir)
+    chdir(dir)
+    write('README.md', 'howdy')
+    gitaddstring = f"""
+        cd {dir}
+        git init
+        git add .
+        git commit -m "Initial commit"
+        git remote add origin git@github.com:kdog3682/{repo}.git
+        git push -u origin master
+    """
+    result = SystemCommand(gitaddstring, dir=dir)
+    print(result.success, result.error)
