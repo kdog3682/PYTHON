@@ -198,3 +198,14 @@ mfiles(getFiles('2023', extensions='md txt'), dirGetter('res'))
 
 #mfiles(sprawldir('2023', 'ham'), 'drivepics')
 #moveAllPicturesToDrive('res')
+
+# 09-20-2023 
+# builds a json representing requirements.txt
+buildRequirements()
+
+
+# 09-20-2023 Remove Vim Temp Files
+rfiles(getFiles('root', vimInfo=1))
+
+# 09-20-2023 
+doFileTable()

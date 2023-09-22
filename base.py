@@ -1093,21 +1093,33 @@ def testf(r, flags=0, reverse=0):
     else:
         return lambda x: test(r, x, flags)
 
-def rmdir(dir, force=0, create=0):
+def rmdir(dir, force=0, create=0, ask=0):
+    if not isdir(dir):
+        return 
+
+    def remove(dir):
+        assert(dir != '/home/kdog3682')
+        assert(dir != '/home/kdog3682/2023')
+        assert(dir != '/home/kdog3682/RESOURCES')
+
+        if ask:
+            if not prompt('remove the directory? ' + dir):
+                return 
+        shutil.rmtree(dir)
+        print("removing dir", dir)
+
     if (
         len(os.listdir(dir)) < 10
         and absdir(dir) not in dirdict.values()
     ):
-        shutil.rmtree(dir)
-        print("removing dir", dir)
+        remove(dir)
 
     elif (
         len(os.listdir(dir)) == 0
         or force
         or prompt("rmdir for sure?",dir)
     ):
-        shutil.rmtree(dir)
-        print("removing dir", dir)
+        remove(dir)
 
     if create:
         mkdir(dir)
@@ -1115,6 +1127,9 @@ def rmdir(dir, force=0, create=0):
 quoteRE = "(?<!\\)'.*?(?<!\\)'|(?<!\\)\".*?(?<!\\)\""
 
 def mkdir(dir):
+    if isfile(dir):
+        raise Exception('the dir is a file: ' + dir)
+
     if isdir(dir):
         print("dir alrady exists. early return")
         return dir
@@ -1281,7 +1296,7 @@ def map(items, fn, *args, filter=1, **kwargs):
 
 def raw(f):
     with open(f, "rb") as f:
-        return str(f.read())
+        return f.read()
 
 def read(file):
     e = getExtension(file)
@@ -1647,241 +1662,6 @@ def isSameDate(date, f):
     fdate = datetime.fromtimestamp(mdate(f))
     date = dategetter(date, None)
     return date.day == fdate.day
-
-def checkpointf(
-    kb=0,
-    keepRE=0,
-    contains=0,
-    gdoc=0,
-    deleteIt=0,
-    deleteRE=0,
-    include="",
-    size=0,
-    svg=0,
-    maxLength=0,
-    image=0,
-    images=0,
-    today=0,
-    flags=re.I,
-    fonts=0,
-    files=0,
-    gif=0,
-    weeks=0,
-    month=0,
-    old=0,
-    ignore="",
-    ignoreRE="",
-    css=0,
-    js=0,
-    zip=0,
-    py=0,
-    txt=0,
-    html=0,
-    pdf=0,
-    date=0,
-    name=0,
-    big=0,
-    r=0,
-    antiregex=0,
-    anti=0,
-    small=0,
-    before=0,
-    after=0,
-    minLength=0,
-    minutes=0,
-    days=0,
-    hours=0,
-    regex=0,
-    public=0,
-    math=0,
-    text=0,
-    lib=0,
-    log=0,
-    onlyFiles=0,
-    isf=0,
-    isp=0,
-    onlyFolders=0,
-    folders=0,
-    biggerThan=0,
-    smallerThan=0,
-    fn=0,
-    e=0,
-    json=0,
-    **kwargs,
-):
-    if kb:
-        smallerThan = kb * 1000
-    if size:
-        biggerThan = size
-    if text:
-        onlyFiles = 1
-    if isf:
-        onlyFiles = 1
-    if r:
-        keepRE = r
-    extensions = kwargs.get("extensions", [])
-    if kwargs.get("isdir"):
-        onlyFolders = 1
-
-    if fonts:
-        extensions.extend(fonte)
-    if log:
-        extensions.append("log")
-    if gdoc:
-        extensions.append("gdoc")
-        extensions.append("gsheet")
-
-    if math:
-        extensions.append("math")
-    if css:
-        extensions.append("css")
-    if js: extensions.append("js")
-    if svg: extensions.append("svg")
-    if zip: extensions.append("zip")
-    if json: extensions.append("json")
-    if py:
-        extensions.append("py")
-    if txt:
-        extensions.append("txt")
-    if html:
-        extensions.append("html")
-    if pdf:
-        extensions.append("pdf")
-    if gif:
-        extensions.append("gif")
-    if image or images:
-        for e in imge:
-            extensions.append(e)
-    if isArray(e):
-        extensions.extend(e)
-    elif e:
-        extensions.append(e)
-
-    if old:
-        hours = 24 * 30
-    elif days:
-        hours = days * 24
-    elif weeks:
-        hours = 24 * 7 * weeks
-    elif month:
-        hours = 24 * 30
-    elif today:
-        hours = 12
-
-    if include:
-        print("deleting")
-        include = xsplit(include, "\s+")
-    if ignore:
-        ignore = xsplit(ignore, "\s+")
-    if deleteIt:
-        isp = 1
-
-    def runner(f):
-        filename = tail(f)
-
-        if fn and not fn(f):
-            return False
-
-        if include and filename in include:
-            return True
-        if folders and not isdir(f):
-            return False
-        if ignore and filename in ignore:
-            return False
-        if isp and filename.startswith("."):
-            return False
-        if deleteIt and alwaysDelete(f):
-            rfile(f)
-            return False
-        if regex and not test(regex, filename, flags=flags):
-            return False
-        if antiregex and test(antiregex, filename, flags=flags):
-            return False
-
-        if keepRE and not test(keepRE, filename, flags=flags):
-            return False
-
-        if deleteRE and test(deleteRE, filename, flags=flags):
-            rfile(f)
-            return False
-
-        if name and not test(name, filename, flags=flags):
-            return False
-
-        e = getExtension(filename)
-
-        if text and e == 'pdf':
-            return False
-
-        if anti:
-            nevermove = ['.git', 'node_modules', 'package.json', 'screenshot.jpg', '.vimrc', '.gitignore', 'package-lock.json']
-
-            if e in extensions:
-                return False
-            if filename in nevermove:
-                return False
-            if isdir(f):
-                return False
-            #if fsize(f) < 50:
-                #rfile(f)
-                #return False
-            
-        elif extensions and e not in extensions:
-            return False
-
-        if minutes and not isRecent(f, minutes=minutes):
-            return False
-
-        if hours and not isRecent(f, hours=hours):
-            return False
-
-        if not lib and isLibraryFile(f):
-            return False
-
-        if public and not isPublicFile(f):
-            return False
-
-        if onlyFiles and isdir(f):
-            return False
-
-        if contains:
-            if not isdir(f):
-                return True
-            gn = lambda x: getExtension(x) == contains
-            files = filter(os.listdir(f), gn)
-            if len(files) < 5:
-                print(f, 'has some files but not enuf of ', contains)
-                return False
-            return True
-
-        if onlyFolders:
-            if isdir(f):
-                return 1
-            return False
-
-        if maxLength and isString(f) and len(f) > maxLength:
-            return False
-
-        if minLength and isString(f) and len(f) < minLength:
-            return False
-
-        if biggerThan and fsize(f) < biggerThan:
-            return False
-        if smallerThan and fsize(f) > smallerThan:
-            return False
-        if small and fsize(f) > small:
-            return False
-        if big and fsize(f) < big:
-            return False
-        if ignoreRE and test(ignoreRE, filename, flags=re.I):
-            return False
-        if text and not test(text, read(f), flags=flags):
-            return False
-        if date and not isSameDate(date, f):
-            return False
-        return True
-
-    return trycatch(runner)
 
 def trycatch(fn):
     def runner(*args, **kwargs):

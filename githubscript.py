@@ -1117,13 +1117,12 @@ def getRepo(repo):
     return g.Repo
 
 def deleteContent(repo, content):
-            branch=repo.default_branch
-            return repo.delete_file(
-                path=content.path,
-                message=f'Delete {content.name}',
-                sha=content.sha,
-                branch=branch
-            )
+    return repo.delete_file(
+        path=content.path,
+        message=f'Delete {content.name}',
+        sha=content.sha,
+        branch=repo.default_branch
+    )
 
 def deleteProject(reponame, projectname):
     repo = getRepo(reponame)
@@ -1142,6 +1141,20 @@ def deleteProject(reponame, projectname):
     )
     print(f'Folder "{folder_path}" and its contents have been deleted.')
 
+def deleteRepoFiles(self, repoName):
+
+    self.setRepo(repoName)
+    contents = self.getRepoContents()
+    targets = choose(contents)
+
+    for content in targets:
+        self.repo.delete_file(
+            path=content.path,
+            message=f'Delete {content.name}',
+            sha=content.sha,
+            branch=repo.default_branch
+        )
+
 def cleanupRepo(reponame):
      repo = getRepo(reponame)
      contents = getRepoContents(repo)
@@ -1158,47 +1171,3 @@ def updateRepo(reponame, index=None, readme=None):
      if readme:
          print(pushContent(repo, 'readme.md', read(readme)))
 
-
-def createRepo(dir, private=False, name=None):
-    if not name:
-        name = tail(dir)
-    dprompt2(name, dir)
-
-    g = Github(repo=name)
-    g.service.edit(private=private)
-
-    SystemCommand(
-        f"""
-        git init 
-        git branch -m master main
-        git add .
-        git remote add origin git@github.com:kdog3682/{name}.git
-        git commit -m "Initial commit"
-        git push -u origin main
-    """,
-        dir=dir,
-    )
-
-    url = "https://github.com/kdog3682/" + name
-    ofile(url)
-
-
-def makeRepo(repo):
-    from githubscript import KDOG3682
-    KDOG3682(repo=repo)
-    dir = rootdir + repo
-    assert(not isdir(dir) and not isfile(dir))
-    mkdir(dir)
-    dprompt(dir)
-    chdir(dir)
-    write('README.md', 'howdy')
-    gitaddstring = f"""
-        cd {dir}
-        git init
-        git add .
-        git commit -m "Initial commit"
-        git remote add origin git@github.com:kdog3682/{repo}.git
-        git push -u origin master
-    """
-    result = SystemCommand(gitaddstring, dir=dir)
-    print(result.success, result.error)

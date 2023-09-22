@@ -1,6 +1,9 @@
+temptextfile = '/home/kdog3682/RESOURCES/temp.txt'
 hskjsondictfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/hsk-dict.json'
+mathdir = '/home/kdog3682/MATH/'
+bignotefile = '/mnt/chromeos/GoogleDrive/MyDrive/NOTES.TXT'
 
-vimftfile = '/home/kdog3682/2023/file-table.txt'
+vimftfile = '/home/kdog3682/RESOURCES/file-table.txt'
 drivejsondir = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/'
 import env
 import time
@@ -1202,8 +1205,6 @@ def manim():
     arg = choose(env.manimToc)
     ofile(github_usercontent_url('3b1b', 'manim', arg[0]))
 
-#pprint(parseDiff())
-#printdir(pydir)
 
 
 def longstamp():
@@ -1367,7 +1368,8 @@ def gitPush(dir):
     # git push -f origin master
     # use this when there is an error about different work
 
-    parseDiff(dir=dir)
+    if dir != resdir:
+        parseDiff(dir=dir)
     SystemCommand(mainCommand, dir=dir, printIt=1)
 
 def removable(f):
@@ -1553,6 +1555,8 @@ def gitCloneAndMove(repoUrl, move=1):
 #gitCloneAndMove('https://github.com/sagalbot/vue-select/blob/master/src/scss/modules/_spinner.scss')
 
 def getFiles(dir=dir2023, **kwargs):
+    if isArray(dir):
+        return dir
     recursive = kwargs.pop('recursive', False)
     sortIt = kwargs.get('sort', False)
     promptIt = kwargs.get('prompt', False)
@@ -1568,9 +1572,7 @@ def getFiles(dir=dir2023, **kwargs):
     def runner(dir):
         for file in absdir(dir):
             try:
-                if isIgnoredFile2(file):
-                    continue
-                elif folders and isdir(file):
+                if folders and isdir(file):
                     if checkpoint(file):
                         store.append(file)
                 elif isfile(file) and checkpoint(file):
@@ -2138,8 +2140,8 @@ class Watcher:
 
 #pprint(Jieba().cut("我们喜欢吃饭。你呢？我们吃地笑"))
 
-def help(fn):
-    return fn.__doc__
+#def help(fn):
+    #return fn.__doc__
 
 #print(help(makehsk))
 #pprint(choose(alist))
@@ -2828,6 +2830,7 @@ def log(x=0):
 
 
 def zipToDrive(files, out):
+    files = getFiles(files)
     outpath = incrementalName(npath('drivezip', addExtension(out, 'zip')))
     from zipscript import zip
     dprompt(files, outpath)
@@ -2894,6 +2897,7 @@ def doFileTable():
                 return rfile(name)
             return 
 
+        return 
         deleteIt, renameIt, newName = m
         if deleteIt:
             if deleteIt == 'res':
@@ -3019,7 +3023,6 @@ def parseCsvBabyNameFrequencies():
     payload = {'boys': boys, 'girls': girls}
     submit('Popular Baby Names with Frequencies', payload)
 
-#doFileTable()
 
 
 def flattenAllDirectoriesWithinTheDirectory(dir):
@@ -3108,7 +3111,6 @@ def mfiles(files, dir, fn=0, ask=0):
             mfile(f, dir)
 
 
-mathdir = '/home/kdog3682/MATH/'
 def sprawldir(dir, folder):
     items = getFiles(dir, name=folder, folders=1)
     while 1:
@@ -3118,3 +3120,391 @@ def sprawldir(dir, folder):
             return items
 
 #rmdir(dir2023 + 'vite1')
+
+
+#print('a'[1])
+
+
+fruits = [
+  "apple",
+  "banana",
+  "cherry",
+  "date",
+  "elderberry",
+  "fig",
+  "grapes",
+  "honeydew",
+  "kiwi",
+  "lemon",
+  "mango",
+  "nectarine",
+  "orange",
+  "pineapple",
+  "raspberry",
+  "strawberry",
+  "watermelon",
+][0:5]
+
+str1695228324 = """
+    fruits.pop(0)
+    fruits.pop(1)
+    fruits.pop(-1)
+"""
+
+def evaluate_text_invivo_for_python_article(s):
+    lines = linegetter(s)
+    for line in lines:
+        eval(line)
+        print(line, fruits)
+
+def buildRequirements():
+    """
+        So this file does
+    """
+    def clean(s):
+        return search('\S+', s)
+
+    def runner(file):
+        s = read(file)        
+        r = '^(?:import|from) (\S+)'
+        m = re.findall(r, s, flags=re.M)
+        return m
+
+    def checkpoint(file):
+        f = npath(pydir, addExtension(file, 'py'))
+        return not isfile(f)
+
+    files = getFiles(pydir, py=1)
+    imports = filter(unique(flat(map(files, runner))), checkpoint)
+    imports.sort()
+    prompt(imports)
+    s = SystemCommand('pip list', dir=pydir)
+    packages = linegetter(s.success, fn = clean)[2:]
+
+    libraries = filter(imports, lambda x: x in packages)
+
+    return {
+        'packages': packages,
+        'allImports': imports,
+        'imports': libraries,
+    }
+
+
+def checkpointf(
+    kb=0,
+    keepRE=0,
+    contains=0,
+    gdoc=0,
+    deleteIt=0,
+    deleteRE=0,
+    include="",
+    size=0,
+    svg=0,
+    maxLength=0,
+    image=0,
+    images=0,
+    today=0,
+    flags=re.I,
+    fonts=0,
+    files=0,
+    gif=0,
+    weeks=0,
+    month=0,
+    old=0,
+    ignore="",
+    ignoreRE="",
+    css=0,
+    js=0,
+    zip=0,
+    py=0,
+    txt=0,
+    html=0,
+    pdf=0,
+    date=0,
+    name=0,
+    big=0,
+    r=0,
+    antiregex=0,
+    anti=0,
+    small=0,
+    before=0,
+    after=0,
+    minLength=0,
+    minutes=0,
+    days=0,
+    hours=0,
+    regex=0,
+    public=1,
+    private=0,
+    math=0,
+    text=0,
+    lib=0,
+    log=0,
+    onlyFiles=0,
+    isf=0,
+    isp=0,
+    onlyFolders=0,
+    folders=0,
+    biggerThan=0,
+    smallerThan=0,
+    fn=0,
+    e=0,
+    json=0,
+    vimInfo=0,
+    **kwargs,
+):
+    if vimInfo:
+        name = '^\.viminf[^o]'
+        private = 1
+    if private:
+        public = 0
+    if kb:
+        smallerThan = kb * 1000
+    if size:
+        biggerThan = size
+    if text:
+        onlyFiles = 1
+    if isf:
+        onlyFiles = 1
+    if r:
+        keepRE = r
+    extensions = kwargs.get("extensions", [])
+    if kwargs.get("isdir"):
+        onlyFolders = 1
+
+    if fonts:
+        extensions.extend(fonte)
+    if log:
+        extensions.append("log")
+    if gdoc:
+        extensions.append("gdoc")
+        extensions.append("gsheet")
+
+    if math:
+        extensions.append("math")
+    if css:
+        extensions.append("css")
+    if js: extensions.append("js")
+    if svg: extensions.append("svg")
+    if zip: extensions.append("zip")
+    if json: extensions.append("json")
+    if py:
+        extensions.append("py")
+    if txt:
+        extensions.append("txt")
+    if html:
+        extensions.append("html")
+    if pdf:
+        extensions.append("pdf")
+    if gif:
+        extensions.append("gif")
+    if image or images:
+        for e in imge:
+            extensions.append(e)
+    if isArray(e):
+        extensions.extend(e)
+    elif e:
+        extensions.append(e)
+
+    if old:
+        hours = 24 * 30
+    elif days:
+        hours = days * 24
+    elif weeks:
+        hours = 24 * 7 * weeks
+    elif month:
+        hours = 24 * 30
+    elif today:
+        hours = 12
+
+    if include:
+        print("deleting")
+        include = xsplit(include, "\s+")
+    if ignore:
+        ignore = xsplit(ignore, "\s+")
+    if deleteIt:
+        isp = 1
+
+
+    alwaysIgnore = [
+        "vosk-api",
+        "__pycache__",
+        "node_modules",
+        "readme.md",
+        "license.md"
+        ".git",
+    ]
+    def runner(f):
+        filename = tail(f)
+
+        if filename in alwaysIgnore:
+            print("always ignore")
+            return False
+
+        if fn and not fn(f):
+            return False
+
+        if public and test('^\.', filename):
+            return False
+        if include and filename in include:
+            return True
+        if folders and not isdir(f):
+            return False
+        if ignore and filename in ignore:
+            return False
+        if isp and filename.startswith("."):
+            return False
+        if deleteIt and alwaysDelete(f):
+            rfile(f)
+            return False
+        if regex and not test(regex, filename, flags=flags):
+            return False
+        if antiregex and test(antiregex, filename, flags=flags):
+            return False
+
+        if keepRE and not test(keepRE, filename, flags=flags):
+            return False
+
+        if deleteRE and test(deleteRE, filename, flags=flags):
+            rfile(f)
+            return False
+
+        print(filename)
+        if name and not test(name, filename, flags=flags):
+            return False
+
+        e = getExtension(filename)
+
+        if text and e == 'pdf':
+            return False
+
+        if anti:
+            nevermove = ['.git', 'node_modules', 'package.json', 'screenshot.jpg', '.vimrc', '.gitignore', 'package-lock.json']
+
+            if e in extensions:
+                return False
+            if filename in nevermove:
+                return False
+            if isdir(f):
+                return False
+            #if fsize(f) < 50:
+                #rfile(f)
+                #return False
+            
+        elif extensions and e not in extensions:
+            return False
+
+        if minutes and not isRecent(f, minutes=minutes):
+            return False
+
+        if hours and not isRecent(f, hours=hours):
+            return False
+
+        if not lib and isLibraryFile(f):
+            return False
+
+        if onlyFiles and isdir(f):
+            return False
+
+        if contains:
+            if not isdir(f):
+                return True
+            gn = lambda x: getExtension(x) == contains
+            files = filter(os.listdir(f), gn)
+            if len(files) < 5:
+                print(f, 'has some files but not enuf of ', contains)
+                return False
+            return True
+
+        if onlyFolders:
+            if isdir(f):
+                return 1
+            return False
+
+        if maxLength and isString(f) and len(f) > maxLength:
+            return False
+
+        if minLength and isString(f) and len(f) < minLength:
+            return False
+
+        if biggerThan and fsize(f) < biggerThan:
+            return False
+        if smallerThan and fsize(f) > smallerThan:
+            return False
+        if small and fsize(f) > small:
+            return False
+        if big and fsize(f) < big:
+            return False
+        if ignoreRE and test(ignoreRE, filename, flags=re.I):
+            return False
+        if text and not test(text, read(f), flags=flags):
+            return False
+        if date and not isSameDate(date, f):
+            return False
+        return True
+
+    return trycatch(runner)
+#gitPush(dir2023)
+#printdir('~/.viminfo')
+
+
+#print(longstamp())
+
+
+def note(*args):
+    a = map(args, str)
+    s = f"Note: {longstamp()} :: "
+    s += json.dumps(a)
+    append(temptextfile, s)
+    prompt(s)
+
+
+#note(1, 2)
+
+
+def chalkf(color):
+
+    reset = "\033[0m"
+    red = "\033[31m"
+    green = "\033[32m"
+    yellow = "\033[33m"
+    blue = "\033[34m"
+    purple = "\033[35m"
+    cyan = "\033[36m"
+    bold = "\033[1m"
+
+    colors = {
+        'blue': blue,
+        'red': red,
+        'green': green,
+        'yellow': yellow,
+        'purple': purple,
+        'cyan': cyan,
+    }
+    color = colors[color]
+
+    def chalk(*args, **kwargs):
+        colon = ':' if len(args) > 1 else ''
+        if kwargs.get('bold') or isCapitalized(args[0]):
+            print(bold + color + args[0] + colon + reset, '', *args[1:])
+        else:
+            print(color + args[0] + reset, *args[1:])
+
+    return chalk
+
+def isCapitalized(s):
+    return test('^[A-Z]', s)
+
+blue = chalkf('blue')
+red = chalkf('red')
+
+def sleep(n):
+    time.sleep(n)
+
+def warn(*args):
+    red(*args)
+    prompt('Exit')
+
+
+#gitPush(resdir)
+#rmdir(resdir + '.git')
