@@ -2317,7 +2317,8 @@ def reduce(items, fn):
             if not value:
                 continue
             elif isArray(value) and len(value) == 2:
-                store[value[0]] = value[1]
+                if value[1] != None:
+                    store[value[0]] = value[1]
             else:
                 store[k] = value
 

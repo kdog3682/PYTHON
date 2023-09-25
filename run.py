@@ -163,25 +163,38 @@ def python(argv = sys.argv[1:]):
     if not argv:
         return print("requires shell")
 
-    key, *args = argv
+    argv = map(list(argv), shellunescape)
+    arg = None
+    ref = None
 
-    if key == 'pythonWithState':
-        return pythonWithState(*read('pythonWithState.json'))
+    if isObject(argv[0]):
+        ref = argv[0]
+        key = ref.get('fnKey')
+        arg = ref.get('arg')
+    else:
+        key, *args = argv
 
-    args = map(list(args), shellunescape)
-    callable = env.callableRef.get(key)
-    if callable:
-        print('executing callable', callable)
-        return exec(callable)
+    ex = env.executables.get(key)
+    if ex: return exec(ex)
+
     key = env.basepyref.get(key, key)
-    try:
-        fn = globals().get(key)
+    fn = globals().get(key)
+
+    if not fn:
+        return red('The fn key is not registered in globals', key)
+
+    if ref:
+        argList, kwargList = getParameters2(fn)
+        fnArgs = filter(map2(argList, lambda x: ref.get(x)))
+        fnKwargs = reduce(kwargList, lambda x: [x, ref.get(x)])
+        if arg:
+            fnArgs.insert(0, arg)
+
+        blue('args', fnArgs)
+        blue('kwargs', fnKwargs)
+        fn(*fnArgs, **fnKwargs)
+    else:
         fn(*args)
-    except Exception as e:
-        print('eeeeeeeeeeeee @ python', e)
-    
-
-
 
 cwtFileDict = {
     'announcement': 5,
@@ -809,9 +822,6 @@ def masterFileInfo(dir=dir2023):
     write(outpath, payload, True)
 
 
-env.callableRef={}
-env.callableRef['gpy'] = 'gitPush(pydir)'
-env.callableRef['gp'] = 'gitPush(dir2023)'
 def copyToBrowser(s):
     return write(dldir + 'ofile.js', removeComments(s).strip(), 1)
 
@@ -1080,63 +1090,22 @@ def fixViteHtmlContent(s):
     s = sub(s, '</html>', p)
     return s
 
-def buildViteFile(file, reponame):
-    """ the repo name is the projectname """
-    from githubscript import getRepo, pushContent, getRepoContents
-    assert(isfile(file))
-
-    if head(file) != dir2023:
-        cfile(file, npath(dir2023, 'temp.html'))
-        file = 'temp.html'
-        time.sleep(0.5)
-
-    aliases = {
-        'cm3.js': 'cm.html',
-        'cm3.js': 'cm.html',
-    }
-
-    file = aliases.get(file, file)
-    if getExtension(file) != 'html':
-        print('early return: not an html file. we only compile from html')
-        return 
-    
-
-    #prompt(dict(file=file, reponame=reponame))
-
-    results = runjs('viteBuild.js', file)
-    if not results.get('success').startswith('vite'):
-        return print('did not build due to error')
-
-    print('finished viteBuild getting the repo')
-    repo = getRepo('projects')
-    print('got the repo', repo)
-    time.sleep(1)
-    assert(repo)
-    dir = "/home/kdog3682/2023/dist/"
-
-    files = allFiles(dir)
-
-    def fixFile(s):
-        return sub(s, '-\w+(?=\.\w+$)', '')
-
-    for file in files:
-        e = getExtension(file)
-        content = read2(file)
-        path = None
-        if e == 'js':
-            path = f"{reponame}/assets/main.js"
-        elif e == 'css':
-            path = f"{reponame}/assets/style.css"
-        elif e == 'html':
-            content = fixViteHtmlContent(content)
-            path = f"{reponame}/index.html"
+def getParameters2(fn):
+    signature = str(inspect.signature(fn))
+    raw = signature[1:-1].split(', ')
+    args = []
+    kwargs = []
+    for arg in raw:
+        if '*' in arg:
+            continue
+        if '=' in arg:
+            kwargs.append(arg.split('=')[0])
         else:
-            path = f"{reponame}/assets/{fixFile(tail(file))}"
+            args.append(arg)
 
-        #print(path, content)
-        pushContent(repo, path, content)
+    return [args, kwargs]
 
-    pprint(getRepoContents(repo))
+
 
 if __name__ == '__main__':
     python()

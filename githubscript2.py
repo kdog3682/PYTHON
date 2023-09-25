@@ -11,8 +11,8 @@ def getToken(key = None):
     return ref[key]
 
 class Github:
-    def view(self):
-        contents = self.getRepoContents()
+    def view(self, path=''):
+        contents = self.getRepoContents(path=path)
         pprint(contents)
     
 
@@ -33,7 +33,7 @@ class Github:
         os.system(command)
         blue('Authenticated', repoName)
 
-    def setRepo(self, repoName, private=False):
+    def setRepo(self, repoName, private=False, required=1):
 
         if '/' in repoName:
             repoName = repoName.split('/')[-1]
@@ -42,6 +42,8 @@ class Github:
             self.repo = self.user.get_repo(repoName)
         except Exception as e:
             checkErrorMessage(e, 'Not Found')
+            if required:
+                raise Exception('The repo is required, but doesnt exist')
 
             try:
                 self.repo = self.user.create_repo(
@@ -79,6 +81,9 @@ class Github:
     
 
 def prompt(*args, aliases=None):
+    if aliases:
+        print(aliases)
+
     for arg in args:
         if arg:
             if isString(arg):
@@ -196,15 +201,21 @@ class GithubController(Github):
 
     def upload(self, file, content=None):
          updateRepo(self.repo, file, content)
+
+    def uploadFolder(self, dir, subFolder=None):
+        files = getFiles(dir, recursive=1)
+        for file in files:
+            updateRepo(self.repo, file, subFolder=None)
     
 
-
-def updateRepo(repo, file, content=None):
+def updateRepo(repo, file, content=None, subFolder=None):
     if not content:
         content = raw(file)
 
     branch = repo.default_branch
-    path = tail(file)
+    path = removeHead(file)
+    if subFolder:
+        path = os.path.join(subFolder, path)
 
     try:
         return repo.create_file(
@@ -215,7 +226,6 @@ def updateRepo(repo, file, content=None):
         )
 
     except Exception as e:
-        #checkErrorMessage(e)
         reference = repo.get_contents(path, ref=branch)
         assert(reference)
 
@@ -229,30 +239,26 @@ def updateRepo(repo, file, content=None):
 
     
 
-def gitPush(dir, commitMessage='autopush'):
-
-    s = f"""
-        cd {dir}
-        git add .
-        git commit -m "{commitMessage}"
-        git push
-    """
-    SystemCommand(s, dir=dir)
-
-
-
-
 def getErrorMessage(e):
     s = search('"message": "(.*?)"', str(e))
     return re.sub('\.$', '', s.strip())
 
-def archived():
-    pass
-    # g.createLocalRepo('RESOURCES', private=True)
-    # g.run()
 
-def main():
-    g = GithubController()
+def example(g):
+    g.run() # press d to delete the chosen repo
+            # the options will shown up in the aliases
+
+def example(g):
+    g.createLocalRepo('RESOURCES', private=True)
+    g.view() # views the repo that was created
+
+def example(g):
+    """
+        The key for getToken initializes via kdog3682
+        We enter the codesnippets repo
+        We upload a file
+        We view the contents of the repo
+    """
     g.setRepo('codesnippets')
     g.upload('/home/kdog3682/PYTHON/githubscript2.py')
     g.view()
@@ -262,8 +268,29 @@ def checkErrorMessage(e, s = None):
     m = getErrorMessage(e)
     if s == None:
         return prompt(m)
-
     if m != s:
         warn('Invalid Error', str(e))
 
-main()
+
+def buildVite(file):
+
+    assertion(file, isfile)
+    assertion(file, isHtmlFile)
+
+    result = javascript('viteServe.js', 'build', file)
+    clip(result)
+    prompt()
+
+    # f = lambda x: not results.get('success').startswith('vite')
+    # assertion(results, f, 'vite build error')
+
+    sleep(2)
+
+def example(g, file, projectName):
+    buildVite(file)
+
+    g.setRepo('projects')
+    vitedistdir = "/home/kdog3682/2023/dist/"
+    g.uploadFolder(vitedistdir, subFolder=projectName)
+    g.view(path=projectName)
+

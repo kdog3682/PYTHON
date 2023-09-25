@@ -13,9 +13,6 @@ import sys
 from collections import OrderedDict
 from base import *
 
-#import requests
-#import inspect
-
 firedir = rootdir + "FIREBASE/"
 npmdir = nodedir2023
 firedir = rootdir + "FIREBASE/"
@@ -378,9 +375,6 @@ str1681989658 = """
     grid: 2,3,4
     directions: 6, 12, 18, 24, -6, -12, -18, -24
 """
-# colors: background color outline border-color
-
-
 s = """
 
 def fn(key, value):
@@ -900,18 +894,6 @@ def ffstring(s):
     ff(dir2023, **kwargs)
 
 
-# rmdir(cm2dir, 1, 1)
-
-# mkdir()
-# printdir(rootdir + 'CM2/node_modules/@codemirror/lang-json/dist')
-# printdir(cm2dir)
-# npm(clip())
-#npm(fa("/home/kdog3682/CM2/cm.raw.js", "(@.*?)['\"]"))
-
-#SystemCommand('npm uninstall @codemirror/closebrackets @codemirror/basic-setup @codemirror/highlight @codemirror/rectangular-selection @codemirror/panel @codemirror/tooltip @codemirror/gutter', dir=rootdir + 'CM2')
-#SystemCommand('npm uninstall @codemirror/closebrackets @codemirror/basic-setup @codemirror/highlight @codemirror/rectangular-selection @codemirror/panel @codemirror/tooltip @codemirror/history', dir=rootdir + 'CM2')
-#SystemCommand('npm uninstall @codemirror/highlight', dir=rootdir + 'CM2')
-
 s = """
 
     "@codemirror/autocomplete": "^6.6.0",
@@ -929,28 +911,7 @@ s = """
     "@codemirror/view": "^6.10.1"
 """
 
-#clip(fa(s, "(@.*?)['\"]"))
-#cfile('/home/kdog3682/CM2/cm.esm.js', dir2023)
-
-
     #@replit/codemirror-vim
-#SystemCommand('npm uninstall @codemirror/matchbrackets',  dir=cm2dir)
-#ofile(nodedir2023 + '@replit/codemirror-vim/dist/index.js')
-#pprint(printDirRecursive(cm2dir + 'node_modules/@codemirror'))
-#SystemCommand('npm i @codemirror/commands', dir=cm2dir)
-#printdir(cm2dir + 'node_modules/@codemirror/commands/dist')
-
-#mfile('themes.js', 'cm-themes.js')
-#mfile('languages.js', 'cm-languages.js')
-
-#ofile(nodedir2023 + '@lezer/highlight/dist/index.js')
-#SystemCommand('npm i @codemirror/basic-setup',  dir=cm2dir)
-#ofile(nodedir2023 + '@codemirror/basic-setup/dist/index.js')
-#ofile(cm2dir + 'node_modules/@codemirror/basic-setup/dist/index.js')
-#SystemCommand('npm uninstall @codemirror/basic-setup',  dir=cm2dir)
-
-
-
 def review(files=0, move=0, mode=0, **kwargs):
     if not files:
         files = absdir(dir2023)
@@ -984,28 +945,9 @@ def review(files=0, move=0, mode=0, **kwargs):
     clip(saved)
     map(removed, rfile)
 
-#review()
-#clip(Partitioner2(ff(js=1, days=5))())
-
-#write('jake.html', read(glf()))
-
-#ofile(budir + 'class.js')
 def old(s):
     ofile(budir + s)
 
-#old('utils.js11-08-2022')
-
-#cdir = "/mnt/chromeos/GoogleDrive/MyDrive/CWF/"
-#ofile(cdir + 'utils.js04242021')
-# a big one
-
-#SystemCommand('npm run dev', dir='/home/kdog3682/2023/vite1')
-#SystemCommand('npm i vite --save-dev')
-#printdir('/home/kdog3682/2023/vite1')
-# /home/kdog3682/2023/vite1/package.json
-# /home/kdog3682/2023/vite1/index.html
-# /home/kdog3682/2023/vite1/style.css
-# /home/kdog3682/2023/vite1/main.js
 str1683347537 = """
     
 {
@@ -1023,14 +965,6 @@ str1683347537 = """
   }
 }
 """
-#SystemCommand('npm run dev', dir='/home/kdog3682/2023/vite1')
-
-
-#srequest('https://newyork.craigslist.org/brk/edu/d/brooklyn-summer-teaching-position/7618026638.html')
-#print(9 ** 0.5)
-
-#print(str(type({})))
-
 def getObservableInitialDataFromLink(url):
     s = request(url)
     r = '<script id="__NEXT_DATA__" type="application/json">([\w\W]+?)</script>'
@@ -1072,13 +1006,6 @@ def parseObservableData(data):
     #pprint(files)
 
 
-#data = read('observable-data.json')
-#parseObservableData(data)
-#srequest('https://observablehq.com/@meetamit?tab=notebooks')
-#printdir(npmdir)
-#ff(dir=firedir, recursion=1, mode='filetable')
-#srequest('https://prosemirror.net/examples/schema/')
-
 def fo1(a, b):
 
     ref = {
@@ -1098,9 +1025,6 @@ def fo1(a, b):
         return ['rename', m]
 
     return ['comment', m]
-
-#clip(data)
-
 
 def mergejson(file, data):
     if not data: 
@@ -1152,11 +1076,6 @@ def file_table_action():
     }
     mergejson('files.json', payload)
 
-#pprint(file_table_action())
-#print(isdir('teachingExamples'))
-#fa('view-source:https://www.npmjs.com/~marijn?activeTab=packages', r='prosemirror-\w+', clip=1)
-
-
 prosemirrorNpm = [
     "prosemirror-model",
     "prosemirror-keymap",
@@ -1174,10 +1093,6 @@ prosemirrorNpm = [
     "prosemirror-schema-table",
     "prosemirror-tables",
 ]
-#npm(prosemirrorNpm)
-
-
-
 def prosemirrorFileTable():
     
     def g(dir):
@@ -1190,11 +1105,6 @@ def prosemirrorFileTable():
     dirs = map(dirs, g)
     files = flat(dirs)
     write('pm-file-table.txt', join(files))
-
-#pprint(prosemirrorFileTable())
-
-
-
 
 def github_usercontent_url(user, repo, *args, master='master'):
     base = 'https://raw.githubusercontent.com'
@@ -1230,9 +1140,6 @@ def mdir(source_dir, dest_dir):
     shutil.rmtree(source_dir)
     print('done')
 
-#mdir('/home/kdog3682/Resources2023/MARKDOWN', '/home/kdog3682/MARKDOWN/')
-#print(isdir('/home/kdog3682/Resources2023/MARKDOWN'))
-
 markdowndir = '/home/kdog3682/MARKDOWN/'
 
 class Save:
@@ -1262,16 +1169,12 @@ def generate_markdown_toc():
         prev.extend(data)
         prompt(prev=prev)
 
-#pprint(generate_markdown_toc())
-#SystemCommand('npm run dev')
-
 def moveChangeLogFile():
     changelogfile = '/home/kdog3682/2023/changelog.md'
     url = f"{markdowndir}me.{datestamp()}.md"
     mfile(changelogfile, url)
 
 
-#print(new)
 def push(store, x):
     if x != None:
         store.append(x)
@@ -1316,11 +1219,6 @@ def toArray(x):
     if isString(x):
         return split(x, "\n")
     return [x]
-
-
-#pprint(renameClipToDriveFile())
-#printdir(nodedir2023)
-
 
 
 def removeSmallFiles(files):
@@ -1401,8 +1299,6 @@ def moveRecentlyDownloadedFileToDrive(name):
     dprompt(outpath)
     mfile(file, outpath)
 
-#moveRecentlyDownloadedFileToDrive('chrome-history')
-
 def cleanupDldir():
     chdir(dldir)
     files = os.listdir()
@@ -1481,14 +1377,9 @@ def backupFolder(dir):
     for file in absdir(dir):
         cfile(file, budir)
 
-#backupFolder('clips')
 def seeBackup(file):
     file = f"{budir}{file}.backup"
     print(read(file))
-
-#seeBackup('null.js')
-#printdir(budir)
-
 
 def driveWrite(file, s):
      write(drivedir + addExtension(file, 'py'), s)
@@ -1552,7 +1443,105 @@ def gitCloneAndMove(repoUrl, move=1):
     shutil.move(src, newdir)
     rmdir(dir, force=1)
 
-#gitCloneAndMove('https://github.com/sagalbot/vue-select/blob/master/src/scss/modules/_spinner.scss')
+def createKwargs(s, ref, aliases):
+    if not s:
+        return {}
+
+    r = "(\S+?) *= *(\S+?)(?= |$)"
+    s, items = mreplace(r, s)
+    s = dreplace(s, ref, template="(?<![\w=])(?:$1)\\b")
+    s, moreItems = mreplace(r, s)
+
+    aliaser = aliaserf(aliases)
+
+    A = {aliaser(k) : toArgument(v) for k, v in items}
+    B = {aliaser(k): True for k in split(s, " ")}
+    C = {aliaser(k) : toArgument(v) for k, v in moreItems}
+    return mergeToObject(A, B, C)
+
+def mergeToObject(*args):
+    store = {}
+    for arg in args:
+        if isArray(arg):
+            prompt(arg)
+            store[arg[0]] = arg[1]
+        elif isObject(arg):
+            store.update(arg)
+        else:
+            warn('arg can only be array or object', arg)
+    return store
+
+
+
+def toArgument(x):
+    if isNumber(x):
+        return int(x)
+    return x
+
+def aliaserf(dict):
+    def runner(k):
+        return dict.get(k, k)
+    return runner
+
+def getFilesWrapper(s):
+
+    aliases = {
+        'small': 'smallerThan',
+        'big': 'biggerThan',
+    }
+
+    ref = {
+        "backup": "dir=pub after=8pm js=1 copy=bu",
+        "i": "ignore",
+        "budir": "dir=bu",
+        "old": "old=1",
+        "budir": "dir=bu",
+        "pdfjson": "json=1",
+        "root": "dir=root",
+        "pdf": "pdf=1",
+        "5pm": "after=5pm",
+        "6pm": "after=6pm",
+        "7pm": "after=7pm",
+        "8pm": "after=8pm",
+        "9pm": "after=9pm",
+        "10pm": "after=10pm",
+        "11pm": "after=11pm",
+        "midnight": "after=12am",
+        "noon": "after=12pm",
+        "1pm": "after=1pm",
+        "2pm": "after=2pm",
+        "3pm": "after=3pm",
+        "4pm": "after=4pm",
+        "pub": "dir=pub",
+        "cwf": "dir=cwf",
+        "dl": "dir=dl",
+        "c": "copy",
+        "cp": "copy",
+        "debug": "mode=debug",
+        "open": "mode=open",
+        "o": "mode=open",
+        "d": "mode=debug",
+        "n": "name",
+        "r": "mode=review",
+        "today": "date=today",
+        "t": "text",
+        "ye": "date=yesterday",
+        "sm": "small=2000",
+        "small": "small=2000",
+        "this": "date=today",
+        "tf": "testfunction",
+        "mv": "move",
+        "of": "onlyFiles=1",
+        "h": "html",
+        "i": "mode=info",
+        "s": "mode=save",
+        "big": "big=100000",
+    }
+
+    kwargs = createKwargs(s, ref, aliases)
+    files = getFiles(dir2023, **kwargs)
+    return pprint(files)
+    return write('clip.js', files)
 
 def getFiles(dir=dir2023, **kwargs):
     if isArray(dir):
@@ -1613,10 +1602,6 @@ def isIgnoredFile2(file):
 def c2(s):
     write('clip.js', s)
 
-#c2(getFiles(npath(dldir, 'Git Repo - vue-select')))
-
-
-
 class NYTimes:
     def __init__(self):
         pass
@@ -1628,12 +1613,6 @@ class NYTimes:
         data = request(curl)
         docs = data.get('response').get('docs')
         map(docs, ['abstract', 'web_url as url', 'pub_date as date', 'byline.original', 'word_count'])
-
-
-#ny = NYTimes()
-#clip(ny.articlesearch('food'))
-#clip(request())
-
 
 
 def incrementalName(s=0, dir = 'drive'):
@@ -1666,14 +1645,11 @@ def dirGetter(dir=None):
 def foo1689558041(f):
     mfile(f, incrementalName(f))
 
-#foo1689558041('changelog.md')
 s='''NotoColorEmoji.ttf Sohne-Halbfett.otf'''
 def moveToActiveDir(s):
     files = map(xsplit(s), lambda x: npath(dirGetter('dl'), x))
     for file in files:
         mfile(file, dir2023)
-
-#pprint(moveToActiveDir(s))
 
 def rpw(file, f, check=0):
     payload = f(read(file))
@@ -1720,9 +1696,6 @@ def foo1689563342(s):
 
 
 
-#printdir(dirGetter('fontdir'))
-
-
 def headAndTail(s):
     a, b = os.path.split(s)
     if a == '':
@@ -1737,19 +1710,12 @@ def unzipfilestodir(outdir):
         f.unzip(outdir)
         f.remove()
 
-#printdir(fontdir)
-#files = getFiles('cwd')
-#clip(files)
-
-
 def extractAZipFile(file):
     f = FileState(glf())
     f.unzip(trashdir)
     g = trashdir + file
     mfile(g, dir2023)
     return file
-
-#clip(read('conversations.json')[0])
 
 def fo():
     def f(a):
@@ -1782,10 +1748,6 @@ def fo():
         #'/mnt/chromeos/MyFiles/Downloads/myFirstExtension/manifest.json'
         #'/mnt/chromeos/MyFiles/Downloads/myFirstExtension/background.js'
 
-#fo()
-
-#gitCloneAndMove('https://github.com/an-object-is-a/chrome-ext-mv3-how-to', move=0)
-
 def linKeSong():
     def getUrl(n):
         return "jjwxc.net/onebook.php?novelid=2337210&chapterid={n}"
@@ -1797,7 +1759,6 @@ def linKeSong():
 
     parser(1)
 
-#linKeSong()
 def oc():
     ofile('clip.js')
 
@@ -1942,15 +1903,8 @@ def isChinese(s):
     return test(chineseRE, s)
     
 
-#LinKeSong().check(2)
-
-
 def foo(self):
     return 'export default ' + dumpJson(out)
-#write('a.txt', clip()[0].get('text'))
-
-#LinKeSong().jieba()
-
 def copyClipFileToDrive(name):
     name = npath('drive', name)
     cfile('clip.js', name)
@@ -2138,17 +2092,7 @@ class Watcher:
             return False
 
 
-#pprint(Jieba().cut("我们喜欢吃饭。你呢？我们吃地笑"))
-
-#def help(fn):
     #return fn.__doc__
-
-#print(help(makehsk))
-#pprint(choose(alist))
-#pprint(dollarPrompt(['$1 aaa $1']))
-#When you miss the timing ... the timing is not recoverable ...
-#https://book.douban.com/subject/24526949/
-
 
 def zokarious():
     write(npath('drive', 'foo.js'), 'aaa')
@@ -2197,12 +2141,6 @@ def chooseMultiple(items, fn=0):
     message = 'choose 1 based indexes'
     indexes = rangeFromString(prompt(number(display), message))
     return map2(indexes, lambda x: items[x])
-
-#print(chooseMultiple(alist))
-
-
-#print(isfile(file))
-
 
 s = '''
 00:00:47,292 --> 00:00:49,487
@@ -2307,8 +2245,6 @@ def chineseMovieJiebaConverter(file, title, breaker=0):
     }
     write(outpath, payload)
 
-#chineseMovieJiebaConverter('/home/kdog3682/TODO/You Are the Apple of My Eye_utf8.ass', 'You Are the Apple of My Eye')
-
 def filesFromString(s, e=''):
     dir, *items = linegetter(s)
     return map2(items, lambda x: npath(dir, addExtension(x, e)))
@@ -2385,9 +2321,6 @@ def toNumber(x):
     
 
 
-#pprint(hskPaperTests()) # renames the files ... and does som stuff
-
-
 def sortByDate(files, reverse=0):
     files.sort(key=mdate, reverse=reverse)
     return files
@@ -2401,20 +2334,7 @@ def filePicker(dir=dldir, **kwargs):
     if saveIt:
         save(chosen, mode='python', current=1)
 
-#filePicker(json=1, dir=dir2023)
-
-
-
-#FileState(files[1]).debug()
-
 f = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/storyOfYangxiPalace.jieba.json'
-#print
-#print(read(f)[0].get('episodeNumber'))
-#clip(read(files[0])[0])
-
-
-#rpw('clip.js', parseConversation, check=1)
-
 files = ["/mnt/chromeos/MyFiles/Downloads/2e1138925e9cc4385bf450593750cc57d2825701e8fc93a6a3ab1708ff2fc541-2023-05-06-03-43-21.zip", "/mnt/chromeos/MyFiles/Downloads/2e1138925e9cc4385bf450593750cc57d2825701e8fc93a6a3ab1708ff2fc541-2023-07-20-01-00-46.zip"]
 
 def parseChatgptZipFiles():
@@ -2494,8 +2414,6 @@ def findFile2(files, r):
         return 
     return files[index]
 
-#pprint(parseChatgptZipFiles())
-
 def moveFontsToFontDir():
     fonts = getFiles(fonts=1)
     prompt(fonts)
@@ -2508,8 +2426,6 @@ def clickThrough(chunks):
 
 
 ftpdir='/home/kdog3682/.vim/ftplugin/'
-#appendVariable(absdir(ftpdir))
-
 temp = [
     "/home/kdog3682/.vim/ftplugin/vim.vim",
     "/home/kdog3682/.vim/ftplugin/html.vim",
@@ -2522,8 +2438,6 @@ temp = [
 ]
 '/home/kdog3682/.vim/after/ftplugin/vim.vim'
 '/home/kdog3682/.vim/after/ftplugin/python.vim'
-#mkdir()
-
 ftplugindir="/home/kdog3682/.vim/ftplugin/"
 
 def mfiles(files=0, dir=0, to=0):
@@ -2581,8 +2495,6 @@ temp = [
     "/mnt/chromeos/MyFiles/Downloads/clipboard-list-svgrepo-com.svg",
     "/mnt/chromeos/MyFiles/Downloads/clipboard-check-svgrepo-com.svg",
 ]
-#pprint(createSvgPathLibrary(temp))
-
 def createVariable2(name, value, prefix=None):
     value = dumpJson(value)
     if prefix: prefix += ' '
@@ -2600,11 +2512,6 @@ def jsonToJavascript(file):
     write(outpath, payload)
     save(outpath)
 
-
-#files = getFiles(dir='dldir', hours=100, svg=1)
-
-#createSvgPathLibrary(glf())
-#jsonToJavascript('svg-paths.json')
 
 def getN(items, n):
     if n > 0:
@@ -2693,13 +2600,8 @@ def folders():
     files = getFiles(folders=1, sort=1)
     pprint(files)
 
-#folders()
 a = 1
 b = 2
-#dprint2(a, b)
-
-
-
 def read2(file):
     textExtensions = [
         "js",
@@ -2744,28 +2646,6 @@ def viteMover():
     results = map(files, runner)
     return results
 
-#pprint(viteMover())
-
-
-def runjs(file, *args):
-    items = ['node', file, *args]
-    command = ' '.join(items)
-    dprint2(command)
-
-    from subprocess import Popen, PIPE
-    process = Popen(
-        command, stdout=PIPE, stderr=PIPE, shell=True
-    )
-
-    data = process.communicate()
-    success, error = [decode(d).strip() for d in data]
-    return dict(success=success, error=error)
-
-
-#dir = "/home/kdog3682/2023/dist/node_modules/"
-#rmdir(dir)
-
-
 def findFileString(s):
     r = '/\S+'
     return search(r, s)
@@ -2785,9 +2665,6 @@ def askof():
         return info
     clip(map(files, runner))
     #return files
-
-#pprint(askof())
-
 
 def getFiles2(dir=dir2023, **kwargs):
 
@@ -2842,8 +2719,6 @@ def getDrive(x):
     return d
 
 
-#getFiles2('~/', ignoreRE='2023|TRASH', recursive=1)
-
 def isPublic(x):
     return test('^\w', tail(x))
 
@@ -2858,22 +2733,9 @@ class DirectoryManager:
         dirs = chooseMultiple(self.dirs)
         rmdirs(dirs)
 
-#DirectoryManager()
-
-#mfile('/home/kdog3682/PUBLISHED/quiz.txt.04-01-2023', '/home/kdog3682/MARKDOWN/quiz.txt.04-01-2023')
-
-
-
 def aaarenameClipToDriveFile():
     newName = prompt('name for drive clip file?')
     cfile(clipfile, drivedir + newName)
-
-#a = Partitioner2(absdir(pdfdir2))()
-#pprint(a)
-
-#rmdir('/home/kdog3682/FIREBASE')
-#cleandir(jsondir)
-
 
     
 def mget2(r, s):
@@ -2921,10 +2783,6 @@ def changeName(newName, name):
     base = os.path.join(head, newName)
     return addExtension(base, getExtension(tail))
 
-#mdir('/home/kdog3682/JSONS', drivedir + 'JSONS 2023')
-
-
-
 def lastItem(x, mode=None):
     s = textgetter(x)
     if mode == 'date':
@@ -2956,10 +2814,6 @@ def submit(name, value, debug=0):
     write(outpath, value, open=1)
 
 
-#from datetime import datetime, timedelta
-#input_date = datetime(2021, 10, 3)
-#result_date = input_date - timedelta(days=5)
-#print(result_date.strftime('%B %d, %Y'))
  
 data = [
     {'name': 'Norah Wang', 'birthday': '9/28/2021'},
@@ -2975,8 +2829,6 @@ def emptyTrash():
     assert isdir(dir)
     rmdir(dir, force=1)
     mkdir(dir)
-
-#emptyTrash()
 
 def cleanup10(dir, size=150):
     files = getFiles(dir, smallerThan=size)
@@ -3030,8 +2882,6 @@ def flattenAllDirectoriesWithinTheDirectory(dir):
     for d in dirs:
         mfiles(absdir(d), dir)
         rmdir(d)
-
-#flattenAllDirectoriesWithinTheDirectory('res')
 
 def moveAllPicturesToDrive(dir):
      pics = getFiles(dir, images=1)
@@ -3118,12 +2968,6 @@ def sprawldir(dir, folder):
             items = absdir(items[0])
         else:
             return items
-
-#rmdir(dir2023 + 'vite1')
-
-
-#print('a'[1])
-
 
 fruits = [
   "apple",
@@ -3431,8 +3275,6 @@ def checkpointf(
             return False
         if smallerThan and fsize(f) > smallerThan:
             return False
-        if small and fsize(f) > small:
-            return False
         if big and fsize(f) < big:
             return False
         if ignoreRE and test(ignoreRE, filename, flags=re.I):
@@ -3444,22 +3286,12 @@ def checkpointf(
         return True
 
     return trycatch(runner)
-#gitPush(dir2023)
-#printdir('~/.viminfo')
-
-
-#print(longstamp())
-
-
 def note(*args):
     a = map(args, str)
     s = f"Note: {longstamp()} :: "
     s += json.dumps(a)
     append(temptextfile, s)
     prompt(s)
-
-
-#note(1, 2)
 
 
 def chalkf(color):
@@ -3486,7 +3318,7 @@ def chalkf(color):
     def chalk(*args, **kwargs):
         colon = ':' if len(args) > 1 else ''
         if kwargs.get('bold') or isCapitalized(args[0]):
-            print(bold + color + args[0] + colon + reset, '', *args[1:])
+            print(bold + color + args[0] + colon + reset, *args[1:])
         else:
             print(color + args[0] + reset, *args[1:])
 
@@ -3506,5 +3338,115 @@ def warn(*args):
     prompt('Exit')
 
 
-#gitPush(resdir)
-#rmdir(resdir + '.git')
+def getChunks(s):
+    r = '\n+(?=[\w.#])'
+    trim = lambda x: x.strip()
+    items = re.split(r, s.strip())
+    return map(items, trim)
+
+
+def dateTheFile(name):
+    e = getExtension(name)
+    name = removeExtension(name)
+    return name + '.' + datestamp() + '.' + e
+
+def v1(file):
+    newName = npath(drivedir + 'DEPRECATED/', file)
+    newName = dateTheFile(newName)
+    prompt(newName)
+    mfile(file, newName)
+
+def getBackupFile(file):
+    files = os.listdir(budir)
+    f = lambda x: re.sub('\.\d+-\d+-\d+', '', x) == file
+    files = filter(files, f)
+    return npath(budir, files[-1])
+
+def checkBackup(file):
+    originalFile = file
+    file = getBackupFile(file)
+    print(read(file))
+    blue('file', file)
+    blue(linebreak)
+    blue('original file', originalFile)
+    blue('text', read(originalFile))
+    blue(linebreak)
+
+def revert(file):
+    file = getBackupFile(file)
+    dir = dir2023
+    localPath = npath(dir, re.sub('\.\d+-\d+-\d+', '', file) )
+    cfile(file, localPath)
+
+env.basepyref['ff'] = 'getFilesWrapper'
+def assertion(arg, requirement=None, message=None):
+    if isFunction(requirement):
+        if requirement(arg):
+            return 
+        red('Assertion requirement was not met', requirement.__name__)
+        red('Arg', arg)
+        raise Exception(message or '')
+    else:
+        if not arg:
+            red('Assertion was not met', 'the arg is null')
+            raise Exception(message or '')
+
+def isHtmlFile(x):
+    return getExtension(x) == 'html'
+
+
+def makeSampleNestedFolder(dir=trashdir):
+    files = [
+        'abc/fileA.js',
+        'abc/fileB.js',
+        'abc/fileC.js',
+        'abc/def/fileD.js',
+        'abc/def/fileE.js',
+        'abc/def/fileF.js',
+    ]
+    f = lambda file: forceWrite(os.path.join(dir, file), 'hi')
+    map(files, f)
+    pprint(getFiles(dir, recursive=1))
+
+def forceWrite(file, s):
+    head, tail = os.path.split(file)
+    if not isdir(head):
+        mkdir(head)
+    write(file, s)
+
+def removeHead(s):
+    known = [
+        '/home/kdog3682/2023',
+        '/home/kdog3682/2023/dist',
+    ]
+    for known in known:
+        if known in s:
+            s = s.replace(known, '')
+            break
+
+    if s.startswith('/'):
+        s = s[1:]
+
+    return s
+
+
+
+def javascript(file, *args):
+    """
+        the new version of runjs
+        completely matches how bash uses node to call javascript
+
+        sometimes, you will have non-errors present in the error string
+        so cannot just rely on "success" or "error"
+        this happens with the git call
+    """
+    items = ['node', file, *args]
+    command = ' '.join(items)
+
+    from subprocess import Popen, PIPE
+    process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+
+    data = process.communicate()
+    success, error = [decode(d).strip() for d in data]
+    return dict(success=success, error=error)
+
