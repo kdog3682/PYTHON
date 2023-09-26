@@ -246,7 +246,9 @@ def isNumber(x):
     return type(x) == int or type(x) == float
 
 def isArray(x):
-    return type(x) == list or type(x) == tuple
+    t = type(x).__name__
+    c = ['list', 'tuple', 'dict_keys']
+    return t in c
 
 def isObject(x):
     return type(x) == dict
@@ -292,9 +294,14 @@ def toArray(x):
         return split(x, "\n")
     return [x]
 
-def every(items, fn):
-    for item in list(items):
-        if not fn(item):
+def every(x, y):
+    if isArray(y):
+        a = list(x).sort()
+        b = list(y).sort()
+        return json.dumps(a) == json.dumps(b)
+
+    for item in list(x):
+        if not y(item):
             return False
     return True
 

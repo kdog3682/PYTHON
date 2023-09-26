@@ -1,4 +1,5 @@
 from base import *
+from next import *
 import requests
 import praw
 
@@ -8,20 +9,15 @@ class Reddit:
         reddit = praw.Reddit(**env.redditinfo)
         reddit.validate_on_submit = True
         self.reddit = reddit
-
-    def askString(self, s):
-        r = '(\w+) (.*?)  ([\w\W]+)'
-        m = search(r, s)
-        if m:
-            return self.ask(*m)
-        else:
-            print('error because no match')
     
     def ask(self, subreddit, title, body):
-        subreddit = env.subreddits.get(subreddit, subreddit)
-        subreddit = self.reddit.subreddit(subreddit)
-        submission = subreddit.submit(title, body)
-        return submission
+        try:
+            sub = self.reddit.subreddit(subreddit)
+            submission = sub.submit(title, body)
+            return submission
+        except Exception as e:
+            print(str(e))
+            return 
 
     def reply_all_comments(self):
         comments = self.get_comments()
@@ -142,7 +138,7 @@ class RedditAPI(Reddit):
             body, submission.selftext, flags=flags
         ):
             print("failed at body")
-            return 0
+            
         if title and not test(
             title, submission.title, flags=flags
         ):
@@ -201,18 +197,6 @@ class RedditAPI(Reddit):
         )
         return channel.new(limit=limit)
 
-    def get_sub_data(self, post, fields=0):
-        if not submission.is_self:
-            return subm
-            "is_image": not submission.is_self,
-            "url": submission.url,
-            "upvote_ratio": submission.upvote_ratio,
-    
-    def fast(self, **kwargs):
-        posts = self.get_submissions(**kwargs)
-        data = map(posts, self.get_sub_data, fields='image')
-        write('temp.reddit.json', data)
-
     def getSubmissionDataItems(
         self, subreddit=0, redditor=0, limit=10, **kwargs
     ):
@@ -240,4 +224,3 @@ class RedditAPI(Reddit):
             ba.set("date", datestamp(after, "praw"))
             ba.set("size", len(items))
             ba.set("items", items)
-

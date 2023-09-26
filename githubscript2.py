@@ -11,9 +11,22 @@ def getToken(key = None):
     return ref[key]
 
 class Github:
-    def view(self, path=''):
+    
+    def view(self, path='', file=''):
         contents = self.getRepoContents(path=path)
-        pprint(contents)
+        if file:
+            f = lambda x: tail(x.path) == tail(file)
+            content = find(contents, f)
+            if content:
+                blue('content', content)
+                blue('path', content.path)
+                blue('text', content.decoded_content.decode('utf-8'))
+            else:
+                print('no content found')
+                print('original contents:')
+                pprint(contents)
+        else:
+            pprint(contents)
     
 
     def __init__(self, key=None):
@@ -33,7 +46,7 @@ class Github:
         os.system(command)
         blue('Authenticated', repoName)
 
-    def setRepo(self, repoName, private=False, required=1):
+    def setRepo(self, repoName, private=False, create=False):
 
         if '/' in repoName:
             repoName = repoName.split('/')[-1]
@@ -42,8 +55,8 @@ class Github:
             self.repo = self.user.get_repo(repoName)
         except Exception as e:
             checkErrorMessage(e, 'Not Found')
-            if required:
-                raise Exception('The repo is required, but doesnt exist')
+            if not create:
+                raise Exception('The repo doesnt exist and create is False')
 
             try:
                 self.repo = self.user.create_repo(
@@ -174,13 +187,16 @@ class GithubController(Github):
 
 
     def createLocalRepo(self, dirName, private=False):
-        dirName = dirName.upper()
-        self.setRepo(dirName, private)
-        dir = npath(rootdir, dirName)
 
-        remote = 'origin'
-        username = self.username
+        address = f"{self.username}/{dirName}"
+        dir = dirGetter(dirName)
 
+        blue('dir', dir)
+        blue('address', dir)
+        input()
+
+        self.setRepo(dirName, private, create=True)
+            
         mkdir(dir)
         chdir(dir)
 
@@ -193,11 +209,13 @@ class GithubController(Github):
             git add .
             git commit -m "first commit"
             git branch -M main
-            git remote add {remote} git@github.com:{username}/{dirName}.git
-            git push -u {remote} main 
+            git remote add {remote} git@github.com:{address}.git
+            git push -u origin main 
         """
-        result = SystemCommand(s, dir=dir)
-        print({'success': result.success, 'error': result.error})
+
+        shell(s)
+        ofile(self.repo.html_url)
+
 
     def upload(self, file, content=None):
          updateRepo(self.repo, file, content)
@@ -249,7 +267,8 @@ def example(g):
             # the options will shown up in the aliases
 
 def example(g):
-    g.createLocalRepo('RESOURCES', private=True)
+    # g.createLocalRepo('RESOURCES', private=True)
+    g.createLocalRepo('ftplugin', private=False)
     g.view() # views the repo that was created
 
 def example(g):
@@ -294,3 +313,21 @@ def example(g, file, projectName):
     g.uploadFolder(vitedistdir, subFolder=projectName)
     g.view(path=projectName)
 
+
+def example(g):
+    g.createLocalRepo('ftplugin')
+
+
+def example(g, **kwargs):
+    g.setRepo('ftplugin')
+    g.view(**kwargs)
+
+
+def runExample(**kwargs):
+    blue('Kwargs', kwargs)
+    Blue('Running the Function: (press to continue)', toString(example))
+    g = GithubController(key='kdog3682')
+    example(g, **kwargs)
+
+# runExample(file='vim.vim')
+runExample()

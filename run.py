@@ -159,7 +159,7 @@ def pythonWithState(s, state):
     #else:
         #print(value)
 
-def python(argv = sys.argv[1:]):
+def PythonController(argv = sys.argv[1:]):
     if not argv:
         return print("requires shell")
 
@@ -175,7 +175,12 @@ def python(argv = sys.argv[1:]):
         key, *args = argv
 
     ex = env.executables.get(key)
-    if ex: return exec(ex)
+    if ex:
+        if arg:
+            ex = re.sub('\$1', arg, ex)
+        ex = smartDedent(ex)
+        print(ex)
+        return exec(ex)
 
     key = env.basepyref.get(key, key)
     fn = globals().get(key)
@@ -1090,22 +1095,5 @@ def fixViteHtmlContent(s):
     s = sub(s, '</html>', p)
     return s
 
-def getParameters2(fn):
-    signature = str(inspect.signature(fn))
-    raw = signature[1:-1].split(', ')
-    args = []
-    kwargs = []
-    for arg in raw:
-        if '*' in arg:
-            continue
-        if '=' in arg:
-            kwargs.append(arg.split('=')[0])
-        else:
-            args.append(arg)
-
-    return [args, kwargs]
-
-
-
 if __name__ == '__main__':
-    python()
+    PythonController()

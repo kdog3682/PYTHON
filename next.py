@@ -1,3 +1,4 @@
+ftplugindir = "/home/kdog3682/.vim/ftplugin/"
 temptextfile = '/home/kdog3682/RESOURCES/temp.txt'
 hskjsondictfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/hsk-dict.json'
 mathdir = '/home/kdog3682/MATH/'
@@ -216,6 +217,7 @@ def pyargs(file="base.py"):
 
 
 def toString(s):
+    import inspect
     if isFunction(s):
         return inspect.getsource(s)
     return str(s)
@@ -352,7 +354,11 @@ def dictf(ref):
 
     return runner
 
-
+def dictf(ref):
+    def runner(item):
+        return ref.get(item, item)
+    return runner
+            
 def lines(s, ref=0):
     s = s.strip()
     lines = map(s.split("\n"), trim)
@@ -1332,6 +1338,9 @@ class Silence:
     def __exit__(self, etype, value, traceback):
         sys.stdout = self.stdout
 
+
+def sysArg():
+    return toArgument(sys.argv[1])
 
 def sysArgs():
     base = sys.argv[1:]
@@ -3294,7 +3303,7 @@ def note(*args):
     prompt(s)
 
 
-def chalkf(color):
+def chalkf(color, mode=0):
 
     reset = "\033[0m"
     red = "\033[31m"
@@ -3315,6 +3324,16 @@ def chalkf(color):
     }
     color = colors[color]
 
+    def promptChalk(a, b):
+        delimiter = ':'
+        if isString(b) and '\n' in b:
+            delimiter = '\n'
+        print(bold + color + capitalize(a) + delimiter + reset, b)
+        input()
+
+    if mode == prompt:
+        return promptChalk
+
     def chalk(*args, **kwargs):
         colon = ':' if len(args) > 1 else ''
         if kwargs.get('bold') or isCapitalized(args[0]):
@@ -3329,6 +3348,7 @@ def isCapitalized(s):
 
 blue = chalkf('blue')
 red = chalkf('red')
+
 
 def sleep(n):
     time.sleep(n)
@@ -3374,6 +3394,10 @@ def checkBackup(file):
 
 def revert(file):
     file = getBackupFile(file)
+    prompt(file)
+    if 'vimrc' in file:
+        return cfile(file, '/home/kdog3682/.vimrc')
+
     dir = dir2023
     localPath = npath(dir, re.sub('\.\d+-\d+-\d+', '', file) )
     cfile(file, localPath)
@@ -3431,22 +3455,119 @@ def removeHead(s):
 
 
 
-def javascript(file, *args):
-    """
-        the new version of runjs
-        completely matches how bash uses node to call javascript
+def shell(*args):
+    def fixError(s):
+        known = []
+        if s in known:
+            return ''
+        r = '^(?:hint)'
+        if test(r, s, flags=re.I):
+            return ''
+        return s
 
-        sometimes, you will have non-errors present in the error string
-        so cannot just rely on "success" or "error"
-        this happens with the git call
-    """
-    items = ['node', file, *args]
-    command = ' '.join(items)
-
+    def fixArg(s):
+        if "\n" in s:
+            return ';'.join(linegetter(s))
+        return s
+        
     from subprocess import Popen, PIPE
-    process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
 
+    command = map2(flat(args), fixArg).join(' ')
+    process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     data = process.communicate()
     success, error = [decode(d).strip() for d in data]
+    error = fixError(error)
+
+    blue('success', success)
+    blue('error', error)
+
     return dict(success=success, error=error)
 
+def javascript(file, *args):
+    return shell('node', file, args)
+
+def python(file, *args):
+    return shell('node3', file, args)
+
+# backupFolder('/home/kdog3682/.vim/ftplugin/')
+
+Blue = chalkf('blue', prompt)
+Red = chalkf('red', prompt)
+# Blue('hi', 1)
+
+
+def parseRedditString(s):
+    r = '(\w+) (.*?)  ([\w\W]+)'
+    m = search(r, s)
+    if not m:
+        return 
+    a, b, c = m
+    subreddit = env.subreddits.get(a, a)
+    title = capitalizeTitle(b)
+    body = toParagraph(c)
+    return (subreddit, title, body)
+
+def capitalizeTitle(title):
+    if isCapitalized(title):
+        return title
+    smallWords = ["a", "an", "the", "and", "but", "or", "for", "nor", "on", "at", "to", "from", "by", "with"]
+
+    def cap(word, i):
+        if i == 0 or word.lower() not in smallWords:
+            return word.capitalize()
+        else:
+            return word
+
+    words = title.split()
+    s = [cap(w, i) for i,w in enumerate(words)]
+    return " ".join(s)
+
+def shared(a, b):
+    return list(set(a) & set(b))
+
+def getArgsKwargs(fn, config, transform=None):
+    argList, kwargList = getParameters2(fn)
+
+    def get(key):
+        try:
+            a = config.get(key)
+            t = transform.get(key) if transform else None
+            return t(a) if t else a
+        except Exception as e:
+            error = str(e)
+            message = 'the error is in the transformer'
+            transformer = transform.get(key)
+            prompt({"error": error, "message": message, "transformer": transformer, "key": key})
+    
+    fnArgs = filter(map2(argList, lambda x: get(x)))
+    fnKwargs = reduce(kwargList, lambda x: [x, get(x)])
+    return [fnArgs, fnKwargs]
+
+def prettyProse(s):
+    return s
+
+def getParameters2(fn):
+    import inspect
+    signature = str(inspect.signature(fn))
+    raw = signature[1:-1].split(', ')
+    args = []
+    kwargs = []
+    for arg in raw:
+        if '*' in arg:
+            continue
+        if '=' in arg:
+            kwargs.append(arg.split('=')[0])
+        else:
+            args.append(arg)
+
+    return [args, kwargs]
+
+
+class Config:
+    def __init__(self, x):
+        d = dict(x)
+        for k,v in d.items():
+            setattr(self, k, v)
+        
+#revert('vimrc')
+# cfile(budir + 'vimrc09-22-2023', '/home/kdog3682/.vimrc')
