@@ -8377,3 +8377,7 @@ def save(x, mode=0, current=0):
 #print(isfile(read('base.py')))
 
 #checkpointf(hours=0)('/home/kdog3682/2023/vue.min.esm.js')
+
+
+
+# print(datestamp())

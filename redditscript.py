@@ -3,11 +3,41 @@ from next import *
 import requests
 import praw
 
+def getSubreddit(r, subreddit):
+    key = env.subreddits.get(subreddit, subreddit)
+    if hasattr(r, 'reddit'):
+        return r.reddit.subreddit(key)
+    return r.subreddit(key)
+
+
+def printSubmissionInfo(submission):
+    blue("Submission Title:", submission.title)
+    blue("Submission Author:", submission.author)
+    blue("Submission Score:", submission.score)
+    blue("Submission URL:", submission.url)
+    blue("Submission Comments:", submission.num_comments)
+    blue("Submission Created UTC:", submission.created_utc)
+
+def getSubredditSubmissions(subreddit, **kwargs):
+
+    def get():
+        computedKwargs = {}
+        computedKwargs['limit'] = kwargs.get('limit', 10)
+        if kwargs.get('new'): return subreddit.new(**computedKwargs)
+        if kwargs.get('hot'): return subreddit.hot(**computedKwargs)
+        return subreddit.new(**computedKwargs)
+    
+    submissions = mapFilter(get(), kwargs.get('checkpoint'))
+    blue("Number of Submissions", len(submissions))
+    return submissions
 
 class Reddit:
+
+
     def __init__(self):
         reddit = praw.Reddit(**env.redditinfo)
         reddit.validate_on_submit = True
+        self.username = env.redditinfo.get('username')
         self.reddit = reddit
     
     def ask(self, subreddit, title, body):
@@ -197,6 +227,7 @@ class RedditAPI(Reddit):
         )
         return channel.new(limit=limit)
 
+             
     def getSubmissionDataItems(
         self, subreddit=0, redditor=0, limit=10, **kwargs
     ):
@@ -224,3 +255,5 @@ class RedditAPI(Reddit):
             ba.set("date", datestamp(after, "praw"))
             ba.set("size", len(items))
             ba.set("items", items)
+
+

@@ -1,4 +1,6 @@
 ftplugindir = "/home/kdog3682/.vim/ftplugin/"
+oldjdjsonfile = "/home/kdog3682/RESOURCES/jd.june.json"
+jdjsonfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/jd.june.json'
 temptextfile = '/home/kdog3682/RESOURCES/temp.txt'
 hskjsondictfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/hsk-dict.json'
 mathdir = '/home/kdog3682/MATH/'
@@ -354,9 +356,26 @@ def dictf(ref):
 
     return runner
 
-def dictf(ref):
+def hasValue(x = None):
+    if x == None or x == False:
+        return False
+    return True
+
+def fparse(fn, *args):
+    if not fn:
+        return args[0]
+    elif isFunction(fn):
+        value = fn(*args)
+        if hasValue(value):
+            return value
+        return args[0]
+    else:
+        return fn[0]
+        
+
+def dictf(ref, fallback = None):
     def runner(item):
-        return ref.get(item, item)
+        return ref.get(item, fparse(fallback, item))
     return runner
             
 def lines(s, ref=0):
@@ -1340,7 +1359,11 @@ class Silence:
 
 
 def sysArg():
-    return toArgument(sys.argv[1])
+    try:
+        return toArgument(sys.argv[1])
+    except Exception as e:
+        return 
+    
 
 def sysArgs():
     base = sys.argv[1:]
@@ -1485,6 +1508,8 @@ def mergeToObject(*args):
 def toArgument(x):
     if isNumber(x):
         return int(x)
+    if test('^(?:""|\'\')$', x.strip()):
+        return ''
     return x
 
 def aliaserf(dict):
@@ -3324,10 +3349,16 @@ def chalkf(color, mode=0):
     }
     color = colors[color]
 
+    def getDelimiter(a, b = None):
+        if isString(b):
+            if '\n' in b:
+                return '\n'
+            elif a.endswith(':'):
+                return ''
+        return ':'
+
     def promptChalk(a, b):
-        delimiter = ':'
-        if isString(b) and '\n' in b:
-            delimiter = '\n'
+        delimiter = getDelimiter(a, b)
         print(bold + color + capitalize(a) + delimiter + reset, b)
         input()
 
@@ -3335,9 +3366,9 @@ def chalkf(color, mode=0):
         return promptChalk
 
     def chalk(*args, **kwargs):
-        colon = ':' if len(args) > 1 else ''
+        delimiter = getDelimiter(*args)
         if kwargs.get('bold') or isCapitalized(args[0]):
-            print(bold + color + args[0] + colon + reset, *args[1:])
+            print(bold + color + args[0] + delimiter + reset, *args[1:])
         else:
             print(color + args[0] + reset, *args[1:])
 
@@ -3394,7 +3425,8 @@ def checkBackup(file):
 
 def revert(file):
     file = getBackupFile(file)
-    prompt(file)
+    dprompt2(file)
+    warn('still in progress')
     if 'vimrc' in file:
         return cfile(file, '/home/kdog3682/.vimrc')
 
@@ -3528,19 +3560,26 @@ def shared(a, b):
 def getArgsKwargs(fn, config, transform=None):
     argList, kwargList = getParameters2(fn)
 
+    store = {}
     def get(key):
+        if key == 'config':
+            return {k:toArgument(v) for k,v in config.items()}
         try:
             a = config.get(key)
             t = transform.get(key) if transform else None
-            return t(a) if t else a
+            value = t(a) if t else a
+            store[key] = value
+            return value
         except Exception as e:
             error = str(e)
-            message = 'the error is in the transformer'
+            message = 'the error is in the transformer. Please Exit.'
             transformer = transform.get(key)
-            prompt({"error": error, "message": message, "transformer": transformer, "key": key})
+            prompt({"error": error, "message": message, "transformer": transformer, "key": key, "value": a})
+            raise e
     
     fnArgs = filter(map2(argList, lambda x: get(x)))
     fnKwargs = reduce(kwargList, lambda x: [x, get(x)])
+    blue('ParamRef @getArgsKwargs', store)
     return [fnArgs, fnKwargs]
 
 def prettyProse(s):
@@ -3563,11 +3602,44 @@ def getParameters2(fn):
     return [args, kwargs]
 
 
+def compose(*functions):
+    def composed(*args, **kwargs):
+        result = None
+        for i, fn in enumerate(reversed(flat(functions))):
+            result = fn(*args, **kwargs) if i == 0 else fn(result)
+
+        return result
+
+    return composed
+
 class Config:
     def __init__(self, x):
         d = dict(x)
         for k,v in d.items():
             setattr(self, k, v)
         
-#revert('vimrc')
-# cfile(budir + 'vimrc09-22-2023', '/home/kdog3682/.vimrc')
+def mapFilter(items, fn = None):
+    store = []
+    for item in list(items):
+        if fn:
+            value = fn(item)
+            if hasValue(value):
+                if isinstance(value, bool):
+                    store.append(item)
+                else:
+                    store.append(value)
+        elif hasValue(item):
+            store.append(item)
+    return store
+
+def packageManager(fn):
+    args = sys.argv
+    if len(args) == 1:
+        red('PackageManager', 'no arg = no run')
+    else:
+        fn(*map(args[1:], toArgument))
+
+
+
+def toCallableFromConfig(name, params, config):
+    f"{name}({params})"
