@@ -1,49 +1,58 @@
 from base import *
 from next import *
-from datetime import datetime, timedelta
-
-def tomorrow():
-    tomorrow = datetime.today() + timedelta(days=1)
-    return tomorrow.strftime("%m-%d-%Y")
 
 def main():
-    gdjson = '/home/kdog3682/2023/git-data3.json'
+    doGit()
+    doVim()
+    doReddit()
+    doNotes()
 
-    store = []
-    store.append(runner('/home/kdog3682/2023/', 1))
-    store.append(runner('/home/kdog3682/PYTHON/', 1))
-    store.append(runner('/home/kdog3682/RESOURCES/', 0))
+def doGit():
+    ref = [
+        # ('/home/kdog3682/.vim/ftplugin/', 0),
+        ('/home/kdog3682/2023/',          1),
+        ('/home/kdog3682/PYTHON/',        1),
+        # ('/home/kdog3682/RESOURCES/',     0),
+    ]
 
-    prompt(store, 'continue to append?') 
-    appendjson(gdjson, filter(store), mode = list)
-    append('/home/kdog3682/.vimrc', tomorrow())
+    store = mapFilter(ref, lambda args: runner(*args))
+    appendjson(gdjsonfile, store, mode = list, ask = 1)
+
+def doVim():
+    append('/home/kdog3682/.vimrc', '" ' + tomorrow())
+
+def doReddit():
+    pass
+
+def doNotes():
+    pass
 
 
-def runner(dir, parseIt = 0, pushIt = 1):
 
-    # def parse(a): return a
-    # def push(a): return a
+def runner(dir, parseIt):
 
-    blue('Start', longstamp())
-    if parseIt: value = parse(dir)
-    blue('Parsed', longstamp())
-    if pushIt: push(dir)
-    blue('Pushed', longstamp())
-    blue('Sleeping', longstamp())
-    sleep(5)
-    blue('Wake', longstamp())
+    blue('Starting GitPush Runner', longstamp())
+    value = None
+    if parseIt: 
+        value = parse(dir)
+    blue('Finished Parsed', longstamp())
+    print(push(dir))
+    blue('Finished Pushing', longstamp())
+    blue('Sleeping for 3 seconds', longstamp())
+    blue(linebreak)
     print()
-    print()
+    sleep(3)
+    return value
 
 def push(dir):
-
     s = f"""
         cd {dir}
         git add .
         git commit -m "'autopush'"
         git push
     """
-    SystemCommand(s, dir=dir)
+    r = SystemCommand(s, dir=dir)
+    return r.success or r.error
 
 
 def parse(dir):

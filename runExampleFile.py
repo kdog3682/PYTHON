@@ -15,8 +15,17 @@ def runExampleFile(lineNumber):
     items = re.split(delimiter, s, flags = re.M)
     items = map2(items, trim)
     item = items[index]
-    # return pprint({"item": item, "itemLength": len(items), 'ln': lineNumber, 'index': index})
+    # if not test('^code:', item):
+        # a, b = splitonce(item, '\n(?=(?:def |class |from \w+ import|import |\w+ = ))')
+        # config = colonDict(a)
+        # if b:
+            # config['code'] = b
+    # else:
     config = colonDict(item)
+
+    if not config:
+        red('Error')
+        return pprint({"item": item, "itemLength": len(items), 'ln': lineNumber, 'index': index})
 
     keys = config.keys()
     for item in ref:
@@ -68,20 +77,21 @@ def colonDict(item):
     return config
 
 def executeCode(code, config):
-    os.system('clear')
-    callableRE = "^[a-zA-Z]\w*(?:.\w+)*\("
-    code = 'def main():' + newlineIndent(code) + 'main()\n\n'
-    if not test(callableRE, code, flags == re.I):
+    callableRE = "^[a-zA-Z]\w*(?:\.\w+)*\("
+    if not test(callableRE, code, flags = re.M):
         ref = codeLibrary(code)[-1]
         name = ref.get('name')
         params = ref.get('params')
         callable = toCallableFromConfig(name, params, config)
-        code += callable
+        code += '\n\n' + callable
 
-    # blue('Code', code)
+    code = 'def main():' + newlineIndent(code) + 'main()\n\n'
     blue(linebreak)
     print(code)
     blue(linebreak)
+    if config.get('stop'):
+        blue('Stopping', 'No code evaluation')
+        return 
     exec(code)
 
 ref = [
@@ -97,5 +107,7 @@ ref = [
     { 'identifiers': ['code'], 'fn': executeCode, },
 ]
 
+
+    
 
 packageManager(runExampleFile)

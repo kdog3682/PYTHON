@@ -4553,9 +4553,11 @@ def push(store, data=0):
     else:
         store.append(data)
 
-def appendjson(file, data, mode=0):
+def appendjson(file, data, mode=0, ask = 0):
     if not data:
         return
+    if ask:
+        prompt(data, 'continue to append?\nPress ctrl-c to exit\n')
     placeholder = [] if mode == list or isArray(data) else {}
     store = readjson(file, placeholder)
 

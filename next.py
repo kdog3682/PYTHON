@@ -1,4 +1,5 @@
 ftplugindir = "/home/kdog3682/.vim/ftplugin/"
+gdjsonfile = '/home/kdog3682/2023/git-data3.json'
 oldjdjsonfile = "/home/kdog3682/RESOURCES/jd.june.json"
 jdjsonfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/jd.june.json'
 temptextfile = '/home/kdog3682/RESOURCES/temp.txt'
@@ -375,7 +376,7 @@ def fparse(fn, *args):
 
 def dictf(ref, fallback = None):
     def runner(item):
-        return ref.get(item, fparse(fallback, item))
+        return ref.get(item, fparse(fallback, item)) or item
     return runner
             
 def lines(s, ref=0):
@@ -3353,7 +3354,7 @@ def chalkf(color, mode=0):
         if isString(b):
             if '\n' in b:
                 return '\n'
-            elif a.endswith(':'):
+            elif str(a).endswith(':'):
                 return ''
         return ':'
 
@@ -3368,9 +3369,9 @@ def chalkf(color, mode=0):
     def chalk(*args, **kwargs):
         delimiter = getDelimiter(*args)
         if kwargs.get('bold') or isCapitalized(args[0]):
-            print(bold + color + args[0] + delimiter + reset, *args[1:])
+            print(bold + color + str(args[0]) + delimiter + reset, *args[1:])
         else:
-            print(color + args[0] + reset, *args[1:])
+            print(color + str(args[0]) + reset, *args[1:])
 
     return chalk
 
@@ -3585,6 +3586,21 @@ def getArgsKwargs(fn, config, transform=None):
 def prettyProse(s):
     return s
 
+def getParameters(s):
+    m = search('\((.*?)\)', s)
+    if m:
+        parts = re.split(', *', m)
+        args = []
+        kwargs = []
+        for part in parts:
+            if test('\*\w', part):
+                continue
+            elif test('\w+ *=', part):
+                kwargs.append(re.split(' *= *', part))
+            else:
+                args.append(part)
+        return [args, kwargs]
+
 def getParameters2(fn):
     import inspect
     signature = str(inspect.signature(fn))
@@ -3642,4 +3658,66 @@ def packageManager(fn):
 
 
 def toCallableFromConfig(name, params, config):
-    f"{name}({params})"
+    def fix(s):
+        if test('\n', s):
+            escaped = re.sub('\n', '\\\\n', s)
+            return f'"""{escaped}"""'
+        elif isNumber(s):
+            return s
+        elif isJsonParsable(s):
+            return json.dumps(s)
+        else:
+            return singleQuote(s)
+    args, kwargs = params
+    store = []
+    for arg in args:
+        v = config.get(arg)
+        if v != None:
+            push(store, fix(v))
+    for a,b in kwargs:
+        v = config.get(a)
+        if v != None:
+            push(store, f"{a} = {fix(v)}")
+
+    paramString = ', '.join(store)
+    return f"{name}({paramString})"
+
+
+def tomorrow():
+    date = datetime.today() + timedelta(days=1)
+    return date.strftime("%m-%d-%Y")
+
+def pick(items, display = identity, get = identity):
+
+    for i, item in enumerate(items):
+        blue(i + 1, display(item))
+
+    indexes = rangeFromString(input('Select 1-based indexes: '))
+
+    store = [get(el) for i,el in enumerate(items) if i in indexes]
+    return smallify(store)
+
+
+def getIdentifier(s):
+    r = '^(?:class |def )(\w+)|^(\w+) *= *'
+    m = search(r, s)
+    if m:
+        return m[0] or m[1]
+
+def codeLibrary(s):
+    r = '\n+(?=class|def|\w+ *=)'
+    items = re.split(r, s)
+    
+    def runner(s):
+        text = s.strip()
+        name = getIdentifier(text)
+        if name:
+            params = getParameters(text)
+            return { 'name': name, 'params': params, 'text': text, }
+    
+    return mapFilter(items, runner)
+
+# print(codeLibrary('\n' + toString(codeLibrary)))
+
+# c2(getFiles('/mnt/chromeos/GoogleDrive/MyDrive/CWF', py = 1))
+

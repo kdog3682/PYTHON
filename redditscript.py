@@ -32,7 +32,13 @@ def getSubredditSubmissions(subreddit, **kwargs):
     return submissions
 
 class Reddit:
-
+    def getUserSubmissions(self, key, limit = 100):
+        if key == 'self':
+            user = self.reddit.user.me()
+        else:
+            user = self.reddit.user.me()
+        return user.submissions.new(limit = limit)
+    
 
     def __init__(self):
         reddit = praw.Reddit(**env.redditinfo)
