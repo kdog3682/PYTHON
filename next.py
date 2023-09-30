@@ -3720,4 +3720,8 @@ def codeLibrary(s):
 # print(codeLibrary('\n' + toString(codeLibrary)))
 
 # c2(getFiles('/mnt/chromeos/GoogleDrive/MyDrive/CWF', py = 1))
+# print(SystemCommand('curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'))
 
+
+ftplugindir = "/home/kdog3682/.vim/plugged/goyo.vim"
+# printdir(ftplugindir)

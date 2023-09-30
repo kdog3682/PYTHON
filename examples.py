@@ -150,8 +150,8 @@ And then around 5PM, I kind of don't want to do anything anymore.
 
 How do you guys (if you do) stay productive in the afternoons?
 -------------------------------------------------------------
-
-
+date: 09-28-2023 
+desc: testing it out
 s:
 
 line 1
@@ -164,4 +164,27 @@ code:
 
 def foo(s, y = 3):
     print(y - 3)
+
+
+code
+-------------------------------------------------------------
+date: ${DateStamp()}
+d: $date
+desc: testing it out
+
+arg: 
+
+howdy from line 1
+howdy from line 2
+howdy from line 3
+
+code:
+
+$c
+
+def foo(s):
+    print(s)
+    return 
+
+
 

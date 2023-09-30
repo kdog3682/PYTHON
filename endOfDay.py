@@ -9,10 +9,10 @@ def main():
 
 def doGit():
     ref = [
-        # ('/home/kdog3682/.vim/ftplugin/', 0),
+        ('/home/kdog3682/.vim/ftplugin/', 0),
         ('/home/kdog3682/2023/',          1),
         ('/home/kdog3682/PYTHON/',        1),
-        # ('/home/kdog3682/RESOURCES/',     0),
+        ('/home/kdog3682/RESOURCES/',     0),
     ]
 
     store = mapFilter(ref, lambda args: runner(*args))
@@ -32,16 +32,17 @@ def doNotes():
 def runner(dir, parseIt):
 
     blue('Starting GitPush Runner', longstamp())
+    blue('Directory', dir)
     value = None
     if parseIt: 
         value = parse(dir)
     blue('Finished Parsed', longstamp())
     print(push(dir))
     blue('Finished Pushing', longstamp())
-    blue('Sleeping for 3 seconds', longstamp())
+    blue('Sleeping for 2 seconds', longstamp())
     blue(linebreak)
     print()
-    sleep(3)
+    sleep(2)
     return value
 
 def push(dir):
