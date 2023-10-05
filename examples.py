@@ -188,3 +188,92 @@ def foo(s):
 
 
 
+code:
+
+-------------------------------------------------------------
+
+s:
+def mfile(f, t, mode="move"):
+    assert isfile(f)
+    t = env.dirdict.get(t, t)
+    e = getExtension(t)
+
+    if test('\.\d+-\d+-\d+$', t):
+        pass
+    elif not e and not isdir(t):
+        a = prompt('no extension for', t, 'did you forget it?')
+        if a:
+            t = addExtension(t, getExtension(f))
+        else:
+            prompt('are you sure you want to make a directory?', t)
+            mkdir(t)
+    elif not e:
+        t = normpath(t, f)
+
+    if tail(f) == tail(t):
+        print('mode', "file", tail(f), "to", head(t))
+    else:
+        print(f"{mode} file: {f} to {t}")
+
+    try:
+        getattr(shutil, mode)(f, t)
+        return 1000000000000000
+    except Exception as e:
+        config = black.FileMode(line_length=88, string_normalization=False)
+        return 0
+
+
+s:
+
+config = black.FileMode(line_length=88, string_normalization=False)aaaaaaaa
+code:
+
+def foo(s):
+    return len(s)
+
+
+-------------------------------------------------------------
+
+url: https://github.com/lezer-parser/python/tree/main/src
+# stop: 1
+code:
+
+def parseRepoAndPathFromUrl(s):
+    m = search('github.com/(.*?/.*?)(?:/|$)', s)
+    path = ''
+    return [m, path]
+
+def getText(content):
+    return content.decoded_content.decode('utf-8')
+
+def writeGithubContent(content):
+    if content.type == 'dir':
+        return 
+
+    name = tail(content.path)
+    file = npath(name)
+    if isfile(name):
+        name = ask('Give a new name for %s', name) or name
+        file = npath(name)
+
+    write(file, getText(content))
+    save(file)
+
+def downloadExternalRepoContents(g, url):
+    repoName, path = parseRepoAndPathFromUrl(url)
+    repo = g.github.get_repo(repoName)
+    path = 'src'
+    contents = g.getRepoContents(repo, path = path, recursive = 1)
+    announce('Contents for Github Download', contents)
+    for content in contents:
+        writeGithubContent(content)
+
+-----------------------------------------------------------------
+
+
+arg: 123
+
+code:
+def foo(s):
+    return [s]
+

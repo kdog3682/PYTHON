@@ -4,8 +4,10 @@ from next import *
 def main():
     doGit()
     doVim()
-    doReddit()
-    doNotes()
+    backup('help.md')
+    backup('vimrc')
+    # doReddit()
+    # doNotes()
 
 def doGit():
     ref = [

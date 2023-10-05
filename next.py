@@ -1,4 +1,6 @@
 ftplugindir = "/home/kdog3682/.vim/ftplugin/"
+drivedir = '/mnt/chromeos/GoogleDrive/MyDrive/'
+depdir = drivedir + 'DEPRECATED/'
 gdjsonfile = '/home/kdog3682/2023/git-data3.json'
 oldjdjsonfile = "/home/kdog3682/RESOURCES/jd.june.json"
 jdjsonfile = '/mnt/chromeos/GoogleDrive/MyDrive/JSONS/jd.june.json'
@@ -1247,6 +1249,9 @@ def toArray(x):
     return [x]
 
 
+def removeStartingComments(s):
+    return re.sub('^#.*\n*', '', s, flags = re.M)
+
 def removeSmallFiles(files):
     for file in files:
         if isfile(file) and fsize(file) < 50:
@@ -1442,7 +1447,7 @@ def npath(dir=0, file=0):
     if not dir:
         return file
     elif not file:
-        return npath(dirFromFile(file), file)
+        return npath(dirFromFile(dir), dir)
     if isfile(dir):
         if not getExtension(file):
             file = addExtension(file, getExtension(dir))
@@ -1611,7 +1616,9 @@ def getFiles(dir=dir2023, **kwargs):
     checkpoint = checkpointf(**kwargs)
     runner(dir)
     if sortIt:
-        store = sortByDate(store, reverse=kwargs.get('reverse', 0))
+        store = sortByDate(store)
+    if kwargs.get('reverse'):
+        store.reverse()
     if promptIt:
         prompt(store)
     if parser:
@@ -2135,17 +2142,20 @@ def zokarious():
 def map2(items, fn, **kwargs):
     if not fn:
         return items
+
     store = []
-    for index, originalItem in enumerate(list(items)):
+    for index, el in enumerate(list(items)):
         try:
-            value = fn(originalItem)
+            value = fn(el)
             if value == None:
                 continue
             store.append(value)
         except Exception as error:
-            errorPrompt(index, originalItem, error)
+            errorPrompt(index, el, error)
+
     if kwargs.get('sort'):
         return sort(store, kwargs.get('sort'))
+
     return store
         
 
@@ -2963,18 +2973,30 @@ def review(files):
         runner(file)
 
 
-def printdir(dir=dldir, printIt=0):
+def printdir(dir=dldir, printIt=0, dated = 0):
     dir = dirGetter(dir)
-    files = os.listdir(dir)
+    files = absdir(dir)
     size = len(files)
-    if size < 30:
-        files = map(files, lambda f: normpath(dir, f))
+
+    def dateRunner(file):
+        try:
+            d = datestamp(file, 'long')
+            return (tail(file), d)
+        except Exception as e:
+            return 
+
+    if dated:
+        files = map2(sortByDate(files), dateRunner)
+        for file, date in files:
+            blue(date, file)
+    elif size < 30:
         pprint(map(files, fileInfo))
     else:
-        files = sorted(files)
+        files = map(sorted(files), tail)
         pprint(files)
 
-    dprint(size, dir)
+    blue('Num Files', size)
+
     if printIt:
         append(vimftfile, join(datestamp(), files))
     return files
@@ -3358,6 +3380,15 @@ def chalkf(color, mode=0):
                 return ''
         return ':'
 
+
+    def baseChalk(s):
+        if isCapitalized(s):
+            return bold + color + str(s) + reset
+        else:
+            return color + str(s) + reset
+
+    if mode == str:
+        return baseChalk
     def promptChalk(a, b):
         delimiter = getDelimiter(a, b)
         print(bold + color + capitalize(a) + delimiter + reset, b)
@@ -3376,7 +3407,7 @@ def chalkf(color, mode=0):
     return chalk
 
 def isCapitalized(s):
-    return test('^[A-Z]', s)
+    return isString(s) and test('^[A-Z]', s)
 
 blue = chalkf('blue')
 red = chalkf('red')
@@ -3385,7 +3416,13 @@ red = chalkf('red')
 def sleep(n):
     time.sleep(n)
 
-def warn(*args):
+def stop(*args):
+    s = printf(*args)
+    raise Exception(chalkf('red', mode = str)(s))
+
+def warn(*args, **kwargs):
+    if kwargs.get('required'):
+        raise Exception(chalkf('red', mode = str)(args[0]))
     red(*args)
     prompt('Exit')
 
@@ -3396,17 +3433,25 @@ def getChunks(s):
     items = re.split(r, s.strip())
     return map(items, trim)
 
+def ask(*args):
+    s = printf(*args)
+    return input(chalkf('blue', mode = str)(s + ': '))
 
-def dateTheFile(name):
-    e = getExtension(name)
-    name = removeExtension(name)
-    return name + '.' + datestamp() + '.' + e
+def printf(s, *args):
+    count = -1
+    def runner(x):
+        nonlocal count
+        count += 1
+        return args[count]
+    return re.sub('%s', runner, s)
 
-def v1(file):
-    newName = npath(drivedir + 'DEPRECATED/', file)
-    newName = dateTheFile(newName)
-    prompt(newName)
-    mfile(file, newName)
+def confirm(message, *args):
+    s = printf(message, *args)
+    red('CONFIRM ' + capitalize(s), 'Give input to proceed')
+    a = input()
+    if not a:
+        warn('Confirmation was not accepted', required = True)
+        
 
 def getBackupFile(file):
     files = os.listdir(budir)
@@ -3658,30 +3703,44 @@ def packageManager(fn):
 
 
 def toCallableFromConfig(name, params, config):
-    def fix(s):
-        if test('\n', s):
-            escaped = re.sub('\n', '\\\\n', s)
-            return f'"""{escaped}"""'
-        elif isNumber(s):
-            return s
-        elif isJsonParsable(s):
-            return json.dumps(s)
-        else:
-            return singleQuote(s)
     args, kwargs = params
     store = []
-    for arg in args:
+    imports = []
+    beforeRef = {
+            'g': {
+                'import': 'from githubscript2 import GithubController',
+                'value': 'g = GithubController()',
+            },
+    }
+    imports = []
+    values = []
+    for i, arg in enumerate(args):
+        if i == 0 and config.get('arg') and not config.get(arg):
+            push(store, config.get('arg'))
+            continue
+
         v = config.get(arg)
-        if v != None:
-            push(store, fix(v))
+        if v == None:
+            ref = beforeRef.get(arg)
+            if ref:
+                imports.append(ref.get('import'))
+                values.append(ref.get('value'))
+                push(store, arg)
+        else:
+            push(values, createBinding(arg, v))
+            push(store, arg)
     for a,b in kwargs:
         v = config.get(a)
         if v != None:
-            push(store, f"{a} = {fix(v)}")
+            push(store, createBinding(a, v))
 
-    paramString = ', '.join(store)
-    return f"{name}({paramString})"
+    top = join(join(imports), join(values))
+    if top:
+        top = '\n\n' + top + '\n\n'
+    return [stringCall2(name, store), top]
 
+def stringCall2(fn, *args):
+    return f"{fn}({', '.join(map2flat(args))})"
 
 def tomorrow():
     date = datetime.today() + timedelta(days=1)
@@ -3725,3 +3784,178 @@ def codeLibrary(s):
 
 ftplugindir = "/home/kdog3682/.vim/plugged/goyo.vim"
 # printdir(ftplugindir)
+# printdir(budir, dated = 1)
+# print(datestamp('/home/kdog3682/PYTHON/next.py', 'long'))
+# printdir(depdir)
+
+
+def Black(file):
+    import black
+
+    # 75 represents my current vim setup max length
+    config = black.FileMode(line_length=75, string_normalization=True)
+    prompt(config)
+    rpw(file, lambda s: black.format_str(s, mode = config))
+
+def singleQuote(s):
+    return f"'{s}'"
+
+
+def dateTheFile(name):
+    e = getExtension(name)
+    name = removeExtension(name)
+    return name + '.' + datestamp() + '.' + e
+
+def v1(file):
+    outpath = dateTheFile(npath(depdir, file))
+    confirm('moving %s to %s', file, outpath)
+    mfile(file, outpath)
+
+def announce(a, b = None):
+    if not b:
+        stop('The value for announce() is empty and is required.')
+
+    blue(linebreak)
+    print(chalk('key:   ', 'blue'), a)
+    if isPrimitive(b):
+        print(chalk('value: ', 'blue'), b)
+    else:
+        print(chalk('value', 'blue'))
+        pprint(b)
+
+    blue(linebreak)
+    message = 'Input <C-C> to exit the announcement '
+    input(chalk(message, 'red'))
+
+
+# imports = []
+# values = []
+# top = join(join(imports), join(values))
+# pprint({"top": top})
+
+def createBinding(a, b):
+    return f"{a} = {toStringArgument(b)}"
+
+def toStringArgument(s):
+    if test('\n', s):
+        escaped = re.sub('\n', '\\\\n', s)
+        return f'"""{escaped}"""'
+    elif isNumber(s):
+        return s
+    elif isJsonParsable(s):
+        return json.dumps(s)
+    else:
+        return singleQuote(s)
+
+def getChalkColor(color):
+    reset = "\033[0m"
+    red = "\033[31m"
+    green = "\033[32m"
+    yellow = "\033[33m"
+    blue = "\033[34m"
+    purple = "\033[35m"
+    cyan = "\033[36m"
+    bold = "\033[1m"
+
+    colors = {
+        'blue': blue,
+        'red': red,
+        'green': green,
+        'yellow': yellow,
+        'purple': purple,
+        'cyan': cyan,
+        'reset': reset,
+        'bold': bold,
+        '': '',
+    }
+    return colors[color]
+
+def chalk(s, color, bold = ''):
+    color = getChalkColor(color)
+    reset = getChalkColor('reset')
+    bold = getChalkColor('bold') if bold else ''
+    return color + bold + s + reset 
+
+def mostRecent(dir, n=1, reverse=0, **kwargs):
+    from glob import glob
+
+    files = glob(dir + "/*") if isString(dir) else dir
+
+    if kwargs:
+        files = filter(files, checkpointf(**kwargs))
+
+    files.sort(key=mdate)
+
+    if not files:
+        return None
+    if n == 1:
+        return files[-1]
+    elif isNumber(n):
+        return files[-n:]
+    else:
+        if reverse:
+            return files[-n:][::-1]
+        else:
+            return files[-n:]
+
+def mostRecentFileGroups(dir=dldir, minutes=3, reverse=True, ignore = []):
+    files = getFiles(dir, sort=1, reverse=reverse)
+    store = []
+    lastDate = 0
+
+    for i, file in enumerate(files):
+        if getFileName(file) in ignore:
+            continue
+        if test('\(\d\)', file):
+            continue
+        date = mdate(file)
+        name = tail(file)
+        d = delta(date, lastDate)
+        limit = toSeconds(minutes=minutes)
+        passes = d < limit or lastDate == 0
+        if passes:
+            store.append(file)
+        else:
+            return store
+
+        lastDate = date
+
+def moveRecentFileGroupToActiveDir(dir = dldir):
+    group = mostRecentFileGroups(dir = dir, minutes = 10)
+    for file in group:
+        newName = ask('Choose a new tail for %s', file)
+        mfile(file, npath(newName))
+
+# moveRecentFileGroupToActiveDir()
+
+# pprint(mostRecentFileGroups(dir2023))
+
+def printError(e):
+    red(str(e))
+
+# printdir(budir, dated = 1)
+
+def smartFileGetter(x):
+    if isString(x):
+        if isfile(x):
+            return x
+        elif isfile(smart_path(x)):
+            return smart_path(x)
+
+
+
+def dirFromFile(file):
+    if file.startswith("/"):
+        return head(file)
+    e = getExtension(file)
+    if e == 'md': return resdir
+    if e == 'py': return pydir
+    return dir2023
+def smartPath(file):
+    return env.fileDict.get(file) or npath(dir, dirFromFile(file))
+def backup(x):
+    file = smartFileGetter(x)
+    cfile(file, npath(budir, dateTheFile(file)))
+
+# source /home/kdog3682/.vim/ftplugin/python.vim
+# print([read('h.js')])

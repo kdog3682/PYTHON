@@ -72,10 +72,26 @@ class Github:
         blue('Successfully set the repo', repoName)
         return self.repo
 
-    def getRepoContents(self, repo=None, path=''):
-        if not repo: repo = self.repo
+    def getRepoContents(self, repo=None, path='', recursive = 0):
+        if not repo: 
+            repo = self.repo
+
         try:
-            return repo.get_contents(path, ref=repo.default_branch)
+            ref = repo.default_branch
+            contents = repo.get_contents(path, ref=ref)
+            if not recursive:
+                return contents
+
+            store = []
+            while contents:
+                content = contents.pop(0)
+                if content.type == "dir":
+                    items = repo.get_contents(content.path, ref=ref)
+                    contents.extend(items)
+                else:
+                    store.append(content)
+            return store
+
         except Exception as e:
             message = getErrorMessage(e)
             if message == 'This repository is empty':
@@ -330,4 +346,3 @@ def runExample(**kwargs):
     example(g, **kwargs)
 
 # runExample(file='vim.vim')
-runExample()

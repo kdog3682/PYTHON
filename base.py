@@ -319,6 +319,8 @@ def datestamp(x=None, strife="%m-%d-%Y"):
         "-": "%m-%d-%Y",
         "human": "%A %B %d, %-I:%M:%S%p",
         "praw": "%m-%d-%Y %-I:%M:%S%p",
+        'long': "%A %B %d %Y, %H:%M:%S%p",
+        'long': "%m-%d-%Y, %H:%M:%S%p",
     }
     strife = ref.get(strife, strife)
     if isString(x):
@@ -449,28 +451,6 @@ def timestamp(x=int):
 
 def mdate(f):
     return int(os.path.getmtime(f))
-
-def mostRecent(dir, n=1, reverse=0, **kwargs):
-    from glob import glob
-
-    files = glob(dir + "/*") if isString(dir) else dir
-
-    if kwargs:
-        files = filter(files, checkpointf(**kwargs))
-
-    files.sort(key=mdate)
-
-    if not files:
-        return None
-    if n == 1:
-        return files[-1]
-    elif isNumber(n):
-        return files[-n:]
-    else:
-        if reverse:
-            return files[-n:][::-1]
-        else:
-            return files[-n:]
 
 def npath(dir=0, file=0):
     if not dir:
@@ -5568,34 +5548,6 @@ def getTime():
 
 def getFileName(file):
     return removeExtension(tail(file))
-
-def mostRecentFileGroups(dir=dldir, minutes=3, reverse=True):
-    ignore = ['Grade Reports', 'g4q', 'g5q']
-
-    #storage = PageStorage()
-    files = ff(dir, sort=1, reverse=reverse)
-    store = []
-
-    ignoreRE = "(Class|home)work|^g[45]"
-    lastDate = 0
-
-    for i, file in enumerate(files):
-        if getFileName(file) in ignore:
-            continue
-        date = mdate(file)
-        name = tail(file)
-        if test(ignoreRE, name):
-            continue
-        d = delta(date, lastDate)
-        limit = toSeconds(minutes=minutes)
-        passes = d < limit or lastDate == 0
-        dprint(name, d, limit, passes)
-        if passes:
-            store.append(file)
-        else:
-            return store
-
-        lastDate = date
 
 def promptOutpath(s=0, fallback="", fn=0):
     out = s or prompt("outpath?") or fallback
