@@ -5,7 +5,7 @@ def main():
     doGit()
     doVim()
     backup('help.md')
-    backup('vimrc')
+    # backup('vimrc')
     # doReddit()
     # doNotes()
 

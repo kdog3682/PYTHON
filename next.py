@@ -533,6 +533,8 @@ def mwrite(inpath, outpath, regex, flags=0):
 
 
 def smart_path(file, refpath=0):
+    if file == 'vimrc':
+        return "/home/kdog3682/.vimrc" 
     if refpath:
         dir = dirFromFile(refpath)
         file = addExtension(file, getExtension(refpath))
@@ -3472,10 +3474,12 @@ def checkBackup(file):
 def revert(file):
     file = getBackupFile(file)
     dprompt2(file)
-    warn('still in progress')
     if 'vimrc' in file:
         return cfile(file, '/home/kdog3682/.vimrc')
+    if 'functions2' in file:
+        return cfile(file, '/home/kdog3682/.vim/ftplugin/functions2.vim')
 
+    return 123
     dir = dir2023
     localPath = npath(dir, re.sub('\.\d+-\d+-\d+', '', file) )
     cfile(file, localPath)
@@ -3514,7 +3518,11 @@ def forceWrite(file, s):
     head, tail = os.path.split(file)
     if not isdir(head):
         mkdir(head)
-    write(file, s)
+    if not s:
+        with open(file, "w") as _f:
+            _f.write('')
+    else:
+        write(file, s)
 
 def removeHead(s):
     known = [
@@ -3550,7 +3558,7 @@ def shell(*args):
         
     from subprocess import Popen, PIPE
 
-    command = map2(flat(args), fixArg).join(' ')
+    command = ','.join(map2(flat(args), fixArg))
     process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     data = process.communicate()
     success, error = [decode(d).strip() for d in data]
@@ -3959,3 +3967,10 @@ def backup(x):
 
 # source /home/kdog3682/.vim/ftplugin/python.vim
 # print([read('h.js')])
+
+# revert('functions2.vim')
+
+# forceWrite('/home/kdog3682/2024/functions.txt', '')
+# /home/kdog3682/.vim/ftplugin/text.vim
+
+# blue('hi')

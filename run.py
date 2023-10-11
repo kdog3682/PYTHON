@@ -167,6 +167,7 @@ def PythonController(argv = sys.argv[1:]):
     arg = None
     ref = None
 
+    red(argv)
     if isObject(argv[0]):
         ref = argv[0]
         key = ref.get('fnKey')
@@ -1095,5 +1096,7 @@ def fixViteHtmlContent(s):
     s = sub(s, '</html>', p)
     return s
 
+def sayhi2023(x):
+    print("'hii'")
 if __name__ == '__main__':
     PythonController()

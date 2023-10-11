@@ -51,6 +51,7 @@ class Github:
         if '/' in repoName:
             repoName = repoName.split('/')[-1]
 
+        print('repoName', repoName)
         try:
             self.repo = self.user.get_repo(repoName)
         except Exception as e:
@@ -204,15 +205,24 @@ class GithubController(Github):
 
     def createLocalRepo(self, dirName, private=False):
 
-        address = f"{self.username}/{dirName}"
-        dir = dirGetter(dirName)
+        address = f"{self.username}/{tail(dirName)}"
+        dir = None
+        try:
+            dir = dirGetter(dirName)
+        except Exception as e:
+            raise e
 
         blue('dir', dir)
-        blue('address', dir)
-        input()
+        name = tail(dirName)
+        blue('dirName', name)
+        blue('address', address)
+        input('Awaiting Input to Continue')
 
-        self.setRepo(dirName, private, create=True)
+        self.setRepo(name, private, create=True)
             
+        blue('Repo has been set')
+        blue('Starting the mkdir and local git process')
+
         mkdir(dir)
         chdir(dir)
 
@@ -225,13 +235,14 @@ class GithubController(Github):
             git add .
             git commit -m "first commit"
             git branch -M main
-            git remote add {remote} git@github.com:{address}.git
+            git remote add origin git@github.com:{address}.git
             git push -u origin main 
         """
 
+        blue('starting shell command to push git')
         shell(s)
         ofile(self.repo.html_url)
-
+        blue('all finished')
 
     def upload(self, file, content=None):
          updateRepo(self.repo, file, content)
@@ -330,8 +341,6 @@ def example(g, file, projectName):
     g.view(path=projectName)
 
 
-def example(g):
-    g.createLocalRepo('ftplugin')
 
 
 def example(g, **kwargs):
@@ -341,8 +350,12 @@ def example(g, **kwargs):
 
 def runExample(**kwargs):
     blue('Kwargs', kwargs)
-    Blue('Running the Function: (press to continue)', toString(example))
+    blue('Running the Function', toString(example))
     g = GithubController(key='kdog3682')
+    blue('Github Instance Initialized', g)
     example(g, **kwargs)
 
-# runExample(file='vim.vim')
+def example(g, **kwargs):
+    g.createLocalRepo('/home/kdog3682/2024/', **kwargs)
+
+# runExample(private = True)
