@@ -1301,12 +1301,20 @@ def gitPush(dir):
 
     if dir != resdir:
         parseDiff(dir=dir)
+
     SystemCommand(mainCommand, dir=dir, printIt=1)
 
 def removable(f):
+
+    ignore = [
+        "gitignore",
+    ]
+
     if isfile(f) and fsize(f) < 50:
-        rfile(f)
-        return True
+        if tail(f) not in ignore:
+            rfile(f)
+
+    return True
 
 def FixGitCache():
     SystemCommand('''
@@ -3974,3 +3982,9 @@ def backup(x):
 # /home/kdog3682/.vim/ftplugin/text.vim
 
 # blue('hi')
+# print(toString(gitPush))
+
+
+
+# undoTrash()
+# print(mfile(trashdir + '.gitignore', pydir))

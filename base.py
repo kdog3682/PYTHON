@@ -539,6 +539,8 @@ def mfile(f, t, mode="move"):
             pass
 
 def rfile(f):
+    if '.gitignore' in f:
+        return
     mfile(f, "/home/kdog3682/TRASH")
 
 def cfile(f, t):
