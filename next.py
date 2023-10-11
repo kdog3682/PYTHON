@@ -3988,3 +3988,16 @@ def backup(x):
 
 # undoTrash()
 # print(mfile(trashdir + '.gitignore', pydir))
+
+def removeGithubStuff():
+    cmd       =f"""
+        cd {pydir}
+        git rm --cached env.py
+        git rm -r __pycache__
+        git commit -m "removing sensitive stuff"
+        git push
+    """
+    shell(cmd)
+
+# removeGithubStuff()
+# for pac

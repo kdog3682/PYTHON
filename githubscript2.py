@@ -358,4 +358,4 @@ def runExample(**kwargs):
 def example(g, **kwargs):
     g.createLocalRepo('/home/kdog3682/2024/', **kwargs)
 
-# runExample(private = True)
+runExample(private = True)
