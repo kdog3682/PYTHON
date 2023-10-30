@@ -3,22 +3,23 @@ from next import *
 
 def main():
     doGit()
-    doVim()
-    backup('help.md')
+    # doVim()
+    # backup('help.md')
     # backup('vimrc')
     # doReddit()
     # doNotes()
 
 def doGit():
     ref = [
-        ('/home/kdog3682/.vim/ftplugin/', 0),
-        ('/home/kdog3682/2023/',          1),
-        ('/home/kdog3682/PYTHON/',        1),
-        ('/home/kdog3682/RESOURCES/',     0),
+        '/home/kdog3682/.vim/ftplugin/', 
+        '/home/kdog3682/2024/',         
+        # '/home/kdog3682/2023/',
+        # '/home/kdog3682/PYTHON/',
+        # '/home/kdog3682/RESOURCES/',
     ]
 
-    store = mapFilter(ref, lambda args: runner(*args))
-    appendjson(gdjsonfile, store, mode = list, ask = 1)
+    for arg in ref:
+        runner(arg)
 
 def doVim():
     append('/home/kdog3682/.vimrc', '" ' + tomorrow())
@@ -31,14 +32,14 @@ def doNotes():
 
 
 
-def runner(dir, parseIt):
+def runner(dir):
 
     blue('Starting GitPush Runner', longstamp())
     blue('Directory', dir)
     value = None
-    if parseIt: 
-        value = parse(dir)
-    blue('Finished Parsed', longstamp())
+    # if parseIt:
+        # value = parse(dir)
+    # blue('Finished Parsed', longstamp())
     print(push(dir))
     blue('Finished Pushing', longstamp())
     blue('Sleeping for 2 seconds', longstamp())

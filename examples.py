@@ -3,6 +3,55 @@ LOCAL VIMSCRIPT
 inoreab <buffer>-- -------------------------------------------------------------<C-R>=Eatchar('\s')<CR>
 
 ------------------------------------------------------------
+subreddit: python 
+title: How would you collected repeated phrases in a string?
+body:
+
+Given the sample text below:
+    
+    The apple is tasty
+    The apple is mushy
+    The apple is tasty in autumn
+
+Repeated phrases would be "the apple is" (count 3) and "the apple is tasty" (count 2).
+
+Arguably, "the apple", and "apple is" are also repeating phrases. However, all of their existences exist inside of 'the apple is' so it is not considered unique.
+
+Do you guys have any suggestions on where I could get started?
+
+
+
+
+
+
+Do you guys have any suggestions on what I could try?
+
+
+------------------------------------------------------------
+subreddit: vim
+title: istaw to trigger completions without using C-x-c-u?
+
+body: when i try to use complete() in a function, i am given the error warning that it has to be used in insertion mode. 
+im wondering if theres a way to get smth lk the afec belo
+
+    answer = CustomCompletion(myItems)
+    " use the answer however you like in your code
+
+ikn thers input() and inputlist() but those do not create the popup menu, where you can toggle choices with arrow keys.
+
+body: There is an autocmd for "InsertCharPre" and I am using it to
+
+Do you guys have any suggestions on what I could try?
+
+------------------------------------------------------------
+
+subreddit: vim
+title: is there a way to choose completions by pressing number keys?
+body: For example, the vim completion list will show 5 options. Rather than pressing down 5 times to get the 5th option, I'd like to just press '5' and have it be chosen. I've been tinkering around with feedkeys(), but nothing I am doing is working.
+
+Do you guys have any suggestions on what I could try?
+
+------------------------------------------------------------
 subreddit: me 
 title: vim is awesome
 body: 
@@ -276,4 +325,45 @@ arg: 123
 code:
 def foo(s):
     return [s]
+
+ 
+------------------------------------------------------------
+
+code: testing report lab
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+
+# Create a sample PDF
+doc = SimpleDocTemplate("table_example.pdf", pagesize=letter)
+print(doc)
+
+# Create a list of data for the table
+data = [
+    ['Name', 'Age', 'Country'],
+    ['Alice', 25, 'USA'],
+    ['Bob', 32, 'Canada'],
+    ['Charlie', 28, 'UK'],
+    ['David', 23, 'Australia'],
+]
+
+# Create a table with the data
+table = Table(data)
+
+# Apply table styles
+table.setStyle(TableStyle([
+    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+]))
+
+# Create a story to hold the content
+story = [table]
+
+# Build the PDF
+doc.build(story)
 

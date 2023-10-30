@@ -843,6 +843,7 @@ def textgetter(x):
 
 
 def request(url):
+    import requests
     r = requests.get(
         fixUrl(url), {"user-agent": env.BROWSER_AGENT}
     )
@@ -1260,7 +1261,6 @@ def removeSmallFiles(files):
             rfile(file)
 
 def parseDiff(dir):
-
     result = SystemCommand('git status --short', dir=dir)
     r = '^ *(\?\?|M) (.+)'
     m = re.findall(r, result.success, flags=re.M)
@@ -1270,9 +1270,6 @@ def parseDiff(dir):
     modified = []
     created = []
     for a,b in m:
-        if removable(b):
-            continue
-
         if a == '??':
             created.append(b)
         else:
@@ -1283,12 +1280,9 @@ def parseDiff(dir):
     if modified: payload['modified'] = modified
     if created: payload['created'] = created
     payload['directory'] = dir
-
-    pprint(payload)
     appendjson('/home/kdog3682/2023/git-data3.json', payload, mode=list)
 
 def gitPush(dir):
-
     mainCommand = f"""
         cd {dir}
         git add .
@@ -1296,16 +1290,15 @@ def gitPush(dir):
         git push
     """
 
+    if dir == dir2023:
+        parseDiff(dir=dir)
+
     # git push -f origin master
     # use this when there is an error about different work
-
-    if dir != resdir:
-        parseDiff(dir=dir)
 
     SystemCommand(mainCommand, dir=dir, printIt=1)
 
 def removable(f):
-
     ignore = [
         "gitignore",
     ]
@@ -3999,5 +3992,25 @@ def removeGithubStuff():
     """
     shell(cmd)
 
-# removeGithubStuff()
-# for pac
+@logf
+def glf(dir=dldir, **kwargs):
+    if kwargs.get('q'):
+        return find_file(dir=dir, q=kwargs.get('q'))
+    file = mostRecent(dir, **kwargs)
+    return file
+
+
+def printer():
+    store=[]
+    for n in range(1, 13 + 1):
+        url=f'https://archive.org/stream/aseriesofunfortunateevents10bylemonysnicket/A%20Series%20of%20Unfortunate%20Events%20{n}%20by%20Lemony%20Snicket_djvu.txt'
+        if isUrl(url):
+            s=request(url)
+            time.sleep(1)
+            store.append(s)
+            print(n)
+        else:
+            store.append('')
+    write('/home/kdog3682/2024/lemony.json', store)
+
+# printer()

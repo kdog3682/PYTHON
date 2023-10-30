@@ -1272,3 +1272,31 @@ def combineDownloadedPdfs():
 #checkpoint = iqrf(sizes)
 #pdfs = filter(files, checkpoint)
 #pdf = mergepdf(results, outpath=incrementalName('Bulk PDF.pdf'))
+
+# iunmap <buffer> <expr> =
+r   ='\d+\. +(\w+)'
+# r='[a-z]{4,}'
+file  ='/mnt/chromeos/MyFiles/Downloads/Third-Grade-Master-Spelling-Lists.pdf'
+# rfile(glf())
+file=glf()
+def gt(file):
+    return '\n'.join(fitzRead(file))
+
+# clip(gt(file))
+# data=re.findall(r, s)
+# pprint(data)
+# out='/home/kdog3682/2024/g3words.json'
+# append(out, data)
+file="/mnt/chromeos/GoogleDrive/MyDrive/TEACHING 2023/2021+Specialized+High+School+Handbook.pdf"
+# 46 81 english
+# 82 98 math
+# 147 ak
+# 150 185
+# 186 203
+
+def fitzRead(file, indexes = None):
+    if indexes:
+        return [page.get_text() for i, page in enumerate(fitzOpen(file)) if i > indexes[0] - 2 and i < indexes[1]]
+    return [page.get_text() for page in fitzOpen(file)]
+
+# clip(fitzRead(file, [82, 98]))

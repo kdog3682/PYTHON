@@ -2725,13 +2725,6 @@ def find_file(q, dir=dldir):
             if test(q, file):
                 return abspath(file)
 
-@logf
-def glf(dir=dldir, **kwargs):
-    if kwargs.get('q'):
-        return find_file(dir=dir, q=kwargs.get('q'))
-    file = mostRecent(dir, **kwargs)
-    return file
-
 def p(k, v):
     if v < 10000:
         return
@@ -8326,6 +8319,10 @@ def save(x, mode=0, current=0):
                 payload = f"file = '{x[0]}'"
             else:
                 payload = f"files = {dumpJson(x)}"
+        else:
+            payload  =dumpJson(x)
+    else:
+        payload    =dumpJson(x)
     outpath = self() if current  else vimsavefile
     append(outpath, payload)
 
@@ -8336,4 +8333,3 @@ def save(x, mode=0, current=0):
 
 
 
-# print(datestamp())
