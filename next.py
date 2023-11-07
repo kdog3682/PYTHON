@@ -4001,6 +4001,16 @@ def glf(dir=dldir, **kwargs):
 
 
 def printer():
+    a = '#\w{6}\\b'
+    r = input('regex:  ')
+    r = re.sub('b', '\\b', r)
+    s = request(input('url:  '))
+    m = unique(re.findall(r, s))
+    clip(m)
+    return
+    s = sdf
+    rrequest
+    return
     store=[]
     for n in range(1, 13 + 1):
         url=f'https://archive.org/stream/aseriesofunfortunateevents10bylemonysnicket/A%20Series%20of%20Unfortunate%20Events%20{n}%20by%20Lemony%20Snicket_djvu.txt'

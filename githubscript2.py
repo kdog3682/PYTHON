@@ -358,4 +358,16 @@ def runExample(**kwargs):
 def example(g, **kwargs):
     g.createLocalRepo('/home/kdog3682/2024/', **kwargs)
 
-runExample(private = True)
+# runExample(private = True)
+
+def downloadRepo():
+    dir = "/home/kdog3682/latest-git-cloned-repo"
+    target = input('url: ')
+    target = search('^.*?github.com/[a-z0-9-]+/[a-z0-9-]+', target)
+    mkdir(dir)
+    cmd = f""" git clone {target} {dir} """
+    input(cmd)
+    response = SystemCommand(cmd)
+    print(response)
+
+pprint(downloadRepo())
