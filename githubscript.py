@@ -1065,6 +1065,11 @@ def editSources(s, repo):
 
 # upload_kdog3682_test()
 
+def create_lorem_dir():
+	
+    g = Github(
+        key="kdog3682", repo="projects", upload_dir=dir
+    )
 
 def create_project():
     dir = "/home/kdog3682/2023/dist/"
@@ -1087,9 +1092,6 @@ def create_local_sample_project():
     write("abc.js", "document.write('howdy from abc.js')")
     printdir(dir)
     ofile("index.html")
-
-
-# create_local_sample_project()
 
 
 def getRepoContents(repo, start='', fn=identity):
@@ -1170,5 +1172,4 @@ def updateRepo(reponame, index=None, readme=None):
          print(pushContent(repo, 'index.html', read(index)))
      if readme:
          print(pushContent(repo, 'readme.md', read(readme)))
-
 

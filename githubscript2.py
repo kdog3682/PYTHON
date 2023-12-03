@@ -86,6 +86,8 @@ class Github:
             store = []
             while contents:
                 content = contents.pop(0)
+                if isPrivate(content.path):
+                    continue
                 if content.type == "dir":
                     items = repo.get_contents(content.path, ref=ref)
                     contents.extend(items)
@@ -143,6 +145,27 @@ def choose(x):
 
 
 class GithubController(Github):
+
+    def download(self, url):
+        r = '/'
+        url = url.replace('https://', '')
+        p = re.split(r, url)
+        user = p[1]
+        repo = p[2]
+        target = p[-1]
+        folderName = prompt3('choose a folder name for the repo: ' + target, fallback = target)
+        query = user + '/' + repo
+        repo = self.github.get_repo(query)
+        items = self.getRepoContents(repo, target, recursive = 1)
+        items = antichoose(items)
+        write = writef(dldir, user + '-' + folderName)
+        store = []
+        t = str(timestamp())
+        for item in items:
+            store.append(t + ' ' + write(item.path, item.decoded_content.decode("utf-8")))
+
+        append('/home/kdog3682/2024/files.log', join(store))
+    	
 
     def run(self):
 
@@ -355,11 +378,6 @@ def runExample(**kwargs):
     blue('Github Instance Initialized', g)
     example(g, **kwargs)
 
-def example(g, **kwargs):
-    g.createLocalRepo('/home/kdog3682/2024/', **kwargs)
-
-# runExample(private = True)
-
 def downloadRepo():
     dir = "/home/kdog3682/latest-git-cloned-repo"
     target = input('url: ')
@@ -370,4 +388,19 @@ def downloadRepo():
     response = SystemCommand(cmd)
     print(response)
 
-pprint(downloadRepo())
+# pprint(downloadRepo())
+
+
+def example(g, **kwargs):
+    dir = '/home/kdog3682/LOREMDIR/'
+    nested = '/home/kdog3682/LOREMDIR/node_modules/foo.txt'
+    g.createLocalRepo(dir, **kwargs)
+
+# runExample(private = True)
+
+def isPrivate(s):
+	return test('^[._]', tail(s))
+
+url = "https://github.com/tlaceby/guide-to-interpreters-series/tree/main/ep11-user-defined-functions"
+g = GithubController()
+g.download(url)

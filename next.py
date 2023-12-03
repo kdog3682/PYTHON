@@ -1,3 +1,4 @@
+dir2024 = "/home/kdog3682/2024/"
 ftplugindir = "/home/kdog3682/.vim/ftplugin/"
 drivedir = '/mnt/chromeos/GoogleDrive/MyDrive/'
 depdir = drivedir + 'DEPRECATED/'
@@ -197,11 +198,22 @@ def appendVim(value, name="temp"):
     append("/home/kdog3682/.vimrc", s)
 
 
+def prompt3(message = 'prompt3', items = 0, fallback = ''):
+    if items:
+        assert items
+    os.system("clear")
+    if items:
+        number(items)
+    message += ':'
+    message += '\n\n'
+    blue(message)
+    return input('') or fallback
 
 def antichoose(items):
-    assert items
 
-    a = prompt2(items)
+    message = 'anti choose 1 based indexes'
+    a = prompt3(message = message, items = items)
+
     if not a:
         return items
     indexes = [int(n) - 1 for n in a.strip().split(" ")]
@@ -3238,6 +3250,14 @@ def checkpointf(
         "license.md"
         ".git",
     ]
+    # pprint(locals())
+    # raise Exception('')
+
+    if anti and regex:
+        antiregex = regex
+        regex = None
+        anti = None
+
     def runner(f):
         filename = tail(f)
 
@@ -3273,7 +3293,6 @@ def checkpointf(
             rfile(f)
             return False
 
-        print(filename)
         if name and not test(name, filename, flags=flags):
             return False
 
@@ -3957,11 +3976,14 @@ def dirFromFile(file):
     if file.startswith("/"):
         return head(file)
     e = getExtension(file)
-    if e == 'md': return resdir
     if e == 'py': return pydir
-    return dir2023
+    if e == 'css' or e == 'js' or e == 'html': return dir2023
+    return dir2024
+
 def smartPath(file):
     return env.fileDict.get(file) or npath(dir, dirFromFile(file))
+def smartnpath(file):
+	return npath(dirFromFile(file), file)
 def backup(x):
     file = smartFileGetter(x)
     cfile(file, npath(budir, dateTheFile(file)))
@@ -4024,3 +4046,132 @@ def printer():
     write('/home/kdog3682/2024/lemony.json', store)
 
 # printer()
+
+
+
+# mkdir('/home/kdog3682/LOREMDIR')
+# items = sort(mostRecent(dldir, 9), f)
+# getFiles(dldir, today = 1, zip = 1)
+
+
+
+# nested = '/home/kdog3682/LOREMDIR/'
+# forceWrite(nested, 'abc')
+
+
+
+def ff(dir=dldir, **kwargs):
+    checkpoint = checkpointf(**kwargs)
+    return filter(absdir(dirGetter(dir)), checkpoint)
+
+
+codependir = '/home/kdog3682/2024/codepens'
+# files = ff(minutes = 30)
+# for file in files: shutil.move(file, codependir)
+
+
+def npath2(dir, file):
+	return os.path.join(dir, tail(file))
+def writef(*args):
+
+    dir = os.path.join(*args)
+    mkdir(dir)
+
+    def runner(file, payload):
+        outpath = npath2(dir, file)
+        write(outpath, payload)
+        return outpath
+
+    return runner
+
+# print(len(str(1700962599)))
+# print(len(str(timestamp())))
+
+def self():
+    return sys.argv[0]
+
+def appendself(x):
+    s = createVariable2('temp', x)
+    append(self(), s)
+
+
+
+def getFiles3(dir, **kwargs):
+
+    kwargs['regex'] = 'license|readme|package|ts$'
+    kwargs['flags'] = re.I
+    kwargs['anti'] = 1
+    checkpoint = checkpointf(**kwargs)
+    # return checkpoint('asd.ts')
+    dir = dirGetter(dir)
+
+    def parse(file, depth):
+        if isIgnoredFile2(file):
+            return 
+        elif isdir(file):
+            return runner(file, depth + 1)
+        elif checkpoint(file):
+            return file
+
+    def runner(dir, depth=0):
+        children = []
+        for file in absdir(dir):
+            try:
+                push(children, parse(file, depth))
+            except Exception as error:
+                errorPrompt(file, error)
+
+        return children
+
+    return flat(runner(dir))
+
+
+def see_npm_repo_files(key):
+    files = getFiles3(npmdir + key)
+
+
+
+def templater_map(items, template):
+    items = to_array(items)
+    return [templater2(template, item) for item in items]
+
+def log_files(files):
+    s = templater_map(files, '$timestamp $1')
+    append('/home/kdog3682/2024/files.log', s)
+
+def templater2(template, ref):
+
+    if isPrimitive(ref):
+        ref = [str(ref)]
+    regex = "\$(\w+)"
+
+    def fallback(x):
+        expr = x + '()'
+        return str(eval(expr))
+
+    def parser(x):
+        if isNumber(x) and isArray(ref):
+            return ref[int(x) - 1]
+
+        if isObject(ref):
+            return ref.get(x) or fallback(x)
+
+        return fallback(x)
+
+    def runner(x):
+        return parser(x.group(1))
+
+    return re.sub(regex, runner, template)
+
+
+def to_array(x):
+    if isArray(x):
+        return x
+    if not x:
+        return []
+    return [x]
+
+
+# pprint(templater_map('aaax', 'aaa $timestamp'))
+
+

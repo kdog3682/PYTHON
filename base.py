@@ -427,7 +427,7 @@ def toSeconds(
 def isRecent(file, before=0, after=0, **kwargs):
     if isNumber(file):
         n = int(file)
-    elif isfile(file):
+    elif os.path.exists(file):
         n = mdate(file)
     else:
         return False
@@ -1238,7 +1238,7 @@ def templater(template, ref):
             return ref[int(x) - 1]
 
         if isObject(ref):
-            return ref.get(x)
+            return ref.get(x, fallback(x))
 
         if isFunction(ref):
             return ref(x)

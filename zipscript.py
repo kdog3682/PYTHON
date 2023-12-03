@@ -1,4 +1,5 @@
 from base import *
+from next import *
 import time
 import zipfile
 
@@ -8,15 +9,20 @@ def getZipFiles(inpath, outpath):
         f = lambda x: npath(outpath, x.filename)
         return map(z.filelist, f)
 
-def unzip(inpath, outpath = 0):
+def unzip(inpath, outpath = None, preview = None):
     if not outpath:
         outpath = head(inpath)
-        dprompt('inferring outpath via inpath', outpath)
 
     with zipfile.ZipFile(inpath, "r") as z:
-        z.extractall(outpath)
+
         f = lambda x: npath(outpath, x.filename)
-        return map(z.filelist, f)
+        files = map(z.filelist, f)
+
+        if preview:
+            prompt3(items = files)
+
+        z.extractall(outpath)
+        return files
 
 def readzip(inpath=None, outpath=None, flatten=0):
     if not inpath:
@@ -230,7 +236,64 @@ def check(outpath):
     with zipfile.ZipFile(outpath, "r") as z:
         return map(z.filelist, lambda x: x.filename)
 
-
+# pprint(unzip(glf()))
 #name='COLORING'
 #zip(absdir(colordir), outpath=drivedir + name + ' ' + datestamp() + '.zip')
 #rmdir('/home/kdog3682/COLORING/', force=1)
+# inoremap <buffer> <expr> 9 SmartNine('(')
+# inoremap <buffer> qp (<c-o>A)<LEFT>
+
+
+# /home/kdog3682/2024/codepens
+# /home/kdog3682/2024/.gitignore
+# files = mostRecentFileGroups(minutes = 5)
+# files = mostRecent(dldir, minutes = 10)
+# prompt(files)
+# outpath = '/home/kdog3682/2024/codepens'
+# for file in files:
+    # shutil.move(file, outpath)
+
+# mfiles(files, outpath)
+# mkdir(outpath)
+# names = flat(map2(files, unzip, outpath = outpath))
+# append('/home/kdog3682/RESOURCES/file-table.txt', names)
+
+def mostRecentZipFile():
+    f = glf()
+    ge = getExtension
+    assert ge(f) == 'zip'
+    return f
+
+def getCodepen(target = 'style.stylus'):
+    a = mostRecentZipFile()
+    files = unzip(a, trashdir)
+    loc = npath(trashdir, removeExtension(tail(a)))
+    file = os.path.join(loc, 'src', target)
+    outpath = smartnpath(target)
+    assert isfile(outpath)
+    append(outpath, read(file))
+
+def codepenToMyCodePlayground():
+    # a = mostRecentZipFile()
+    # unzip(a, trashdir)
+    # loc = npath(trashdir, removeExtension(tail(a)))
+
+    loc = npath(trashdir, 'arc-example-from-stackoverflow')
+    sourceFiles = absdir(os.path.join(loc, 'src'))
+    log_files(sourceFiles)
+
+    store = reduce(sourceFiles, lambda x: [getExtension(x), read(x)])
+    html = store.get('html', '')
+    css = store.get('css', '')
+    js = store.get('js', '')
+    stylus = store.get('stylus', '')
+
+    s = ''
+
+    if css: s += '\n' + 'css:\n' + css + '\n'
+    if html: s += '\n' + 'html:\n' + html + '\n'
+    if js: s += '\n' + 'javascript:\n' + js + '\n'
+    append('/home/kdog3682/2023/codePlaygroundString.js', s)
+
+
+# codepenToMyCodePlayground()

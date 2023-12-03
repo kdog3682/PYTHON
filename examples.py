@@ -3,6 +3,115 @@ LOCAL VIMSCRIPT
 inoreab <buffer>-- -------------------------------------------------------------<C-R>=Eatchar('\s')<CR>
 
 ------------------------------------------------------------
+subreddit: kidneystones
+title: how do 
+body:
+
+------------------------------------------------------------
+subreddit: nostupidquestions
+title: 
+body:
+
+Thus far, I havent detected any 
+
+------------------------------------------------------------
+subreddit: pickling 
+title: A few beginner questions about pickling eggs
+body:
+
+Hey everybody,
+
+I've been on a YouTube binge, watching lots of different egg pickling videos as I get started in my pickling journey. I have some questions, and I hope you guys could help me answer them.
+
+Question 1: What is the purpose of putting in various vegetables into the jar along with the eggs? Is it to make the egg taste better, or is it also to pickle the vegetable at the same time and enjoy the vegetable? Why not pickle the vegetables and eggs separately? I ask this because I feel like it would be easier to take out the eggs one by one if it was all just pure eggs, rather than having vegetables mixed in.
+
+Question 2: Why is it that the jars are always packed to the brim? In a lot of the YouTube videos, they try to pack 12 to 16 eggs completely to the brim of the jar. Does it have something to do with the surface area? Are they trying to minimize the surface area? Does leaving the jar half empty allow bacteria to propagate?
+
+Question 3: What is the purpose of using a hot brine? I understand that salt and vinegar have preservative properties, but the eggs have just recently been boiled and cooled down. Why are we now using a hot brine? What difference is there between using a hot brine and a cold brine?
+
+Thank you for the help. I'm excited to start pickling various foods.
+------------------------------------------------------------
+subreddit: webdev
+title: How does daisyui manage its theme system?
+body:
+
+I have been reading thru its css file: 
+
+- https://cdnjs.cloudflare.com/ajax/libs/daisyui/4.4.11/full.css
+
+Something that really stands out is snippets like this:
+    
+    :root:has(input.theme-controller[value=light]:checked)
+
+
+
+------------------------------------------------------------
+subreddit: askculinary
+title: Does blanching meat cause protein to tighten?
+
+body:
+
+I am watching some youtube videos on preparing chinese pork ribs.
+Every video first blanches the meat for about 5 minutes.
+
+This then lead me into reading a reddit thread on blanching meat and in particular asian cuisine:
+    https://www.reddit.com/r/AskCulinary/comments/ijqqyt/chinese_recipes_call_for_preblanching_meats/
+
+From experience, I know that if I boil something for some time, it becomes tough and stringy. 
+Shouldn't this happen to the meat that gets blanched?
+
+Why not steam the meat instead of blanching?
+Why not soak the meat for >>> hours?
+
+It seems over the past thousand years, asian cuisine has established blanching as a correct technique.
+
+My main questions are:
+
+1) Why did blanching win out over other forms of cleaning the meat?
+
+2) Doesn't the texture of the meat get affected by the blanching process? Is this desirable.
+
+------------------------------------------------------------
+subreddit: askprogramming 
+title: hwu find organize a config file which holds all the information for a timeline animation?
+
+I am going to write a parser to parse the raw config file into a json
+
+t = 0
+    fn = revolve(r = 3, point = origin)
+    ball1.move(50, 50).after(fn)
+    ball2.move(30, 30)    
+t = 37
+    
+------------------------------------------------------------
+subreddit: askprogramming 
+title: is there a way to access the value of a bound mapping?
+
+
+------------------------------------------------------------
+subreddit: vim 
+title: is there a way to access the value of a bound mapping?
+
+body:
+
+Take for instance, the bindings
+
+    nnoremap e0 :call EDefine()<CR>
+    nnoremap <buffer> e0 :call EDefineBuffer()<CR>
+
+I would like to use a "get" function in this manner:
+
+    return s:get('e0')
+    " the return value is a string repr of the command:
+    "nnoremap e0 :call EDefine()<CR>"
+
+or:
+
+    return s:get('e0', 'buffer')
+    " the return value is a string repr of the command:
+    "nnoremap <buffer> e0 :call EDefineBuffer()<CR>"
+
+------------------------------------------------------------
 subreddit: python 
 title: How would you collected repeated phrases in a string?
 body:

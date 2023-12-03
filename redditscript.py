@@ -1,5 +1,6 @@
-from base import *
-from next import *
+# from base import *
+# from next import *
+from utils import *
 import requests
 import praw
 
@@ -9,7 +10,36 @@ def getSubreddit(r, subreddit):
         return r.reddit.subreddit(key)
     return r.subreddit(key)
 
+def get_reddit():
+    reddit = praw.Reddit(**env.redditinfo)
+    reddit.validate_on_submit = True
+    return reddit
 
+
+def get_comment_data(comment):
+    return {
+        "text": comment.body,
+        "author": comment.author.name if comment.author else "",
+        "score": comment.score,
+        "id": comment.id,
+        "parent_id": comment.submission.id,
+        "created_utc": comment.created_utc,
+        "parent_created_utc": comment.submission.created_utc,
+        "subreddit": comment.subreddit.display_name,
+        "date": datestamp(comment.created_utc),
+    }
+def get_submission_data(submission):
+    return {
+        "title": submission.title,
+        "author": submission.author.name if submission.author else "",
+        "subreddit": submission.subreddit.display_name,
+        "score": submission.score,
+        "url": submission.url,
+        "id": submission.id,
+        "num_comments": submission.num_comments,
+        "created_utc": submission.created_utc,
+        "date": datestamp(submission.created_utc),
+    }
 def printSubmissionInfo(submission):
     blue("Submission Title:", submission.title)
     blue("Submission Author:", submission.author)
@@ -41,8 +71,7 @@ class Reddit:
     
 
     def __init__(self):
-        reddit = praw.Reddit(**env.redditinfo)
-        reddit.validate_on_submit = True
+        reddit = get_reddit()
         self.username = env.redditinfo.get('username')
         self.reddit = reddit
     
@@ -261,5 +290,4 @@ class RedditAPI(Reddit):
             ba.set("date", datestamp(after, "praw"))
             ba.set("size", len(items))
             ba.set("items", items)
-
 
