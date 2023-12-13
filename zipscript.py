@@ -264,6 +264,16 @@ def mostRecentZipFile():
     assert ge(f) == 'zip'
     return f
 
+def unzipOpenai():
+    a = mostRecentZipFile()
+    files = unzip(a, trashdir)
+    loc = npath(trashdir, removeExtension(tail(a)))
+    print(files)
+    print(loc)
+
+"/home/kdog3682/TRASH/conversations.json"
+unzipOpenai()
+
 def getCodepen(target = 'style.stylus'):
     a = mostRecentZipFile()
     files = unzip(a, trashdir)

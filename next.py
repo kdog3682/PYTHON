@@ -3904,6 +3904,8 @@ def chalk(s, color, bold = ''):
     bold = getChalkColor('bold') if bold else ''
     return color + bold + s + reset 
 
+def mdate(f):
+    return int(os.path.getmtime(f))
 def mostRecent(dir, n=1, reverse=0, **kwargs):
     from glob import glob
 

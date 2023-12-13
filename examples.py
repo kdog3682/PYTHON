@@ -3,9 +3,18 @@ LOCAL VIMSCRIPT
 inoreab <buffer>-- -------------------------------------------------------------<C-R>=Eatchar('\s')<CR>
 
 ------------------------------------------------------------
-subreddit: kidneystones
-title: how do 
+subreddit: git
+title: Is there a way to show the files that are changed on git push?
 body:
+The result of my git message is:
+
+    [main 97e3706] pushing directory
+     2 files changed, 10 insertions(+)
+    To github.com:mementomoriok/files.git
+       077584e..97e3706  main -> main
+
+Might there be some way to show the actual file names, instead of "2 files changed" ?
+
 
 ------------------------------------------------------------
 subreddit: nostupidquestions
@@ -474,5 +483,97 @@ table.setStyle(TableStyle([
 story = [table]
 
 # Build the PDF
-doc.build(story)
+----------------------------------------------------------------------------
+subreddit: vim
+title: istaw
+body:
+
+
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+subreddit: git
+title: Can you some how "download" all of your git history?
+body:
+
+I am hoping to create a frontend ui where a user can view all of their github/git data.
+
+Something like:
+
+    on october 13, 2023, you 
+        created:
+            file a
+            file b
+            file c
+        modified:
+            file d (10 insertions)
+            file e (12 insertions)
+            file f (13 insertions, 3 deletions)
+
+    on october 14, 2023, you ...
+
+as well as stats:
+
+    your most frequent file edited is
+        file abc 
+    
+    it has been edited on:
+        march 1
+        march 2
+        march 7
+        ...
+        for a total of 700 edits
+
+But to do this, I will need to aggregate all of the git push data.
+
+Is there a way for downloading such data?
+Or maybe a way to parse it from the .git directory?
+
+
+----------------------------------------------------------------------------
+subreddit: pickling
+title: How do you clean your pickling jars for reuse?
+body:
+
+I have pickled eggs in a standard mason jar.
+The jar has a vinegar-salt-eggy smell.
+
+I have designated this jar as the "pickled egg jar."
+
+Part of me is wondering, is it even necessary to wash it very thoroughly?
+I am just going to be adding more salt-vinegar-eggs to it in the future.
+
+Part of me is fearing, if I dont give it a deep wash, botulism or other bad stuff could appear?
+
+----------------------------------------------------------------------------
+subreddit: pickling
+title: Do you deep clean your pickling jars?
+body:
+
+Or just give them a quick rinse?
+
+I have been pickling eggs, and since the process of making them keeps repeating, with very little variance, I am wondering if I really need to clean the jar that thoroughly. (ie boiling the jar in hot water) and then washing with soap and water. After all, I am just going to be putting the same ingredients back into it.
+
+What do you guys think?
+
+
+
+
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+subreddit: vim
+title: istaw
+body:
+
+app_go_gfgf_item
+app_set_gfgf_item
+app_find_gfgf_item
+
+For these 3 names, they only differ by a single word.
+They should be grouped together
+
+app_gfgf_go_item
+app_set_gfgf_item
+app_find_gfgf_item
 

@@ -1,6 +1,6 @@
-# from base import *
-# from next import *
-from utils import *
+from base import *
+from next import *
+# from utils import *
 import requests
 import praw
 
@@ -291,3 +291,5 @@ class RedditAPI(Reddit):
             ba.set("size", len(items))
             ba.set("items", items)
 
+
+# Reddit().reply_all_comments()

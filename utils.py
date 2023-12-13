@@ -4,10 +4,14 @@ from datetime import datetime, timedelta
 import regex as re
 from pathlib import Path, PosixPath
 import json
+import shutil
 import variables
+
+dirdict = {"active_dir": "/home/kdog3682/2023", "downloads":"/mnt/chromeos/MyFiles/Downloads","node":"/home/kdog3682/2023/node_modules","r":"/home/kdog3682","nm":"/home/kdog3682/2023/node_modules","24":"/home/kdog3682/2024","budir":"/mnt/chromeos/GoogleDrive/MyDrive/BACKUP","g":"/home/kdog3682/latest-git-cloned-repo","2024":"/home/kdog3682/2024/","py":"/home/kdog3682/PYTHON","ftp":"/home/kdog3682/.vim/ftplugin","2023":"/home/kdog3682/2023/","23":"/home/kdog3682/2023","res":"/home/kdog3682/RESOURCES","trash":"/home/kdog3682/TRASH"}
 
 def get_global_value(key):
     return getattr(variables, key, None)
+
 def chalk(s, color, bold = None):
     red = "\033[31m"
     green = "\033[32m"
@@ -112,6 +116,12 @@ def write(file, content):
 
 def npath(dir, file):
     return str(Path(dir, tail(file)))
+
+def tail(x):
+    return re.sub("/$", "", str(x)).rsplit("/", maxsplit=1)[-1]
+
+def identity(s):
+    return s
 
 def normalize_file(file):
     dir = dir_from_file(file)
@@ -240,7 +250,7 @@ def templater(s, *args, **kwargs):
     return re.sub(r, runner, s, kwargs.get("flags", 0))
 
 def prompt(*args):
-    return blue_colon(*args) if len(args) > 1 else input(print(args[0]))
+    return blue_colon(*args) if len(args) > 1 else input(args[0] + ":\n")
 
 
 def to_array(x):
@@ -373,3 +383,49 @@ def is_url(x):
 
 def get_constructor_name(x):
     return type(x).__name__
+
+
+#
+def file_prompt():
+    return prompt("choose an outpath file name")
+
+# 
+
+def debug(*args):
+    print(*args)
+    input("")
+def npath(dir, file):
+    return re.sub("/$", "", dir) + "/" + tail(file)
+def copy_last_downloaded_file_into_active_dir():
+    # name = file_prompt()
+    name = "javascript.grammar"
+    file = most_recent_file()
+    active_dir = get_dir("active_dir")
+    outpath = npath(active_dir, name)
+    debug(file, outpath)
+    shutil.copy(file, outpath)
+    print("sucess")
+    # announce("copied last downloaded file: $1 to $2", file, outpath)
+/home/kdog3682/2023/javascript.grammar
+def is_dir(x):
+    return Path(x).is_dir()
+
+def get_dir(dir):
+    if is_dir(dir):
+        return dir
+    dir = dirdict.get(dir)
+    if is_dir(dir):
+        return dir
+    throw("not a valid directory: $1", dir)
+
+def path(dir):
+    return Path(get_dir(dir))
+
+def most_recent_file(dir = "downloads"):
+    directory = path(dir)
+    files = directory.glob("*")
+    target = max(files, key=lambda f: f.stat().st_ctime)
+    return target
+
+# print("Most recent file:", most_recent_file())
+# print(copy_last_downloaded_file_into_active_dir())
