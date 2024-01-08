@@ -115,3 +115,33 @@ def get_comment_data(comment):
 
 def is_comment(item):
     return get_constructor_name == "Comment"
+
+
+def get_flairs(subreddit):
+    flairs = subreddit.flair.templates
+    return [{'id': f.get("id"), 'text': f.get("text")} for f in flairs]
+
+
+def ask(reddit, subreddit, title, body):
+    sub = reddit.subreddit(subreddit)
+
+    try:
+        submission = sub.submit(title, body)
+        return submission
+    except Exception as e:
+        if "SUBMIT_VALIDATION_FLAIR_REQUIRED" in str(e):
+            # flairs = get_flairs(sub)
+            # flair = choose(flairs)
+            # flair_id = flair.get("id")
+            submission = sub.submit(title, body)
+            submission.mod.flair(flair = "Resources")
+            return submission
+        else:
+            raise e
+
+class Reddit:
+    def __init__(self):
+        self.reddit = get_reddit()
+
+    def ask(self, subreddit, title, body):
+        return ask(self.reddit, subreddit, title, body)

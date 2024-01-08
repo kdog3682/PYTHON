@@ -41,12 +41,14 @@ def runExampleFile(lineNumber):
 
 
 def redditFn(subreddit, title, body):
-    from redditscript import Reddit
-
+    from reddit_script import Reddit
+    title = capitalizeTitle(title)
+    subreddit = dictf(env.subreddits, subredditFromUrl)(subreddit)
+    body = compose(newlinesToNbsp, prettyProse)
     r = Reddit()
-    id = r.ask(subreddit, title, body)
-    print({"id": id})
-    link = f"http://reddit.com/{id}"
+    submission = r.ask(subreddit, title, body)
+    print({"submission": submission})
+    link = f"http://reddit.com/{submission}"
     ofile(link)
 
 
@@ -137,5 +139,54 @@ ref = [
         "fn": executeCode,
     },
 ]
+
+
+examplepyfile = "/home/kdog3682/PYTHON/examples.py"
+
+def runExampleFile2(lineNumber):
+    s = removeStartingComments(read(examplepyfile))
+    regex = "^-{20,} *$"
+    lines = s.split("\n")
+    start = lineNumber - 1
+    index = start
+    a = 0
+    b = 0
+    line = lines[index]
+    if test(line, regex):
+
+    while True:
+
+
+    for i, line in enumerate(lines):
+        if test(delimiter, line):
+            index += 1
+        if i + 1 == lineNumber:
+            break
+
+    items = re.split(delimiter, s, flags=re.M)
+    items = map2(items, trim)
+    item = items[index]
+
+    if not test("^\w+:", item):
+        return executeCode(item)
+
+    config = colonDict(item)
+    keys = config.keys()
+
+    for item in ref:
+        identifiers = item.get("identifiers")
+        fn = item.get("fn")
+        transform = item.get("transform")
+
+        if identifiers and not shared(identifiers, keys):
+            continue
+        if transform and not every(transform.keys(), keys):
+            continue
+
+        args, kwargs = getArgsKwargs(fn, config, transform=transform)
+        value = fn(*args, **kwargs)
+        if value:
+            print(value)
+        return
 
 packageManager(runExampleFile)

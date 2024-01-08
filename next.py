@@ -3723,9 +3723,7 @@ def mapFilter(items, fn = None):
 
 def packageManager(fn):
     args = sys.argv
-    if len(args) == 1:
-        red('PackageManager', 'no arg = no run')
-    else:
+    if len(args) > 1:
         fn(*map(args[1:], toArgument))
 
 

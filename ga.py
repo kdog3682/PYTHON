@@ -1,9 +1,11 @@
 from __future__ import print_function
 UPLOAD_DESTINATION = "1sD9pfkJVa0WBH_FPygLQ-gCaJQRGaO-B"
 
-from datetime import datetime
+from datetime import datetime, timedelta
+
 from pprint import pprint
 from base import *
+from utils import *
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -93,23 +95,45 @@ def downloadImage(url, name):
 
 
 class GoogleDocs():
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         service = getService("docs")
         self.documents = service.documents()
 
     def get(self, id):
-        id = getId(id)
         return self.documents.get(documentId=id).execute()
 
+    def create(self, title = "untitled"):
+        return self.documents.create(body={'title': title}).execute()
 
-    def create(self):
-        return self.documents.create().execute()
     def batchUpdate(self, x, requests):
-        return self.documents.batchUpdate(documentId=x.get('documentId'), body={'requests': requests}).execute()
-    
-    
+        id = self.get_id(x)
+        return self.documents.batchUpdate(documentId=id, body={'requests': requests}).execute()
+
+    def get_id(x):
+        
+        if is_google_id(x):
+            return x
+        if is_string(x):
+            drive = GoogleDrive()
+            file = drive.getDriveFile(name = x)
+            if file:
+                documentId = file.get("id")
+                return documentId
+            return 
+        if has(x, "documentId"):
+            return x.get("documentId")
+        if has(x, "id"):
+            return x.get("id")
+
+    def get_doc(self, x):
+        id = self.get_id(x)
+        if id:
+            return self.get(id)
+        return x
+        
+    def getDocContentAsJson(self, x):
+        document = self.get_doc(x)
+        return json.dumps(document, indent = 2)
 
 
 def getService(
@@ -130,10 +154,9 @@ def getService(
     token_file = addExtension(ref.get("token_file", 'token'), 'json')
     if ref.get("name"):
         key = ref.get("name")
-    #reset = 1
     creds = getCreds(token_file, reset)
     service = build(key, version, credentials=creds)
-    print("Service success: returning service for ", key)
+    blue_colon("returning successful service", key)
     return service
 
 
@@ -156,23 +179,34 @@ def queryHelper(key, mode=0):
 
 
 class GoogleDrive:
-    def getLastDocFiles(self, size=1):
-        query = "mimeType='application/vnd.google-apps.document' and trashed = false"
-        response = self.files.list(q=query, orderBy='modifiedTime desc', pageSize=size, fields="files(id, name)").execute()
-        files = response.get('files')
-        return smallify(files[0:size])
 
-    
-    def downloadFile(self, x=0, outpath=0):
+    def get_file(self, x):
         if isObject(x):
-            file = x
-        elif isGoogleFileID(x):
-            file = self.files.get(fileId=x).execute()
+            return 
+        elif is_google_id(x):
+            return self.files.get(fileId=x).execute()
         elif isString(x):
-            file = self.getFiles2(name=x)
+            raise "aaa"
+            return self.files.get(**create_query(name=x))
         else:
-            file = self.getLastDocFiles(1)
+            return self.getDriveFile()
 
+    def get_files(self, **kwargs):
+        options = create_query(**kwargs)
+        response = self.files.list(**options).execute()
+        files = response.get('files', [])
+        if kwargs.get("size") == 1:
+            return files[0] if files else None
+        return files
+        
+    def getDriveFile(self, **kwargs):
+        return self.get_files(size = 1, **kwargs)
+
+    def getDocsFromLastWeek(self):
+        return self.get_files(type = "document", after = "7days")
+
+    def downloadFile(self, x=0, outpath=0):
+        file = self.get_file(name = x)
         fileId = file.get('id')
         fileName = outpath or removeDateString(file.get('name'))
 
@@ -903,9 +937,7 @@ def getCreds(tokenfile, reset=0):
             writeCreds(f, creds)
             return creds
 
-    tokenfile = jsondir + addExtension(
-        tail(tokenfile), "json"
-    )
+    tokenfile = "/home/kdog3682/2024/token.json"
 
     if creds:
         if creds.expired:
@@ -1701,13 +1733,9 @@ def get_elapsed_time(doc):
         return {"type": "minutes", "value": elapsed_minutes}
 
 
-def isGoogleFileID(s):
+def is_google_id(s):
     r = '[\d-_][a-zA-Z]'
-    if isString(s) and len(s) > 20 and len(re.findall(r, s)) >= 4:
-        return True
-    else:
-        prompt(notValidId=s, len=len(re.findall(r, s)))
-
+    return isString(s) and len(s) > 20 and len(re.findall(r, s)) >= 4
         
 
 
@@ -1717,7 +1745,7 @@ def downloadCoverLettersAndResumesAndMerge():
     items = googleDocsJson()
     ids = obj_filter(items, title='cv|\bcover\b|resume', owner='kevin', delete=False, get='id, date, title')
     app = GoogleApp()
-    assert(every(ids, isGoogleFileID))
+    assert(every(ids, is_google_id))
     #prompt(good=ids)
     paths = map(ids, app.drive.downloadFile)
     prompt(pathsToMerge=paths)
@@ -1811,7 +1839,340 @@ def getResponseId(response):
 #yt = GoogleYoutube()
 #pprint(yt.getUserPlayList('kevinlee8512'))
 
+# client_secrets.json
+# g.py-oauth2.json
+# credentials.json
 
-client_secrets.json
-g.py-oauth2.json
-credentials.json
+
+
+
+
+class GoogleDocsManager:
+    def __init__(self):
+        self.service = getService("docs")
+
+    def createParagraphRequest(self, text, index):
+        return {
+            'insertText': {
+                'location': {
+                    'index': index,
+                },
+                'text': text + '\n'
+            }
+        }
+
+    def createTableRequest(self, rows, start_index, column_widths=None, cell_styles=None):
+        requests = [{
+            'insertTable': {
+                'rows': len(rows),
+                'columns': len(rows[0]),
+                'location': {'index': start_index}
+            }
+        }]
+
+        # Moving the index to the first cell after the table is created
+        index = start_index + 1
+
+        for row_index, row in enumerate(rows):
+            for col_index, cell in enumerate(row):
+                cell_insert_index = index + 1  # Adjusting for the newline character at the end of each cell
+                requests.append({
+                    'insertText': {
+                        'location': {'index': cell_insert_index},
+                        'text': cell
+                    }
+                })
+
+                # Updating index for the next cell or row
+                index = cell_insert_index + len(cell)
+
+                # Adding cell style if provided
+                if cell_styles and cell_styles[row_index][col_index]:
+                    requests.append({
+                        'updateTextStyle': {
+                            'range': {
+                                'startIndex': cell_insert_index,
+                                'endIndex': cell_insert_index + len(cell)
+                            },
+                            'textStyle': cell_styles[row_index][col_index],
+                            'fields': ','.join(cell_styles[row_index][col_index].keys())
+                        }
+                    })
+
+                # Adding column width if provided
+                if column_widths and column_widths[col_index]:
+                    requests.append({
+                        'updateTableColumnProperties': {
+                            'tableStartLocation': {'index': start_index},
+                            'columnIndices': [col_index],
+                            'tableColumnProperties': {
+                                'width': column_widths[col_index]
+                            },
+                            'fields': 'width'
+                        }
+                    })
+
+            # Adjusting index for the end of the row
+            index += 2  # Skipping past the end of row character
+
+        return requests, index
+
+    # ... other methods ...
+
+    def xxcreateTableRequest(self, rows, start_index, column_widths=None, cell_styles=None):
+        requests = [{
+            'insertTable': {
+                'rows': len(rows),
+                'columns': len(rows[0]),
+                'location': {'index': start_index}
+            }
+        }]
+        index = start_index + 1
+
+        for row_index, row in enumerate(rows):
+            for col_index, cell in enumerate(row):
+                requests.append({
+                    'insertText': {
+                        'location': {'index': index},
+                        'text': cell
+                    }
+                })
+                index += len(cell) + 1
+
+                if cell_styles and cell_styles[row_index][col_index]:
+                    requests.append({
+                        'updateTextStyle': {
+                            'range': {
+                                'startIndex': index - len(cell) - 1,
+                                'endIndex': index - 1
+                            },
+                            'textStyle': cell_styles[row_index][col_index],
+                            'fields': ','.join(cell_styles[row_index][col_index].keys())
+                        }
+                    })
+
+                if column_widths and column_widths[col_index]:
+                    requests.append({
+                        'updateTableColumnProperties': {
+                            'tableStartLocation': {'index': start_index},
+                            'columnIndices': [col_index],
+                            'tableColumnProperties': {
+                                'width': column_widths[col_index]
+                            },
+                            'fields': 'width'
+                        }
+                    })
+            index += 1  # Skip over the end of the row
+        return requests, index
+
+    def insertImageRequest(self, image_url, index=1):
+        return {
+            'insertInlineImage': {
+                'location': {
+                    'index': index
+                },
+                'uri': image_url,
+                'objectSize': {
+                    'height': {'magnitude': 50, 'unit': 'PT'},
+                    'width': {'magnitude': 50, 'unit': 'PT'}
+                }
+            }
+        }
+
+    def createDocumentFromJson(self, json_data, title='Untitled'):
+        document = self.service.documents().create(body={'title': title}).execute()
+        doc_id = document['documentId']
+
+        requests = []
+        index = 1
+        for item in json_data['content']:
+            if item['type'] == 'paragraph':
+                requests.append(self.createParagraphRequest(item['text'], index))
+                index += len(item['text']) + 1
+            elif item['type'] == 'table':
+                table_requests, table_end_index = self.createTableRequest(item['rows'], index, item.get('column_widths'), item.get('cell_styles'))
+                requests.extend(table_requests)
+                index = table_end_index
+            elif item['type'] == 'image':
+                requests.append(self.insertImageRequest(item['url'], index))
+                index += 2  # Update index as needed for the inserted image
+
+        self.service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+        doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+        return doc_url
+
+json_data = {
+    "content": [
+        {"type": "paragraph", "text": "Hello, this is a sample paragraph."},
+        {"type": "paragraph", "text": "Hello, this is a sample paragraph."},
+        {"type": "paragraph", "text": "Hello, this is a sample paragraph."},
+        {"type": "image", "url": "https://picsum.photos/id/237/200/300"},
+        {"type": "image", "url": "https://picsum.photos/id/237/200/200"},
+        {"type": "image", "url": "https://picsum.photos/id/237/400/400"},
+        # {
+            # "type": "table",
+            # "rows": [["Cell 1", "Cell 2"], ["Cell 3", "Cell 4"]],
+            # "column_widths": [None, {'magnitude': 100, 'unit': 'PT'}],
+            # "cell_styles": [[{'bold': True}, None], [None, {'backgroundColor': {'color': {'rgbColor': {'red': 0.8, 'green': 0.8, 'blue': 0.8}}}}]]
+        # }
+    ]
+}
+
+def abc():
+    manager = GoogleDocsManager()
+    doc_url = manager.createDocumentFromJson(json_data, title="Document with Images and Tables")
+    print("Document created:", doc_url)
+    ofile(doc_url)
+
+
+
+def get_drive_file(service, x):
+    if has(x, "id"):
+        return x
+        return x
+    if x.replace('-', '').isalnum() and len(x) > 15:
+        return service.files().get(fileId=x).execute()
+
+    results = service.files().list(q=f"name = '{x}'", fields="files(id, name)").execute()
+    files = results.get('files', [])
+    return files
+
+# docs = GoogleDocs()
+# append_self()
+
+def parse_date_string(date_str):
+    pattern = r'(\d+)\s*(day|hour|minute|second|week|month|year)s?'
+    matches = re.findall(pattern, date_str, re.IGNORECASE)
+    ref = {
+       'years': 365,
+       'weeks': 7,
+       'months': 30,
+    }
+
+    time_dict = {'days': 0, 'hours': 0, 'minutes': 0, 'seconds': 0}
+    for value, unit in matches:
+        unit = unit.lower() + "s"
+        if unit in ref:
+            unit = 'days'
+            time_dict[unit] += int(value) * multiplier
+        else:
+            time_dict[unit] += int(value)
+
+    return time_dict
+
+def create_query(after = 0, type = 0, before = 0, name = 0, size = 0, ascending = 0, descending = 0):
+
+    fields = [ "id", "name" ]
+    reqs = []
+    reqs.append("trashed = false")
+
+    if type == "document":
+        reqs.append("mimeType='application/vnd.google-apps.document'")
+    elif type == "spreadsheet":
+        reqs.append("mimeType='application/vnd.google-apps.sheet'")
+
+    if name:
+        reqs.append(f"name contains '{name}'")
+    if after or before:
+        date = parse_date_string(after or before)
+        sign = ">" if after else "<"
+        d = datetime.utcnow() - timedelta(**date)
+        s = d.isoformat() + 'Z'
+        reqs.append(f"modifiedTime {sign} '{s}'")
+
+
+    query = " and ".join(reqs)
+    fieldString = ','.join(fields)
+    if size != 1:
+        fields = f"files({fieldString})"
+    else:
+        # fields = fieldString
+        fields = f"files({fieldString})"
+    payload =  { "q": query, "fields": fields }
+
+    if ascending:
+        payload["orderBy"] = 'modifiedTime desc'
+    elif descending:
+        payload["orderBy"] = 'modifiedTime desc'
+    if size:
+        payload["pageSize"] = size
+
+    # prompt("opts", payload)
+    return payload
+
+
+def abc():
+    drive = GoogleDrive()
+    files = drive.getDocsFromLastWeek()
+    id = files[0].get("id")
+
+    file = drive.getDriveFile(name = "doctes")
+    id2 = file.get("id")
+    assert id == id2
+
+    docs = GoogleDocs()
+    json = docs.getDocContentAsJson(id)
+    clip(json)
+
+def abc():
+    drive = GoogleDrive()
+    file = drive.getDriveFile(name = "doctes")
+    docs = GoogleDocs()
+    json = docs.getDocContentAsJson(file)
+    clip(json)
+
+
+def abc():
+    docs = GoogleDocs()
+    document = docs.create("dialogue_template")
+
+def create_formatted_table(document_id, service):
+    requests = [
+        {
+            'insertTable': {
+                'rows': 2,
+                'columns': 2,
+                'location': {'index': 1}
+            }
+        },
+        # Set the text in the first column to be bold
+        {
+            'updateTextStyle': {
+                'textStyle': {'bold': True},
+                'range': {
+                    'startIndex': 1,
+                    'endIndex': 4  # Adjust this range based on your actual table content
+                },
+                'fields': 'bold'
+            }
+        },
+        # Set column widths
+        {
+            'updateTableColumnProperties': {
+                'tableColumnProperties': {
+                    'width': {
+                        'magnitude': 72,  # 1 inch in points
+                        'unit': 'PT'
+                    }
+                },
+                'columnIndices': [0],  # First column
+                'tableStartLocation': {'index': 1},
+                'fields': 'width'
+            }
+        },
+        {
+            'updateTableColumnProperties': {
+                'tableColumnProperties': {
+                    'width': {
+                        'magnitude': 72 * ,  # 2 inches in points
+                        'unit': 'PT'
+                    }
+                },
+                'columnIndices': [1],  # Second column
+                'tableStartLocation': {'index': 1},
+                'fields': 'width'
+            }
+        }
+    ]
+
+    service.documents().batchUpdate(documentId=document_id, body={'requests': requests}).execute()

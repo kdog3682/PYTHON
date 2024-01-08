@@ -1,7 +1,13 @@
-LOCAL VIMSCRIPT
+# filetype: executable_template
+# caller: runExampleFile.py
+# notes:
+    this file runs multiple types of things
+    it can run python call functions
+    it can ask reddit
+    it can run bash
+    it can start servers
 
-inoreab <buffer>-- -------------------------------------------------------------<C-R>=Eatchar('\s')<CR>
-
+    
 ------------------------------------------------------------
 subreddit: git
 title: Is there a way to show the files that are changed on git push?
@@ -546,34 +552,100 @@ I am just going to be adding more salt-vinegar-eggs to it in the future.
 Part of me is fearing, if I dont give it a deep wash, botulism or other bad stuff could appear?
 
 ----------------------------------------------------------------------------
-subreddit: pickling
-title: Do you deep clean your pickling jars?
-body:
+note: it doesnt work
+bash:
 
-Or just give them a quick rinse?
+cd /home/kdog3682/2024/
+hugo new site quickstart
+cd quickstart
+git init
+git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke
+echo "theme = 'ananke'" >> hugo.toml
+hugo server
 
-I have been pickling eggs, and since the process of making them keeps repeating, with very little variance, I am wondering if I really need to clean the jar that thoroughly. (ie boiling the jar in hot water) and then washing with soap and water. After all, I am just going to be putting the same ingredients back into it.
+----------------------------------------------------------------------------
 
-What do you guys think?
-
-
-
+outpath: ~/GITHUB/typst-packages/codelst
+github: https://github.com/jneug/typst-codelst
 
 
 ----------------------------------------------------------------------------
+github: https://github.com/typst/templates
+outpath: ~/GITHUB/typst-packages/templates
+
+implementation:
+1704518934 /home/kdog3682/PYTHON/SectionExecutorApps.py
+1704518972 /home/kdog3682/PYTHON/SectionExecutor.py
+
+
 ----------------------------------------------------------------------------
-subreddit: vim
-title: istaw
+
+typst: 
+
+why does 50% baseline look a little bit off?
+
+i was hoping to get the names centered completely inline with the text, but from what I can see, it looks a little bit off.
+
+
+?r
+
+#set page(width: 200pt, height: auto)
+
+Good morning
+#{
+  let names = ("sam", "bob", "george")
+  let abcde = [
+     #for name in names {
+       name
+       parbreak()
+       
+     }
+  ]
+    
+  let dictionary = (
+    // left: blue + 2pt,
+    // right: blue + 2pt,
+    :
+  )
+  let outset = (
+    x: 0pt,
+  )
+  let inset = (
+    x: 5pt,
+    y: 5pt,
+  )
+  let radius = 3pt
+  let height = auto
+  box(baseline: 10pt, clip: false, fill: yellow, height: height, inset: inset, outset: outset, radius: radius, stroke: dictionary, abcde)
+}
+!
+
+----------------------------------------------------------------------------
+
+github: https://github.com/EpicEricEE/typst-plugins/tree/master/quick-maths/src
+outpath: ~/GITHUB/typst-packages/quick-maths
+outpath: ~/GITHUB/typst-packages/leetcode
+github: https://github.com/lucifer1004/leetcode.typ
+
+# /home/kdog3682/GITHUB/typst-packages/quick-maths
+# /home/kdog3682/GITHUB/typst-packages/leetcode
+# /home/kdog3682/GITHUB/typst-packages/leetcode/build/leetcode.pdf
+
+----------------------------------------------------------------------------
+file: /home/kdog3682/2024/web.typ
+regex: ^#?(let \\w+\\([\\w\\W]+?\\n *})\\n *(?=#?let)"
+
+
+----------------------------------------------------------------------------
+file: /home/kdog3682/2024/util.typ
+regex: ^styles\\.[\\w+.]
+unique: 1
+join: 1
+
+
+help: 1704518934 /home/kdog3682/PYTHON/SectionExecutorApps.py
+
+----------------------------------------------------------------------------
+subreddit: askprogramming
+title: Is there a way to automatically refresh pdf on chromebook?
 body:
-
-app_go_gfgf_item
-app_set_gfgf_item
-app_find_gfgf_item
-
-For these 3 names, they only differ by a single word.
-They should be grouped together
-
-app_gfgf_go_item
-app_set_gfgf_item
-app_find_gfgf_item
-

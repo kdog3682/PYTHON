@@ -401,6 +401,10 @@ def example(g, **kwargs):
 def isPrivate(s):
 	return test('^[._]', tail(s))
 
-url = "https://github.com/tlaceby/guide-to-interpreters-series/tree/main/ep11-user-defined-functions"
-g = GithubController()
-g.download(url)
+# url = "https://github.com/tlaceby/guide-to-interpreters-series/tree/main/ep11-user-defined-functions"
+# g = GithubController()
+# g.download(url)
+
+# Creators and Applicators ...
+# To summarize ...
+# Define custom

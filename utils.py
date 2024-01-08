@@ -1,4 +1,13 @@
+dldir = "/mnt/chromeos/MyFiles/Downloads/"
+tocfile = "/home/kdog3682/2024/toc.txt"
+typstdir = "/home/kdog3682/GITHUB/typst"
+typstpackagedir = "/home/kdog3682/GITHUB/typst-packages"
+loremdir = "/home/kdog3682/LOREMDIR"
+hugodir = "/home/kdog3682/2024/quickstart"
+githubdir = "/home/kdog3682/GITHUB"
+
 from pprint import pprint
+import sys
 import env
 from datetime import datetime, timedelta
 import regex as re
@@ -6,8 +15,12 @@ from pathlib import Path, PosixPath
 import json
 import shutil
 import variables
+import webbrowser
 
 dirdict = {"active_dir": "/home/kdog3682/2023", "downloads":"/mnt/chromeos/MyFiles/Downloads","node":"/home/kdog3682/2023/node_modules","r":"/home/kdog3682","nm":"/home/kdog3682/2023/node_modules","24":"/home/kdog3682/2024","budir":"/mnt/chromeos/GoogleDrive/MyDrive/BACKUP","g":"/home/kdog3682/latest-git-cloned-repo","2024":"/home/kdog3682/2024/","py":"/home/kdog3682/PYTHON","ftp":"/home/kdog3682/.vim/ftplugin","2023":"/home/kdog3682/2023/","23":"/home/kdog3682/2023","res":"/home/kdog3682/RESOURCES","trash":"/home/kdog3682/TRASH"}
+def hr(n, newline = 1):
+    s = "\n" if newline else ""
+    return "-" * n + s
 
 def get_global_value(key):
     return getattr(variables, key, None)
@@ -27,7 +40,7 @@ def chalk(s, color, bold = None):
 def blue(x):
     return chalk(x, "blue")
 
-def blue_colon(a, b):
+def _blue_colon(a, b):
     color = "blue"
     hr = chalk("-" * 20, color)
     suffix = ":"
@@ -37,14 +50,15 @@ def blue_colon(a, b):
     print(hr)
     print(a, b)
     print(hr)
+
+def blue_colon(a, b):
+    _blue_colon(a, b)
     answer = input("")
     return answer
-
 def confirm(x):
     word = "confirm"
     return bool(blue_colon(word, x))
 def map(items, fn):
-
     double = is_object(items) or is_nested_array(items)
     entries = items.items() if is_object(items) else items
     gn = lambda x: fn(*x) if double else fn(x)
@@ -56,7 +70,9 @@ def map(items, fn):
             if is_defined(value):
                 store.append(value)
         except Exception as e:
+            print("error at map()")
             print("offender", item)
+            raise e
             prompt("error", str(e))
         
     return store
@@ -65,7 +81,7 @@ def is_defined(x):
     return x != None
 
 def is_array(x):
-    array_types = ['list', 'tuple', 'dict_types']
+    array_types = ['list', 'tuple', 'dict_keys']
     return type(x).__name__ in array_types
 
 def test(s, r, flags = 0):
@@ -96,6 +112,10 @@ def match(s, r, flags = 0):
 def get_extension(x):
     return Path(x).suffix.lstrip(".")
 
+def has(x, key):
+    if isinstance(x, dict) and key in x:
+        return True
+
 def has_extension(x):
     return bool(get_extension(x))
 
@@ -111,8 +131,11 @@ def append(file, content):
 
 def write(file, content):
     assert content
-    with open(normalize_file(file), "w") as f:
+    filename = normalize_file(file)
+    with open(filename, "w") as f:
         f.write(to_string(content))
+    print(f"wrote file: {file}")
+
 
 def npath(dir, file):
     return str(Path(dir, tail(file)))
@@ -130,7 +153,7 @@ def normalize_file(file):
 def trim(s):
     return str(s).strip()
 
-def join(*args):
+def join_lines(*args):
     def runner(args):
         s = ""
         for item in args:
@@ -145,8 +168,9 @@ def join(*args):
         
 def is_primitive(x):
     return is_string(x) or is_number(x)
+
 def to_string(x):
-    return str(x) if is_primitive(x) else join(x)
+    return str(x) if is_primitive(x) else join_lines(x)
     
 def append_json(file, data):
     assert data
@@ -187,6 +211,7 @@ def identity(x):
 
 def head(x):
     return Path(x).parent
+
 def tail(x):
     return Path(x).name
 
@@ -229,14 +254,9 @@ def is_function(x):
     return callable(x)
 
 def templater(s, *args, **kwargs):
-
-    def fallback(x):
-        y = globals().get(x)
-        return y() if is_function(y) else y
-        
     def parser(x):
         if is_array(ref):
-            return ref[int(x) - 1] if is_number(x) else fallback(x)
+            return ref[int(x) - 1] if is_number(x) else ref.pop(0)
 
         if is_object(ref):
             return ref.get(x, fallback(x))
@@ -244,13 +264,27 @@ def templater(s, *args, **kwargs):
     def runner(x):
         return parser(x.group(1))
 
-    ref = args if is_primitive(args[0]) else args[0]
+    if not args:
+        return s
+    ref = (list(args) if is_primitive(args[0]) else args[0])
     r = "\$(\w+)"
 
     return re.sub(r, runner, s, kwargs.get("flags", 0))
 
 def prompt(*args):
-    return blue_colon(*args) if len(args) > 1 else input(args[0] + ":\n")
+    if len(args) == 1:
+        print(chalk(args[0], "blue"))
+        print()
+        return input()
+    elif is_string(args[0]):
+        return blue_colon(*args)
+    else:
+        print("printing multiple prompt items\n")
+        for arg in args:
+            print(chalk(arg, "blue"))
+            print("-" * 20)
+        print()
+        return input()
 
 
 def to_array(x):
@@ -272,7 +306,7 @@ None
 1
 ""
 """
-def split(s, r, flags = 0):
+def split(s, r = "\s+", flags = 0):
     return re.split(r, s.strip(), flags)
 def run_tests(s, fn):
     items = map(split(s, "\n+"), to_argument)
@@ -281,11 +315,31 @@ def run_tests(s, fn):
     for index,(a,b) in enumerate(entries):
         print(str(index + 1) + ". ", blue(a), b)
 
+
+def package_manager(fn):
+    def transform(x):
+        if is_number(x):
+            return int(x)
+        if test(x.strip(), '^(?:""|\'\')$'):
+            return ''
+        return x
+
+    args = sys.argv
+    if len(args) > 1:
+        fn(*map(args[1:], transform))
+
 def to_argument(x):
     return eval(x)
 # run_tests(s, exists)
 
 def testf(x, flags=0, anti=0):
+    if is_object(x):
+        if len(x) == 1:
+            a,b = list(x.items())[0]
+            return lambda x: x.get(a) == b
+        else:
+            raise Exception("ndy")
+
     fn = x if is_function(x) else lambda s: test(s, x, flags)
     if anti:
         return lambda x: not fn(x)
@@ -396,17 +450,17 @@ def debug(*args):
     input("")
 def npath(dir, file):
     return re.sub("/$", "", dir) + "/" + tail(file)
+
 def copy_last_downloaded_file_into_active_dir():
-    # name = file_prompt()
-    name = "javascript.grammar"
+    name = file_prompt()
     file = most_recent_file()
     active_dir = get_dir("active_dir")
     outpath = npath(active_dir, name)
     debug(file, outpath)
     shutil.copy(file, outpath)
-    print("sucess")
+    print("success!")
     # announce("copied last downloaded file: $1 to $2", file, outpath)
-/home/kdog3682/2023/javascript.grammar
+
 def is_dir(x):
     return Path(x).is_dir()
 
@@ -427,5 +481,345 @@ def most_recent_file(dir = "downloads"):
     target = max(files, key=lambda f: f.stat().st_ctime)
     return target
 
+
+def is_jsonable(x):
+    return is_array(x) or is_object(x)
+
+def append_self(x):
+    if empty(x):
+        return
+
+    value = json.dumps(x, indent=4) if is_jsonable(x) else str(x)
+    append(sys.argv[0], value)
+
+
+
 # print("Most recent file:", most_recent_file())
 # print(copy_last_downloaded_file_into_active_dir())
+
+def empty(x):
+    if x == 0:
+        return False
+    if x:
+        return False
+    return True
+
+def get_error_name(e):
+    return e.__class__.__name__
+
+def choose(x):
+    items = list(x)
+    if len(items) == 1:
+        return items[0]
+
+    for i, item in enumerate(items):
+        print(blue(i + 1), item)
+
+    a = input("\nchoose 1-based indexes\n")
+
+    if a == None:
+        return 
+
+    return items[int(a) - 1]
+
+
+def is_private(s):
+	return test('^[._]', tail(s))
+
+def view(file):
+    webbrowser.open(file)
+
+def openpdf(file = "/home/kdog3682/2024/test.pdf"):
+    view(file)
+
+
+def clip(payload, outpath = 1):
+    ref = {
+        1: "/home/kdog3682/2023/clip.js",
+        2: "/home/kdog3682/2023/clip2.js",
+    }
+    file = ref[outpath]
+    write(file, stringify(payload))
+
+def stringify(x):
+    if empty(x):
+        return 
+    if type(x) == bytes:
+        return x.decode()
+    if is_primitive(x):
+        return str(x)
+    return json.dumps(x, indent=4)
+
+def unique(a, b=None):
+    if b:
+        if is_array(a):
+            return list(set(a).difference(b))
+        if is_object(a):
+            return filter(a, lambda k, v: k not in b)
+    else:
+        return list(set(a))
+
+def mkdir(dir):
+    dir_path = Path(dir)
+    try:
+        dir_path.mkdir(parents=True, exist_ok=False)
+        print(f"Directory '{dir_path}' was created.")
+    except FileExistsError:
+        print(f"Directory '{dir_path}' already exists.")
+
+
+def rglob(root):
+    p = Path(root)
+    results = p.rglob(key)
+    list(results)
+
+    from pathlib import Path
+
+def get_files_recursive(root, fileRE = None, dirIgnoreRE = None):
+    root_dir = Path(root)
+    files = []
+
+    def recurse(directory):
+        for path in directory.iterdir():
+            if path.is_dir():
+                if dirIgnoreRE and test(path.name, dirIgnoreRE):
+                    continue
+                recurse(path)
+            elif path.is_file():
+                if fileRE and not test(path.name, fileRE):
+                    continue
+                files.append(str(path))
+
+    recurse(root_dir)
+    return files
+
+
+
+def re_wrap(iterable, template = ''):
+    ref = {
+        '': '(?:$1)',
+        'b': "\\b(?:$1)\\b",
+    }
+    template = ref.get(template, template)
+    keys = list(iterable.keys() if is_object(iterable) else iterable)
+    symbols = map(keys, re.escape)
+    s = join(symbols, "|")
+    return re.sub('\$1', s, template)
+
+
+def decode(x):
+    return x.decode("utf-8")
+
+
+def rmdir(dir):
+    shutil.rmtree(Path(dir))
+
+def sub(s, r, rep, flags = 0):
+    return re.sub(r, rep, s, flags = flags)
+
+def join(x, delimiter = " "):
+    return delimiter.join(x)
+
+
+def system_command(template, *args, **kwargs):
+    from subprocess import Popen, PIPE
+    command = templater(template, *args, **kwargs)
+    command = "; ".join(split(command.strip(), "\s*\n+\s*"))
+
+    if env.GLOBAL_DEBUG_FLAG == 1:
+        blue_colon("debugging the command", command)
+    elif env.GLOBAL_DEBUG_FLAG == 2:
+        return print(command)
+    else:
+        _blue_colon("command", command)
+    process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+    data = process.communicate()
+    success, error = [decode(d) for d in data]
+    return { "success": success, "error": error }
+
+# clip(get_files_recursive(githubdir))
+# pprint(is_dir("/usr/local/bin"))
+
+def is_public_path(path):
+    return test(path.name, "^\w")
+def get_most_recent_file(directory = dldir):
+    dir_path = Path(directory)
+    files = filter(dir_path.iterdir(), is_public_path)
+    file = max(files, key=lambda f: f.stat().st_mtime)
+    return str(file)
+
+def unzip_and_move_executable_in_progress():
+    """
+        used for downloading hugo but it didnt work
+    """
+    file = get_most_recent_file()
+    filename = tail(file)
+    key = match(filename, "[a-zA-Z]+")
+
+    print(system_command(""" 
+        cd $directory
+        tar -xvf $file 
+    """, dldir, filename))
+    unzipped_file = get_most_recent_file()
+    file_path = Path(unzipped_file)
+    contents = list(file_path.iterdir())
+    content = choose(contents)
+    content_path = str(content)
+    print(system_command("cp $content_path /usr/local/bin", content_path))
+    key = content.name
+    print(system_command(""" $key --version """, key))
+
+def c2(x):
+    clip(x, outpath = 2)
+
+# mkdir("/home/kdog3682/PYTHON/apps/SectionExecutor.py")
+
+
+def colon_dict(s):
+    items = re.split("^([\w-]+): *", s.strip(), flags=re.M)
+    items = map(items, trim)
+    if items[0] == "":
+        items.pop(0)
+    config = dict(partition(items))
+    return config
+
+def partition(arr, n = 2):
+
+    def partition_by_integer(arr, n):
+        store = []
+        for i in range(0, len(arr), n):
+            store.append(arr[i : i + n])
+        return store
+    def partition_by_function(arr, f):
+        store = [[], []]
+        for item in arr:
+            if f(item):
+                store[0].append(item)
+            else:
+                store[1].append(item)
+        return store
+
+    if is_string(n):
+        n = testf(n)
+    if is_function(n):
+        return partition_by_function(arr, n)
+    else:
+        return partition_by_integer(arr, n)
+
+def every(a, b):
+    if is_array(b):
+        for item in a:
+            if item not in b:
+                return 
+        return 1
+    for item in a:
+        if not b(item):
+            return 
+    return 1
+def complete_overlap(x, y):
+    a = list(x).sort()
+    b = list(y).sort()
+    return json.dumps(a) == json.dumps(b)
+
+
+def not_none(x):
+    return x != None
+
+def is_valid(x):
+    return x == 0 or x != None
+def assertion(value, key = "exists", message = None):
+    ref = {
+        "not_none": not_none,
+        "is_valid": is_valid,
+        "exists": exists,
+    }
+    def parse(key):
+        if is_function(key):
+            return key
+        elif key.startswith(">"):
+            limit = int(match(key, "> *(.*)"))
+            return lambda x: x > limit
+        else:
+            return ref.get(key)
+
+    check = parse(key)(value)
+    if check:
+        return 
+    raise CustomError(message or key)
+
+
+class CustomError(Exception):
+    RED = '\033[91m'
+    RESET = '\033[0m'
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return red(self.message)
+
+
+def reduce(items, fn):
+    store = {}
+
+    if is_object(items):
+        for k, v in items.items():
+            value = fn(k, v)
+
+            if not value:
+                continue
+            elif is_array(value) and len(value) == 2:
+                if value[1] != None:
+                    store[value[0]] = value[1]
+            else:
+                store[k] = value
+    else:
+        for item in list(items):
+            value = fn(item)
+
+            if not value:
+                continue
+            elif is_array(value) and len(value) == 2:
+                store[value[0]] = value[1]
+            else:
+                store[item] = value
+
+    return store
+
+
+def find(iterable, fn):
+    fn = testf(fn)
+
+    for i, item in enumerate(list(iterable)):
+        if fn(item):
+            return item
+
+
+def read(file):
+    byte_files = [
+        "img",
+        "jpg",
+        "svg",
+    ]
+
+    e = get_extension(file)
+    mode = "rb" if e in byte_files else "r"
+    with open(file, mode) as f:
+        return f.read()
+
+
+def shared(a, b):
+    return list(set(a) & set(b))
+
+
+def noop(*args, **kwargs):
+    return 
+
+def default_path_ignore(path):
+    if test(path.name, "^\W|node_modules"):
+        return True
+    return False
+
+def indent(x, indentation = 2):
+    return sub(x, "^", " " * indentation, flags = re.M)
+

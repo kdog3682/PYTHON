@@ -50,3 +50,4 @@ def create_toc(dir):
 
 # file = get_most_recent_file(typstpackagedir)
 # create_toc(file)
+" ["[master 6ad2d0b] auto push"," 1 file changed, 52 insertions(+)"," create mode 100644 create_toc.py","Warning: Permanently added the RSA host key for IP address '20.29.134.23' to the list of known hosts.\r","To github.com:kdog3682/PYTHON","   1c2054a..6ad2d0b  master -> master"]
