@@ -5,9 +5,9 @@ from debugger_tools import *
 
 def ask_reddit(subreddit, title, body):
     from reddit_script import Reddit
-    title = capitalizeTitle(title)
-    subreddit = dictf(env.subreddits, subredditFromUrl)(subreddit)
-    body = compose(newlinesToNbsp, prettyProse)
+    # title = capitalizeTitle(title)
+    # subreddit = dictf(env.subreddits, subredditFromUrl)(subreddit)
+    # body = compose(newlinesToNbsp, prettyProse)
     r = Reddit()
     submission = r.ask(subreddit, title, body)
     print({"submission": submission})
@@ -67,10 +67,13 @@ def download_github_repo(key, outpath = None):
 
 
 CONTROL_ITEMS = [
+    { "identifiers": ["bash"], "fn": "bash", "aliases": {"cmd": "bash"} },
+    { "identifiers": ["mkdir"], "fn": "fs_setup", "aliases": {"dir": "mkdir"} },
     { "identifiers": ["subreddit"], "fn": "ask_reddit" },
     { "identifiers": ["regex", "file"], "fn": "regex_match" },
     { "identifiers": ["code"], "fn": "execute_code" },
     { "identifiers": ["github"], "fn": "download_github_repo", "aliases": {"key": "github" }},
+    { "identifiers": ["file"], "fn": "execute_file" },
 ]
 
 def regex_match(file, regex):
@@ -87,3 +90,18 @@ def regex_match(file, regex):
 
 def append_section(x):
     append("/home/kdog3682/PYTHON/examples.py", hr(70) + x)
+
+def fs_setup(dir):
+    mkdir(dir)
+
+def bash(cmd):
+    return system_command(cmd)
+
+def execute_file(file):
+    if "\n" in file:
+        a, b = match(file, "(.+)\n+([\w\W]+)")
+        text = read(a)
+        code = text + "\n\n" + b
+        exec(code)
+    elif get_extension(file) == "py":
+        exec(read(file))

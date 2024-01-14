@@ -13,7 +13,7 @@ def execute_section(lineNumber = None):
         # no lineNumber means we run the last section
 
     section = sprawl_lines(lines, lineNumber, "^-{20,} *$")
-    section_text = join(section, "\n")
+    section_text = remove_python_comments(join(section, "\n"))
 
     # get a config dictionary
     config = colon_dict(section_text)
@@ -47,11 +47,24 @@ def execute_section(lineNumber = None):
         return value
     
     item = find(SectionExecutorApps.CONTROL_ITEMS, control_item_finder)
+
+    debug_key = config.get("debug") or config.get("log")
+    if debug_key:
+        print("pretting debug_key", debug_key)
+        with blue_sandwich():
+            if debug_key == 1 or debug_key == "config":
+                print(config)
+            elif debug_key in config:
+                print(debug_key, config.get(debug_key))
+
+        if config.get("debug"):
+            return 
+
     assertion(item, message = "no identifier must have matched")
+
     result = run(item, config)
     if result:
         print(result)
-
 
 env.GLOBAL_DEBUG_FLAG = 2
 env.GLOBAL_DEBUG_FLAG = 0

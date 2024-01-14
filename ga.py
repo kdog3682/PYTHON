@@ -143,6 +143,7 @@ def getService(
     versionRef = {
         "classroom": {"version": "v1"},
         "drive": {"version": "v3"},
+        "sheets": {"version": "v4"},
         "gmail": {"version": "v1", 'token_file': 'march2023credtoken'},
         "docs": {"version": "v1"},
         "youtube": {"version": "v3"},
@@ -2176,3 +2177,4 @@ def create_formatted_table(document_id, service):
     ]
 
     service.documents().batchUpdate(documentId=document_id, body={'requests': requests}).execute()
+

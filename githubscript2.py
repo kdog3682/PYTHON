@@ -1,14 +1,5 @@
-import base64
 import github
-from base import *
-from next import *
-
-def getToken(key = None):
-    ref = {
-        None: env.kdogGithubToken,
-        'kdog3682': env.kdogGithubToken,
-    }
-    return ref[key]
+from utils import *
 
 class Github:
     
@@ -18,9 +9,9 @@ class Github:
             f = lambda x: tail(x.path) == tail(file)
             content = find(contents, f)
             if content:
-                blue('content', content)
-                blue('path', content.path)
-                blue('text', content.decoded_content.decode('utf-8'))
+                blue_colon('content', content)
+                blue_colon('path', content.path)
+                blue_colon('text', content.decoded_content.decode('utf-8'))
             else:
                 print('no content found')
                 print('original contents:')
@@ -30,7 +21,7 @@ class Github:
     
 
     def __init__(self, key=None):
-        self.token = getToken(key)
+        self.token = env.github_token_ref[key]
         self.github = github.Github(self.token)
         self.user = self.github.get_user()
         self.username = self.user.login
@@ -44,7 +35,7 @@ class Github:
             + "\"}' https://api.github.com/user/repos"
         )
         os.system(command)
-        blue('Authenticated', repoName)
+        blue_colon('Authenticated', repoName)
 
     def setRepo(self, repoName, private=False, create=False):
 
@@ -70,7 +61,7 @@ class Github:
                 sleep(1)
                 self.repo = self.github.get_repo(repoName)
 
-        blue('Successfully set the repo', repoName)
+        blue_colon('Successfully set the repo', repoName)
         return self.repo
 
     def getRepoContents(self, repo=None, path='', recursive = 0):
@@ -86,7 +77,7 @@ class Github:
             store = []
             while contents:
                 content = contents.pop(0)
-                if isPrivate(content.path):
+                if is_private_filename(content.path):
                     continue
                 if content.type == "dir":
                     items = repo.get_contents(content.path, ref=ref)
@@ -96,11 +87,7 @@ class Github:
             return store
 
         except Exception as e:
-            message = getErrorMessage(e)
-            if message == 'This repository is empty':
-                return []
             raise e
-        
 
     def getRepo(self, x):
         if isString(x):
@@ -111,38 +98,6 @@ class Github:
         return self.user.get_repos()
     
     
-
-def prompt(*args, aliases=None):
-    if aliases:
-        print(aliases)
-
-    for arg in args:
-        if arg:
-            if isString(arg):
-                print(arg)
-            else:
-                pprint(arg)
-    a = input()
-    return aliases.get(a, a) if aliases else a
-
-def require(x, message):
-    if x == None or x == '':
-        raise Exception(message)
-
-def choose(x):
-
-    for i, item in enumerate(x):
-        print(i + 1, item)
-
-    print('')
-    answer = input()
-    if not answer:
-        return 
-
-    indexes = answer.strip().split(' ')
-    value = [x[int(n) - 1] for n in indexes]
-    return smallify(value)
-
 
 class GithubController(Github):
 
@@ -206,7 +161,7 @@ class GithubController(Github):
             for methodKey,repo in store:
                 getattr(self, methodKey)(repo)
 
-            blue('Finished')
+            blue_colon('Finished')
 
         
         runner()
@@ -220,7 +175,7 @@ class GithubController(Github):
                 return red('Forbidden Deletion', repo.name)
 
         repo.delete()
-        blue('Deleting Repo', repo.name)
+        blue_colon('Deleting Repo', repo.name)
         localName = re.sub('kdog3682-', '', repo.name)
         localDir = npath(rootdir, localName)
         rmdir(localDir, ask=True)
@@ -235,16 +190,16 @@ class GithubController(Github):
         except Exception as e:
             raise e
 
-        blue('dir', dir)
+        blue_colon('dir', dir)
         name = tail(dirName)
-        blue('dirName', name)
-        blue('address', address)
-        input('Awaiting Input to Continue')
+        blue_colon('dirName', name)
+        blue_colon('address', address)
+        input('Awaiting Input to Continue: Press Enter')
 
         self.setRepo(name, private, create=True)
             
-        blue('Repo has been set')
-        blue('Starting the mkdir and local git process')
+        blue_colon('Repo has been set')
+        blue_colon('Starting the mkdir and local git process')
 
         mkdir(dir)
         chdir(dir)
@@ -262,10 +217,10 @@ class GithubController(Github):
             git push -u origin main 
         """
 
-        blue('starting shell command to push git')
-        shell(s)
-        ofile(self.repo.html_url)
-        blue('all finished')
+        blue_colon('starting shell command to push git')
+        system_command(s)
+        view(self.repo.html_url)
+        blue_colon('all finished')
 
     def upload(self, file, content=None):
          updateRepo(self.repo, file, content)
@@ -278,7 +233,7 @@ class GithubController(Github):
 
 def updateRepo(repo, file, content=None, subFolder=None):
     if not content:
-        content = raw(file)
+        content = read_bytes(file)
 
     branch = repo.default_branch
     path = removeHead(file)
@@ -305,11 +260,14 @@ def updateRepo(repo, file, content=None, subFolder=None):
             branch=branch,
         )
 
-    
 
-def getErrorMessage(e):
-    s = search('"message": "(.*?)"', str(e))
-    return re.sub('\.$', '', s.strip())
+def main(fn, *args, **kwargs):
+    blue_colon('Kwargs', kwargs)
+    blue_colon('Running the Function', toString(fn))
+    g = GithubController(key='kdog3682')
+    blue_colon('Github Instance Initialized', g)
+    fn(g, *args, **kwargs)
+
 
 
 def example(g):
@@ -333,28 +291,6 @@ def example(g):
     g.view()
 
 
-def checkErrorMessage(e, s = None):
-    m = getErrorMessage(e)
-    if s == None:
-        return prompt(m)
-    if m != s:
-        warn('Invalid Error', str(e))
-
-
-def buildVite(file):
-
-    assertion(file, isfile)
-    assertion(file, isHtmlFile)
-
-    result = javascript('viteServe.js', 'build', file)
-    clip(result)
-    prompt()
-
-    # f = lambda x: not results.get('success').startswith('vite')
-    # assertion(results, f, 'vite build error')
-
-    sleep(2)
-
 def example(g, file, projectName):
     buildVite(file)
 
@@ -364,47 +300,9 @@ def example(g, file, projectName):
     g.view(path=projectName)
 
 
-
-
 def example(g, **kwargs):
     g.setRepo('ftplugin')
     g.view(**kwargs)
 
-
-def runExample(**kwargs):
-    blue('Kwargs', kwargs)
-    blue('Running the Function', toString(example))
-    g = GithubController(key='kdog3682')
-    blue('Github Instance Initialized', g)
-    example(g, **kwargs)
-
-def downloadRepo():
-    dir = "/home/kdog3682/latest-git-cloned-repo"
-    target = input('url: ')
-    target = search('^.*?github.com/[a-z0-9-]+/[a-z0-9-]+', target)
-    mkdir(dir)
-    cmd = f""" git clone {target} {dir} """
-    input(cmd)
-    response = SystemCommand(cmd)
-    print(response)
-
-# pprint(downloadRepo())
-
-
-def example(g, **kwargs):
-    dir = '/home/kdog3682/LOREMDIR/'
-    nested = '/home/kdog3682/LOREMDIR/node_modules/foo.txt'
-    g.createLocalRepo(dir, **kwargs)
-
-# runExample(private = True)
-
-def isPrivate(s):
-	return test('^[._]', tail(s))
-
-# url = "https://github.com/tlaceby/guide-to-interpreters-series/tree/main/ep11-user-defined-functions"
-# g = GithubController()
-# g.download(url)
-
-# Creators and Applicators ...
-# To summarize ...
-# Define custom
+if __name__ == "__main__":
+    print("hi from main")

@@ -998,10 +998,10 @@ def rigidSort(items, order, f=identity):
     return items
 
 def breaker(n=10):
-    global a
-    a += 1
-    if a >= n:
-        raise Exception()
+    raise Exception("")
+    # env.breaker_count += 1
+    # if env.breaker_count >= n:
+        # raise Exception()
 
 def _setup_chromebook():
     os.system("clear")

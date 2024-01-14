@@ -403,3 +403,12 @@ class MyFireStore(FireStore):
         self.run(actions=actions)
 
 
+# use meaningful group names
+StudentGroups
+    summer2021g6
+        students: 
+            name: kaylee
+            id: kayleechen
+        desc: 
+        meta_data: the 
+            

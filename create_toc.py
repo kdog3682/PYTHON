@@ -1,6 +1,6 @@
 from utils import *
 
-def get_toc_json(root, ignore = default_path_ignore):
+def get_toc_json(root, ignore):
     root_dir = Path(root)
     def recurse(directory):
 
@@ -11,6 +11,7 @@ def get_toc_json(root, ignore = default_path_ignore):
 
         for path in directory.iterdir():
             if ignore(path):
+                print("ignoring", path.name)
                 continue
 
             value = None
@@ -45,9 +46,11 @@ def get_toc_string(data):
     return runner(data)
 
 
-def create_toc(dir):
-    write(tocfile, get_toc_string(get_toc_json(dir)))
-
-# file = get_most_recent_file(typstpackagedir)
-# create_toc(file)
-" ["[master 6ad2d0b] auto push"," 1 file changed, 52 insertions(+)"," create mode 100644 create_toc.py","Warning: Permanently added the RSA host key for IP address '20.29.134.23' to the list of known hosts.\r","To github.com:kdog3682/PYTHON","   1c2054a..6ad2d0b  master -> master"]
+def create_toc(dir, name = None):
+    s = get_toc_string(get_toc_json(dir, default_path_ignore))
+    if not name:
+        name = match(dir, "([\w-]+)\/?$")
+    write(name, s, dir = "2024", ext = "toc", log = 1)
+# 
+# create_toc("/home/kdog3682/.vim/")
+# if the directory has an associated toc ... go to it

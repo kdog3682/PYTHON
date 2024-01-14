@@ -1,4 +1,5 @@
 dldir = "/mnt/chromeos/MyFiles/Downloads/"
+rootdir = "/home/kdog3682"
 tocfile = "/home/kdog3682/2024/toc.txt"
 typstdir = "/home/kdog3682/GITHUB/typst"
 typstpackagedir = "/home/kdog3682/GITHUB/typst-packages"
@@ -22,9 +23,6 @@ def hr(n, newline = 1):
     s = "\n" if newline else ""
     return "-" * n + s
 
-def get_global_value(key):
-    return getattr(variables, key, None)
-
 def chalk(s, color, bold = None):
     red = "\033[31m"
     green = "\033[32m"
@@ -33,9 +31,9 @@ def chalk(s, color, bold = None):
     purple = "\033[35m"
     cyan = "\033[36m"
     reset = "\033[0m"
-    bold = "\033[1m" if bold else ""
+    b = "\033[1m" if bold else ""
     color = locals().get(color, color)
-    return color + str(s) + bold + reset
+    return color + str(s) + b + reset
 
 def blue(x):
     return chalk(x, "blue")
@@ -53,8 +51,6 @@ def _blue_colon(a, b):
 
 def blue_colon(a, b):
     _blue_colon(a, b)
-    answer = input("")
-    return answer
 def confirm(x):
     word = "confirm"
     return bool(blue_colon(word, x))
@@ -116,25 +112,39 @@ def has(x, key):
     if isinstance(x, dict) and key in x:
         return True
 
+
+def add_extension(x, y):
+    e = get_extension(y)
+    if e == "": e = y
+    return x + "." + e if not has_extension(x) else x
+
 def has_extension(x):
     return bool(get_extension(x))
-
-def write_json(file, content):
-    assert content
-    with open(normalize_file(file), "w") as f:
-        json.dump(content, f, indent=4)
 
 def append(file, content):
     assert content
     with open(normalize_file(file), "a") as f:
         f.write(to_string(content))
 
-def write(file, content):
+def write(file, content, dir = None, ext = None, log = False):
+    """
+        the file is normalized with dir and ext if provided
+        if content is a str, write as text
+        else write as json
+    """
     assert content
-    filename = normalize_file(file)
-    with open(filename, "w") as f:
-        f.write(to_string(content))
-    print(f"wrote file: {file}")
+    filename = normalize_file(file, dir, ext)
+    if is_string(content):
+        with open(filename, "w") as f:
+            f.write(content)
+            print(f"wrote file: {filename}")
+    else:
+        with open(file, "w") as f:
+            json.dump(content, f, indent=4)
+            print(f"wrote file: {filename} as json")
+
+    if log:
+        log_file(filename)
 
 
 def npath(dir, file):
@@ -146,7 +156,13 @@ def tail(x):
 def identity(s):
     return s
 
-def normalize_file(file):
+def normalize_file(file, dir = None, ext = None):
+    if ext:
+        file = add_extension(file, ext)
+    if dir:
+        return npath(get_dir(dir), file)
+    if test(file, "^/"):
+        return file
     dir = dir_from_file(file)
     return npath(dir, file)
 
@@ -226,6 +242,22 @@ def red(x):
 def throw(message, *args):
     m = red(templater(message, *args))
     raise Exception(m)
+
+def strftime(key = "iso8601", dt=None):
+    templates = {
+        "iso8601": "%Y-%m-%d",
+        "simple_date": "%Y-%m-%d",
+        "simple_time": "%H:%M:%S",
+        "datetime": "%A %B %d %Y, %-I:%M:%S%p",
+        # Add more templates as needed
+    }
+
+    if dt is None:
+        dt = datetime.now()
+
+    template = templates.get(key, key)
+    return dt.strftime(template)
+
 def timestamp(x=None):
     t = type(x)
 
@@ -293,8 +325,8 @@ def to_array(x):
 def exists(x):
     return bool(x)
 
-def filter(items, x = exists):
-    checkpoint = testf(x)
+def filter(items, x = exists, anti = False):
+    checkpoint = testf(x, anti = anti)
     return [el for el in items if checkpoint(el)]
 
 s = """
@@ -307,9 +339,10 @@ None
 ""
 """
 def split(s, r = "\s+", flags = 0):
-    return re.split(r, s.strip(), flags)
+    items = re.split(r, s.strip(), flags)
+    return items[1:] if items[0] == "" else items
 def run_tests(s, fn):
-    items = map(split(s, "\n+"), to_argument)
+    items = map(split(s, "\n+"), eval)
     evaluations = map(items, fn)
     entries = list(zip(items, evaluations))
     for index,(a,b) in enumerate(entries):
@@ -329,8 +362,9 @@ def package_manager(fn):
         fn(*map(args[1:], transform))
 
 def to_argument(x):
-    return eval(x)
-# run_tests(s, exists)
+    if is_number(x):
+        return int(x)
+    return x
 
 def testf(x, flags=0, anti=0):
     if is_object(x):
@@ -517,7 +551,7 @@ def choose(x):
 
     a = input("\nchoose 1-based indexes\n")
 
-    if a == None:
+    if a == "":
         return 
 
     return items[int(a) - 1]
@@ -537,6 +571,7 @@ def clip(payload, outpath = 1):
     ref = {
         1: "/home/kdog3682/2023/clip.js",
         2: "/home/kdog3682/2023/clip2.js",
+        3: "/home/kdog3682/2023/clip3.js",
     }
     file = ref[outpath]
     write(file, stringify(payload))
@@ -631,7 +666,7 @@ def system_command(template, *args, **kwargs):
     elif env.GLOBAL_DEBUG_FLAG == 2:
         return print(command)
     else:
-        _blue_colon("command", command)
+        blue_colon("command", command)
     process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     data = process.communicate()
     success, error = [decode(d) for d in data]
@@ -815,7 +850,11 @@ def shared(a, b):
 def noop(*args, **kwargs):
     return 
 
-def default_path_ignore(path):
+def default_path_ignore(path: Path) -> bool:
+    """
+        Used in various file finders.
+        Ignores dot files and node modules
+    """
     if test(path.name, "^\W|node_modules"):
         return True
     return False
@@ -823,3 +862,268 @@ def default_path_ignore(path):
 def indent(x, indentation = 2):
     return sub(x, "^", " " * indentation, flags = re.M)
 
+
+def remove_python_comments(s):
+    return sub(s, "^#.+\n*", "", flags = re.M)
+
+
+def get_kwargs(s):
+    """
+        there have been multiple attempts at writing this function over the years
+
+    """
+    def runner(a, b):
+        return [a, to_argument(trim(b))]
+    return dict(map(partition(split(s, "(\w+) *= *")), runner))
+
+env.verify = 1
+def verify(*args, **kwargs):
+    """
+         early returns when env.verify is not active
+         
+         sometimes you want to verify something before you proceed 
+
+         2 args: (1: value, 2: message)
+         n args: (n: values)
+
+         All the values are printed out one by one
+         and they are colored blue
+    """
+    if len(args) == 2 and not kwargs and is_string(args[1]):
+        kwargs["message"] = args[1]
+        args = [args[0]]
+    if env.verify == 0:
+        return 
+    print(blue(hr(30, newline = 0)))
+    for arg in args:
+        print(arg)
+    print(blue(hr(30)))
+    if kwargs.get("message"):
+        print(chalk("message:", "blue", 1), kwargs.get("message"))
+
+# verify("foo", "a")
+
+
+class blue_sandwich:
+    def blue(self):
+        print(blue(hr(30, False)))
+
+    def __enter__(self):
+        self.blue()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.blue()
+
+
+def smart_dedent(s):
+    s = re.sub("^ *\n*|\n *$", "", s)
+    if test(s, "^\S"):
+        return s
+    spaces = match(s, "^ *(?=\S)", flags=re.M)
+    secondLineSpaces = match(s, "\n *(?=\S)")
+    if (
+        not spaces
+        and secondLineSpaces
+        and len(secondLineSpaces) > 4
+    ):
+        return re.sub(
+            "^" + secondLineSpaces[5:], "", s, flags=re.M
+        ).trim()
+
+    return re.sub("^" + spaces, "", s, flags=re.M).strip()
+
+
+def write_git_ignore(dir):
+    """
+        fn_degree: 2
+        writes the .gitignore
+        todo: python or javascript gitignore
+    """
+    assert(is_dir(dir))
+
+    patterns = choose_dict_item(env.git_ignore_patterns)
+    if patterns:
+        write(".gitignore", join(patterns), dir = dir)
+
+def log_file(file):
+    """
+        fn_degree: 2
+        creates a string that lookes like this:
+        2024-01-11 /home/kdog3682/2023/lezer-runExampleFile.js
+
+        linked to function:write via kwargs.log
+    """
+    s = strftime("iso8601") + " " + file + "\n"
+    append("/home/kdog3682/2024/files.log", s)
+
+
+def force_write(*args, **kwargs):
+    """
+        fn_degree: 2
+        args: [string]
+        kwargs: {content?: string}
+
+        the args join together to form the final path
+        the text value is kwargs.content or "howdy"
+
+        return: None
+    """
+
+    content = kwargs.get("content", "howdy")
+    path = Path(*args)
+    if not path.parent.is_dir():
+        path.parent.mkdir(parents=True, exist_ok=False)
+
+    filename = path.resolve()
+    with open(path.resolve(), "w") as f:
+        f.write(content)
+        print("wrote", filename)
+    file_log(filename)
+
+
+def is_private_filename(s):
+	return test('^[._]', tail(s))
+
+def read_bytes(f):
+    with open(f, "rb") as f:
+        return f.read()
+
+
+def getErrorMessage(e):
+    s = search('"message": "(.*?)"', str(e))
+    return re.sub('\.$', '', s.strip())
+
+def breaker(n=10):
+    env.breaker_count += 1
+    if env.breaker_count >= n:
+        raise Exception()
+
+
+def reverse(x):
+    if isObject(x):
+        return {b:a for a,b in x.items()}
+    return list(reversed(x))
+
+
+ignore_patterns = {
+        'python': ['__pycache__/', '*.py[cod]', '*$py.class', '.pytest_cache/', 'venv/', 'env/', '.idea/', '*.sqlite3', '*.ipynb_checkpoints'],
+        'java': ['target/', 'bin/', '*.log', '*.class', '.idea/', '*.jar', '*.war'],
+        'javascript': ["env.js", "package-lock.json", 'node_modules/', 'npm-debug.log', 'dist/', '.env', 'logs', '*.log', 'npm-debug.log*', 'yarn-debug.log*', 'yarn-error.log*'],
+        'cpp': ['*.o', '*.obj', '*.exe', '*.dll', '*.so', '*.dylib', 'bin/', 'obj/', '.vscode/'],
+        'ruby': ['*.gem', '.bundle/', 'log/', 'tmp/', 'vendor/bundle/', '.env', '*.rbc', 'capybara-*.html', '.rspec', '/db/*.sqlite3', '/db/*.sqlite3-journal', '/public/system', '/coverage/', 'spec/tmp*', '**.orig', 'rerun.txt', 'pickle-email-*.html'],
+        'go': ['bin/', 'pkg/', '*.o', '*.a', '*.so', 'dist/', 'build/', '.env', 'vendor/']
+}
+
+def choose_dict_item(ref):
+    return ref.get(choose(list(ref)))
+
+
+
+def get_git_status_and_last_modified(directories):
+    import os
+    import subprocess
+    git_info = {}
+    o = ""
+
+    for dir_path in directories:
+        if not is_git_directory(dir_path):
+            continue
+
+        o += dir_path + "\n"
+        os.chdir(dir_path)
+        result = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True)
+        status_lines = result.stdout.splitlines()
+
+        files = []
+        ref = {
+           '??': 'created',
+           'M': 'modified',
+        }
+        for line in status_lines:
+            status, file_path = line[:2].strip(), line[3:].strip()
+            if not file_path:
+                continue
+            if not is_file(file_path):
+                continue
+            status = ref.get(status, status)
+            mtime = os.path.getmtime(file_path)
+            dt = datetime.fromtimestamp(mtime)
+            expr = pluralize_unit(days_ago(dt), "days")
+            last_modified = strftime("datetime", dt)
+            last_modified += f" ({expr} ago)"
+            s = {
+                'name': tail(file_path),
+                'date': status + " " + last_modified,
+            }
+            files.append(s)
+            for k,v in s.items():
+                o += f"  {k}: {v}\n"
+            o += "\n"
+
+        o += "\n\n"
+        # git_info.append({"dir": dir_path, "contents": files})
+
+    outpath = "/home/kdog3682/2024/git-status.01-14-2024.txt"
+    write(outpath, o)
+
+def is_git_directory(dir_path):
+    return Path(dir_path, ".git").is_dir()
+
+def days_ago(target_datetime):
+    """
+    Calculate how many days ago a given datetime was from the current date.
+
+    :param target_datetime: A datetime object representing the past date and time.
+    :return: Number of days as an integer.
+    """
+    current_datetime = datetime.now()
+    # print(strftime(dt = current_datetime))
+    # print(strftime(dt = target_datetime))
+    delta = current_datetime - target_datetime
+    return delta.days + 1
+
+def ordinal(number):
+    """
+    Convert a number into its ordinal representation.
+
+    :param number: An integer number.
+    :return: A string representing the ordinal form of the number.
+    """
+    if 10 <= number % 100 <= 20:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(number % 10, 'th')
+
+    return f"{number}{suffix}"
+
+def pluralize_unit(n, unit):
+    """
+    Return a string with 'day' or 'days' correctly pluralized based on the number.
+
+    :param n: An integer number representing the number of days.
+    :return: A string with the number and 'day' or 'days'.
+    """
+    unit = sub(unit, "s$", "")
+    if n == 1:
+        return f"{n} {unit}"
+    else:
+        return f"{n} {unit}s"
+
+
+directories = [
+"/home/kdog3682/2024/", "/home/kdog3682/2023/", "/home/kdog3682/.vim/ftplugin/", "/home/kdog3682/PYTHON/"
+]
+# get_git_status_and_last_modified(directories)
+
+def git_push_directories(*args):
+    template = """
+        cd $1
+        git add .
+        git commit -m 'pushing directory'
+        git push
+    """
+
+    for dir in flat(args):
+        print(system_command(template, dir))
+
+git_push_directories(directories)

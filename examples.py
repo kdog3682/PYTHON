@@ -631,6 +631,11 @@ github: https://github.com/lucifer1004/leetcode.typ
 # /home/kdog3682/GITHUB/typst-packages/leetcode
 # /home/kdog3682/GITHUB/typst-packages/leetcode/build/leetcode.pdf
 
+
+github: https://github.com/vuejs/core
+outpath: ~/GITHUB/vuejs3
+toc: 1
+
 ----------------------------------------------------------------------------
 file: /home/kdog3682/2024/web.typ
 regex: ^#?(let \\w+\\([\\w\\W]+?\\n *})\\n *(?=#?let)"
@@ -649,3 +654,207 @@ help: 1704518934 /home/kdog3682/PYTHON/SectionExecutorApps.py
 subreddit: askprogramming
 title: Is there a way to automatically refresh pdf on chromebook?
 body:
+
+----------------------------------------------------------------------------
+
+fn: create_pip_package
+dir: /home/kdog3682/2024-python/google-api-wrappers/gapi_wrappers
+files: 
+google_sheets.py
+google_docs.py
+google_classroom.py
+manager.py
+__init__.py
+/home/kdog3682/2024-python/google-api-toolkit/setup.py
+----------------------------------------------------------------------------
+
+mkdir: /home/kdog3682/2024-python/utli
+file: /home/kdog3682/2024-python/filesystem-setup-toolkit/fs_toolkit/abc.py
+file: /home/kdog3682/2024-python/filesystem-setup-toolkit/fs_toolkit/create_pip_package.py
+file: /home/kdog3682/2024-python/filesystem-setup-toolkit/setup.py
+file: /home/kdog3682/2024-python/filesystem-setup-toolkit/fs_toolkit/__init__.py
+
+
+filesystem-setup-toolkit/fs_toolkit
+
+        
+----------------------------------------------------------------------------
+datetime: 01-08-2024 03:30PM
+bash:
+
+# cd /home/kdog3682/2024-python/filesystem-setup-toolkit
+# pip3 install .
+
+# this will allow you to incrementally readopt the item
+cd /home/kdog3682/2024-python/filesystem-setup-toolkit
+pip3 install -e .
+
+----------------------------------------------------------------------------
+datetime: 01-08-2024 03:30PM
+bash:
+
+# no. typechecking is not how python is used
+# maybe u just write better doc notes
+# it is a tool that exists ... 
+# it will perhaps introduce better habits
+# 
+python3 -m pip3 install mypy
+
+----------------------------------------------------------------------------
+datetime: 01-08-2024 03:30PM
+help_notes:
+
+    log: config
+        will log the config
+    log: help_notes
+        will log the help_notes value
+
+instead of "log", can also write "debug" which will then early return
+
+----------------------------------------------------------------------------
+datetime: 01-08-2024 05:08PM
+title: how to use mypy && typing
+snippet:
+
+from typing import List
+
+def foo(s: str) -> List[int]:
+    return [s]
+
+print(foo("hi"))
+
+notes:
+
+the arrow goes before the colon
+cant use a normal list ... have to use a typing list
+
+
+
+----------------------------------------------------------------------------
+datetime: 01-08-2024 09:45PM
+file: /home/kdog3682/PYTHON/google_sheets_api.py
+
+sample_data = [['Header1', 'Header2'], ['Data1', 'Data2']]
+gs = GoogleSheets()
+gs.create("My New Spreadsheet", sample_data)
+gs.format_headers()
+webbrowser.open(gs.url)
+
+----------------------------------------------------------------------------
+datetime: 01-08-2024 09:45PM
+file: /home/kdog3682/PYTHON/gapi_drive.py
+desc: delete today spreadsheets
+
+env.ask = 1
+query = "mimetype = spreadsheet name = spreadsh size = 10 after = today"
+delete_files(query)
+
+
+----------------------------------------------------------------------------
+datetime: 01-08-2024 09:45PM
+file: /home/kdog3682/PYTHON/gapi_sheets.py
+
+# working
+finance = GoogleSheets("fina")
+pprint(finance) # gets financial statements
+finance.resize(rows = 10, cols = 10)
+open(finance)
+
+----------------------------------------------------------------------------
+datetime: 01-11-2024 12:28PM
+subreddit: 
+title: Is there a way to do movements in autocompletion?
+body:
+
+I have tried a few times using <expr> and feedkeys, but nothing seems to be working.
+The goal is to embed movements into autocompletion
+
+Normally with the completion object: {word: banana, abbr: ban}
+completing on ban gives banana
+
+I would like this: {word: banana<left>, abbr: ban} to also work.
+completing on ban gives banana, and then moves one to the left.
+
+Doing a preparse doesnt work
+
+------------------------------------------------------------
+subreddit: learnprogramming
+title: Why does this example use "Args" and not "Parameters" ?
+body:
+
+args are the literal things passed to the function
+params are the definitions of the args being passed
+
+
+I feel like the below (Google Style DocString) should use the word "Parameters" instead of "Args".
+What do you guys think?
+
+
+    def function_with_pep484_type_annotations(param1: int, param2: str) -> bool:
+        """Example function with PEP 484 type annotations.
+
+        Args:
+            param1: The first parameter.
+            param2: The second parameter.
+
+        Returns:
+            The return value. True for success, False otherwise.
+
+        """
+
+
+----------------------------------------------------------------------------
+datetime: 01-12-2024 07:30PM
+bash:
+
+cd /home/kdog3682/2024-javascript/
+ls /home/kdog3682/2024-javascript/
+npm i @lezer/python
+npm i @lezer/javascript
+ls /home/kdog3682/2024-javascript/
+
+----------------------------------------------------------------------------
+datetime: 01-13-2024 07:29PM
+file: /home/kdog3682/PYTHON/githubscript2.py
+
+def get_all_paths_to_root(dir_path, root = rootdir):
+    """
+    Recursively slices the dir_path until the root is reached.
+    Returns a list of all paths from root to the provided directory.
+
+    input: /home/kdog3682/2024-writing/mmgg/
+    """
+    path = Path(dir_path)
+    root_path = str(Path(root))
+    paths = []
+
+    while True:
+        parent = path.parent
+        if parent.name == "":
+            break
+        paths.append(str(path))
+        if str(parent) == root_path:
+            break
+        path = parent
+
+    return reverse(paths)
+
+def create_local_repo(g, dir, **kwargs):
+    dir_paths = get_all_paths_to_root(dir)
+    mkdir(dir)
+    print("choose the directory for the local repo")
+    dir = choose(dir_paths)
+    filetype = choose(defs.filetypes, )
+        write_git_ignore(dir)
+    g.createLocalRepo(dir, **kwargs)
+    
+
+dir = '/home/kdog3682/2024-writing/'
+dir = '/home/kdog3682/LOREMDIR/'
+dir = '/home/kdog3682/LOREMDIR/node_modules/foo.txt'
+dir = '/home/kdog3682/2024-javascript/'
+dir = '/home/kdog3682/2024-python/'
+dir = '/home/kdog3682/2024-javascript/organize/'
+dir = "/home/kdog3682/2024-writing/mmgg/"
+
+main(example, dir, private = True)
