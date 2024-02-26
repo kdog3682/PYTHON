@@ -1,8 +1,10 @@
-from base import *
-from next import *
+from utils import *
+# from base import *
+# from next import *
 import time
 import zipfile
 
+zipdir = None
 
 def getZipFiles(inpath, outpath):
     with zipfile.ZipFile(inpath, "r") as z:
@@ -154,6 +156,7 @@ def zip(files, outpath):
         for file in files:
             name = tail(file)
             z.write(file, arcname=name, compress_type=compress_type)
+    print("done")
 
 
 def backup(key):
@@ -272,7 +275,7 @@ def unzipOpenai():
     print(loc)
 
 "/home/kdog3682/TRASH/conversations.json"
-unzipOpenai()
+# unzipOpenai()
 
 def getCodepen(target = 'style.stylus'):
     a = mostRecentZipFile()
@@ -307,3 +310,4 @@ def codepenToMyCodePlayground():
 
 
 # codepenToMyCodePlayground()
+

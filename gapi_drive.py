@@ -33,7 +33,7 @@ def rmfile(drive, x):
 
 class GoogleDrive:
     def __init__(self):
-        self.files = servicer("drive")
+        self.files = servicer("drive", reset = 1)
 
     def get(self, *args, **kwargs):
         opts = create_query(*args, **kwargs)
@@ -144,3 +144,5 @@ def get_file(**kwargs):
     drive = GoogleDrive()
     files = drive.get(**kwargs)
     return files[0]
+
+print(get_file())

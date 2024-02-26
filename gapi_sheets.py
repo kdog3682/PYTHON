@@ -216,5 +216,5 @@ def format(self, sheet_id=0, **kwargs):
 
 finance = GoogleSheets("fina")
 pprint(finance)  # gets financial statements
-finance.resize(rows=10, cols=10)
-open(finance)
+# finance.resize(rows=10, cols=10)
+# open(finance)

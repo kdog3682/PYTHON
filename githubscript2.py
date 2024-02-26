@@ -9,9 +9,9 @@ class Github:
             f = lambda x: tail(x.path) == tail(file)
             content = find(contents, f)
             if content:
+                blue_colon('text', content.decoded_content.decode('utf-8'))
                 blue_colon('content', content)
                 blue_colon('path', content.path)
-                blue_colon('text', content.decoded_content.decode('utf-8'))
             else:
                 print('no content found')
                 print('original contents:')
@@ -90,79 +90,27 @@ class Github:
             raise e
 
     def getRepo(self, x):
-        if isString(x):
-            return self.user.get_repo(x)
-        return x
+        return self.user.get_repo(x) if is_string(x) else x
 
     def getRepos(self):
         return self.user.get_repos()
     
+    def open_url(self):
+        view(self.repo.html_url)
     
 
 class GithubController(Github):
-
-    def download(self, url):
-        r = '/'
-        url = url.replace('https://', '')
-        p = re.split(r, url)
-        user = p[1]
-        repo = p[2]
-        target = p[-1]
-        folderName = prompt3('choose a folder name for the repo: ' + target, fallback = target)
-        query = user + '/' + repo
-        repo = self.github.get_repo(query)
-        items = self.getRepoContents(repo, target, recursive = 1)
-        items = antichoose(items)
-        write = writef(dldir, user + '-' + folderName)
-        store = []
-        t = str(timestamp())
-        for item in items:
-            store.append(t + ' ' + write(item.path, item.decoded_content.decode("utf-8")))
-
-        append('/home/kdog3682/2024/files.log', join(store))
-    	
-
-    def run(self):
-
-        store = []
+    def view_repos(self):
         repos = self.getRepos()
 
-        def runner(prevAnswer=None):
-            if prevAnswer:
-                repo = repos[int(prevAnswer) - 1]
-            else:
-                repo = choose(repos)
-            if not repo:
-                return finish()
-            contents = self.getRepoContents(repo)
-            if not contents:
-                store.append(['deleteRepo', repo])
-                return runner()
-
-            aliases = {
-                'd': 'deleteRepo',
-                'v': 'viewRepo',
-            }
-
-            answer = prompt(contents, aliases=aliases)
-            if answer:
-                if isNumber(answer):
-                    return runner(answer)
-                store.append([answer, repo])
+        def runner():
+            repo = choose(repos)
+            if repo:
+                contents = self.getRepoContents(repo)
+                print(repo)
+                pprint(contents)
+                press_anything_to_continue()
                 runner()
-            else:
-                return finish()
-
-        def finish():
-            if not store:
-                return 
-
-            prompt(store)
-            for methodKey,repo in store:
-                getattr(self, methodKey)(repo)
-
-            blue_colon('Finished')
-
         
         runner()
 
@@ -181,33 +129,46 @@ class GithubController(Github):
         rmdir(localDir, ask=True)
 
 
-    def createLocalRepo(self, dirName, private=False):
+    def upload_file(self, file, content=None, name = None):
+         return update_repo(self.repo, file, content, name = name)
 
-        address = f"{self.username}/{tail(dirName)}"
-        dir = None
-        try:
-            dir = dirGetter(dirName)
-        except Exception as e:
-            raise e
+    def upload_directory(self, dir, name = None):
+        files = os.listdir(dir)
+        dirname = head(dir)
+        for file in files:
+            p = Path(dir, file)
+            if p.is_dir():
+                continue
 
-        blue_colon('dir', dir)
-        name = tail(dirName)
-        blue_colon('dirName', name)
-        blue_colon('address', address)
-        input('Awaiting Input to Continue: Press Enter')
+            content = pprint().read_bytes()
+            name = str(Path(dirname, file))
+            update_repo(self.repo, content = content, name = path)
+    
 
-        self.setRepo(name, private, create=True)
-            
-        blue_colon('Repo has been set')
-        blue_colon('Starting the mkdir and local git process')
+    def initialize_local_directory(self, dir, git_ignore = None):
+        """
+            turns the given directory into a git repo
+            optionally writes gitignore 
+            based on the files present in the directory
+        """
 
-        mkdir(dir)
-        chdir(dir)
+        if is_git_directory(dir):
+            return printf(""" "$dir" is already a git directory""")
 
-        if not isfile('README.md') and empty(os.listdir(dir)):
-            write('README.md', 'howdy from ' + dir)
+        if not is_dir(dir):
+            answer = inform("""
+                $dir is not an existant directory
+                would you like to create it?
+            """, accept_on_enter = 1)
+            if not answer:
+                return 
+            else:
+                mkdir(dir)
 
-        s = f"""
+        repo_name = ask("repo_name", tail(dir))
+        address = f"{self.username}/{repo_name}"
+
+        system_command(f"""
             cd {dir}
             git init
             git add .
@@ -215,40 +176,29 @@ class GithubController(Github):
             git branch -M main
             git remote add origin git@github.com:{address}.git
             git push -u origin main 
-        """
+        """, confirm = 1)
 
-        blue_colon('starting shell command to push git')
-        system_command(s)
+        if git_ignore:
+            write_gitignore_file(dir, git_ignore)
         view(self.repo.html_url)
-        blue_colon('all finished')
 
-    def upload(self, file, content=None):
-         updateRepo(self.repo, file, content)
-
-    def uploadFolder(self, dir, subFolder=None):
-        files = getFiles(dir, recursive=1)
-        for file in files:
-            updateRepo(self.repo, file, subFolder=None)
-    
-
-def updateRepo(repo, file, content=None, subFolder=None):
+def update_repo(repo, file = "", content=None, name = None):
     if not content:
         content = read_bytes(file)
 
     branch = repo.default_branch
-    path = removeHead(file)
-    if subFolder:
-        path = os.path.join(subFolder, path)
+    path = name or tail(file)
 
     try:
         return repo.create_file(
             path=path,
-            message=f"Upload {file}",
+            message=f"uploading {path}",
             content=content,
             branch=branch,
         )
 
     except Exception as e:
+        print(str(e))
         reference = repo.get_contents(path, ref=branch)
         assert(reference)
 
@@ -261,48 +211,10 @@ def updateRepo(repo, file, content=None, subFolder=None):
         )
 
 
-def main(fn, *args, **kwargs):
-    blue_colon('Kwargs', kwargs)
-    blue_colon('Running the Function', toString(fn))
-    g = GithubController(key='kdog3682')
-    blue_colon('Github Instance Initialized', g)
-    fn(g, *args, **kwargs)
-
-
-
-def example(g):
-    g.run() # press d to delete the chosen repo
-            # the options will shown up in the aliases
-
-def example(g):
-    # g.createLocalRepo('RESOURCES', private=True)
-    g.createLocalRepo('ftplugin', private=False)
-    g.view() # views the repo that was created
-
-def example(g):
-    """
-        The key for getToken initializes via kdog3682
-        We enter the codesnippets repo
-        We upload a file
-        We view the contents of the repo
-    """
-    g.setRepo('codesnippets')
-    g.upload('/home/kdog3682/PYTHON/githubscript2.py')
-    g.view()
-
-
-def example(g, file, projectName):
-    buildVite(file)
-
-    g.setRepo('projects')
-    vitedistdir = "/home/kdog3682/2023/dist/"
-    g.uploadFolder(vitedistdir, subFolder=projectName)
-    g.view(path=projectName)
-
-
-def example(g, **kwargs):
-    g.setRepo('ftplugin')
-    g.view(**kwargs)
-
-if __name__ == "__main__":
-    print("hi from main")
+def run(fn, *args, **kwargs):
+    controller = GithubController(key='kdog3682')
+    with blue_sandwich():
+        blue_colon('Kwargs', kwargs)
+        blue_colon('Running the Function', fn)
+        blue_colon('Github Instance Initialized', controller)
+    fn(controller, *args, **kwargs)

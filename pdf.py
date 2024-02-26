@@ -73,6 +73,8 @@ def defaultBlocker(blocks, parser=0):
 
 
 def fitzOpen(file=0):
+    if type(file) == fitz.fitz.Document:
+        return file
     if not file:
         return fitz.open()
     file = addExtension(file, "pdf")
@@ -1300,3 +1302,79 @@ def fitzRead(file, indexes = None):
     return [page.get_text() for page in fitzOpen(file)]
 
 # clip(fitzRead(file, [82, 98]))
+
+
+
+def white_bottom_footer(pdf, bottom = 0, left = 0, top = 0, right = 0, skip = []):
+    def white(page):
+        args = [
+            left, # starts at the left
+            page.rect.height - bottom, # bottom offset
+            page.rect.width - right, # distance from right
+            page.rect.height, # all the way to the bottom
+        ]
+        rect = fitz.Rect(*args)
+        page.draw_rect(rect, color=WHITE, fill=WHITE, width=1)
+
+    pdf = fitzOpen(pdf)
+    for i, page in enumerate(pdf):
+        if i - 1 in skip:
+            continue
+        white(page)
+
+    return pdf
+
+def delete_page_n(pdf, n):
+    pdf = fitzOpen(pdf)
+    if len(pdf) > 1:
+        pdf.delete_page(n - 1)
+    return pdf 
+
+def extract_pdf_slice(input_pdf, a = 0, b = 0):
+    if not b:
+        b = a
+
+    document = fitz.open(input_pdf)
+    output_pdf = "/home/kdog3682/2024/test.pdf"
+    new_doc = fitz.open()
+    new_doc.insert_pdf(document, from_page=a, to_page=b)
+    new_doc.save(output_pdf)
+    new_doc.close()
+    document.close()
+    ofile(output_pdf)
+
+test_dot_pdf = "/home/kdog3682/2024/test.pdf"
+# file = "/mnt/chromeos/GoogleDrive/MyDrive/Chess Workbook (Part 1) [Advertisement].pdf"
+# pdf = delete_page_n(file, 2)
+# pdf = white_bottom_footer(pdf, skip = [1], bottom = 50, left = 150, right = 150)
+# fitzSave(pdf, test_dot_pdf)
+# /mnt/chromeos/GoogleDrive/MyDrive/Chess Workbook (Part 1) [Advertisement].pdf
+
+
+# file = "/mnt/chromeos/GoogleDrive/MyDrive/Chess Workbook (Part 1) [Advertisement].pdf"
+# pdf = white_bottom_footer(pdf, skip = [1], bottom = 50, left = 150, right = 150)
+# fitzSave(pdf, test_dot_pdf, incremental = 1)
+
+def get_page_dimensions(pdf_path, page_number = 1):
+    page_number = page_number - 1
+    document = fitzOpen(pdf_path)
+
+    # Check if the document has the specified page
+    if len(document) > page_number:
+        # Get the specified page
+        page = document[page_number]
+
+        # Get the dimensions of the page
+        page_dimensions = page.rect  # (x0, y0, x1, y1)
+        width = page_dimensions.width
+        height = page_dimensions.height
+
+        print(f"Dimensions of page {page_number + 1}: Width = {width}, Height = {height}")
+    else:
+        print(f"The document does not have page number {page_number + 1}.")
+
+    # Close the document
+    document.close()
+
+get_page_dimensions(test_dot_pdf)
+

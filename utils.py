@@ -1,60 +1,33 @@
-dldir = "/mnt/chromeos/MyFiles/Downloads/"
-rootdir = "/home/kdog3682"
-tocfile = "/home/kdog3682/2024/toc.txt"
-typstdir = "/home/kdog3682/GITHUB/typst"
-typstpackagedir = "/home/kdog3682/GITHUB/typst-packages"
-loremdir = "/home/kdog3682/LOREMDIR"
-hugodir = "/home/kdog3682/2024/quickstart"
-githubdir = "/home/kdog3682/GITHUB"
+"""
+    we are not using 2024-python it seems ...
+    we are still working in this directory
+"""
+from setup import *
 
-from pprint import pprint
-import sys
-import env
-from datetime import datetime, timedelta
-import regex as re
-from pathlib import Path, PosixPath
-import json
-import shutil
-import variables
-import webbrowser
-
-dirdict = {"active_dir": "/home/kdog3682/2023", "downloads":"/mnt/chromeos/MyFiles/Downloads","node":"/home/kdog3682/2023/node_modules","r":"/home/kdog3682","nm":"/home/kdog3682/2023/node_modules","24":"/home/kdog3682/2024","budir":"/mnt/chromeos/GoogleDrive/MyDrive/BACKUP","g":"/home/kdog3682/latest-git-cloned-repo","2024":"/home/kdog3682/2024/","py":"/home/kdog3682/PYTHON","ftp":"/home/kdog3682/.vim/ftplugin","2023":"/home/kdog3682/2023/","23":"/home/kdog3682/2023","res":"/home/kdog3682/RESOURCES","trash":"/home/kdog3682/TRASH"}
-def hr(n, newline = 1):
+def hr(n = 30, newline = 0):
     s = "\n" if newline else ""
     return "-" * n + s
 
-def chalk(s, color, bold = None):
-    red = "\033[31m"
-    green = "\033[32m"
-    yellow = "\033[33m"
-    blue = "\033[34m"
-    purple = "\033[35m"
-    cyan = "\033[36m"
-    reset = "\033[0m"
-    b = "\033[1m" if bold else ""
-    color = locals().get(color, color)
-    return color + str(s) + b + reset
+def chalk(s, color = "", bold = None):
+    color = env.chalk_colors.get(color)
+    reset = env.chalk_colors.get("reset")
+    bold = env.chalk_colors.get("bold") if bold else ""
+    return color + stringify(s) + bold + reset
 
-def blue(x):
-    return chalk(x, "blue")
-
-def _blue_colon(a, b):
-    color = "blue"
-    hr = chalk("-" * 20, color)
-    suffix = ":"
-    a = chalk(a + suffix, color, True)
-    b = chalk(b, color, False) if is_string(b) else b
-
-    print(hr)
-    print(a, b)
-    print(hr)
+def blue(x, bold = 0):
+    return chalk(x, color = "blue", bold = bold)
 
 def blue_colon(a, b):
-    _blue_colon(a, b)
-def confirm(x):
-    word = "confirm"
-    return bool(blue_colon(word, x))
+    print(blue(a, 0), ":", blue(b, 0))
+
 def map(items, fn):
+    """
+        items (list|dict)
+        the fn is always spread for entries and dicts
+
+        it is rather inflexible
+        for flexiblity and enumeration, use a comprehension
+    """
     double = is_object(items) or is_nested_array(items)
     entries = items.items() if is_object(items) else items
     gn = lambda x: fn(*x) if double else fn(x)
@@ -62,23 +35,26 @@ def map(items, fn):
     store = []
     for item in entries:
         try:
-            value = gn(item)
-            if is_defined(value):
-                store.append(value)
+            push(store, gn(item))
         except Exception as e:
-            print("error at map()")
-            print("offender", item)
-            raise e
-            prompt("error", str(e))
-        
+            kwargs = get_local_kwargs("e, item")
+            inform(kwargs, header = "an error has occured")
     return store
+
+def push(store, item):
+    if is_defined(item):
+        store.append(item) 
 
 def is_defined(x):
     return x != None
 
 def is_array(x):
-    array_types = ['list', 'tuple', 'dict_keys']
-    return type(x).__name__ in array_types
+    try:
+        array_types = ['list', 'tuple', 'dict_keys']
+        return type(x).__name__ in array_types
+    except Exception as e:
+        return False
+    
 
 def test(s, r, flags = 0):
     return is_string(s) and bool(match(s, r, flags))
@@ -106,12 +82,15 @@ def match(s, r, flags = 0):
     return m.group(0)
 
 def get_extension(x):
+    if x in env.file_extensions:
+        return x
     return Path(x).suffix.lstrip(".")
 
 def has(x, key):
-    if isinstance(x, dict) and key in x:
-        return True
-
+    try:
+        return key in x
+    except Exception as e:
+        return False
 
 def add_extension(x, y):
     e = get_extension(y)
@@ -124,9 +103,9 @@ def has_extension(x):
 def append(file, content):
     assert content
     with open(normalize_file(file), "a") as f:
-        f.write(to_string(content))
+        f.write(stringify(content))
 
-def write(file, content, dir = None, ext = None, log = False):
+def write(file, content, dir = None, ext = None, log = False, ask = 0, openIt = 0):
     """
         the file is normalized with dir and ext if provided
         if content is a str, write as text
@@ -134,24 +113,28 @@ def write(file, content, dir = None, ext = None, log = False):
     """
     assert content
     filename = normalize_file(file, dir, ext)
+    if ask:
+        print(content) if is_string(content) else pprint(content)
+        if not input("do you wish to write this content?"):
+            return
+
     if is_string(content):
         with open(filename, "w") as f:
             f.write(content)
             print(f"wrote file: {filename}")
     else:
         with open(file, "w") as f:
-            json.dump(content, f, indent=4)
+            json.dump(content, f, indent=2, ensure_ascii=False)
             print(f"wrote file: {filename} as json")
 
     if log:
         log_file(filename)
+    if openIt:
+        view(filename)
 
 
 def npath(dir, file):
     return str(Path(dir, tail(file)))
-
-def tail(x):
-    return re.sub("/$", "", str(x)).rsplit("/", maxsplit=1)[-1]
 
 def identity(s):
     return s
@@ -161,10 +144,18 @@ def normalize_file(file, dir = None, ext = None):
         file = add_extension(file, ext)
     if dir:
         return npath(get_dir(dir), file)
+
+    if test(file, "^~"):
+        file = sub(file, "^~", "/home/kdog3682")
+
     if test(file, "^/"):
         return file
-    dir = dir_from_file(file)
-    return npath(dir, file)
+
+    def dir_from_file(file):
+        filetype = get_filetype(file)
+        return env.dirdict.get(filetype, env.dirdict.get("default"))
+        
+    return npath(dir_from_file(file), file)
 
 def trim(s):
     return str(s).strip()
@@ -176,6 +167,7 @@ def join_lines(*args):
             if is_array(item):
                 s += runner(item) + "\n\n"
             else:
+                item = str(item)
                 delimiter = "\n\n" if test(trim(item), "\n") else "\n"
                 s += item + delimiter
         
@@ -185,8 +177,6 @@ def join_lines(*args):
 def is_primitive(x):
     return is_string(x) or is_number(x)
 
-def to_string(x):
-    return str(x) if is_primitive(x) else join_lines(x)
     
 def append_json(file, data):
     assert data
@@ -209,6 +199,7 @@ def read_json(file):
         with open(file) as f:
             return json.load(f)
     except Exception as e:
+        print(e)
         return None
 
 def everyf(*tests):
@@ -219,29 +210,12 @@ def everyf(*tests):
         return True
     return checkpoint
 
-def pretty_print(x):
-    return json.dumps(x, indent = 2)
-
-def identity(x):
-    return x
 
 def head(x):
     return Path(x).parent
 
 def tail(x):
     return Path(x).name
-
-def dir_from_file(file):
-    e = get_extension(file)
-    key = e + "dir"
-    return get_global_value(key) or throw("$1 does not match any directory in variables", file)
-
-def red(x):
-    return chalk(x, "red")
-
-def throw(message, *args):
-    m = red(templater(message, *args))
-    raise Exception(m)
 
 def strftime(key = "iso8601", dt=None):
     templates = {
@@ -286,12 +260,14 @@ def is_function(x):
     return callable(x)
 
 def templater(s, *args, **kwargs):
+    def on_error(x):
+        return f"Error: Key {x} not found"
+
     def parser(x):
         if is_array(ref):
             return ref[int(x) - 1] if is_number(x) else ref.pop(0)
-
         if is_object(ref):
-            return ref.get(x, fallback(x))
+            return stringify(ref.get(x), indent = 0) or on_error(x)
 
     def runner(x):
         return parser(x.group(1))
@@ -305,11 +281,11 @@ def templater(s, *args, **kwargs):
 
 def prompt(*args):
     if len(args) == 1:
-        print(chalk(args[0], "blue"))
-        print()
+        pprint(args[0])
         return input()
     elif is_string(args[0]):
-        return blue_colon(*args)
+        blue_colon(*args)
+        return input()
     else:
         print("printing multiple prompt items\n")
         for arg in args:
@@ -325,31 +301,24 @@ def to_array(x):
 def exists(x):
     return bool(x)
 
-def filter(items, x = exists, anti = False):
-    checkpoint = testf(x, anti = anti)
+def filter(items, x = exists, anti = False, flags = 0):
+    checkpoint = testf(x, anti = anti, flags = flags)
     return [el for el in items if checkpoint(el)]
 
-s = """
-[]
-{}
-[1,2]
-0
-None
-1
-""
-"""
 def split(s, r = "\s+", flags = 0):
-    items = re.split(r, s.strip(), flags)
-    return items[1:] if items[0] == "" else items
-def run_tests(s, fn):
-    items = map(split(s, "\n+"), eval)
-    evaluations = map(items, fn)
-    entries = list(zip(items, evaluations))
-    for index,(a,b) in enumerate(entries):
-        print(str(index + 1) + ". ", blue(a), b)
+    base = re.split(r, s.strip(), flags = flags)
+    items = map(base, trim)
 
+    if items[0] == "":
+        items.pop(0)
+    if items[-1] == "":
+        items.pop(-1)
+    return items
 
 def package_manager(fn):
+    """
+        i have messed around and broken some things in here
+    """
     def transform(x):
         if is_number(x):
             return int(x)
@@ -360,6 +329,8 @@ def package_manager(fn):
     args = sys.argv
     if len(args) > 1:
         fn(*map(args[1:], transform))
+    else:
+        print("package manager is not active")
 
 def to_argument(x):
     if is_number(x):
@@ -374,7 +345,7 @@ def testf(x, flags=0, anti=0):
         else:
             raise Exception("ndy")
 
-    fn = x if is_function(x) else lambda s: test(s, x, flags)
+    fn = x if is_function(x) else lambda s: test(s, x, flags = flags)
     if anti:
         return lambda x: not fn(x)
     else:
@@ -400,10 +371,6 @@ def datestamp(x):
     strife = "%A %B %d %Y, %-I:%M:%S%p"
     return datetime.fromtimestamp(x).strftime(strife)
 
-def announce(message, *args):
-     print(blue(templater(message, *args)))
-
-
 def flat(items):
     def runner(items):
         for item in items:
@@ -418,54 +385,6 @@ def flat(items):
 
 
 
-def get_sentences(text):
-    """
-    Split the text into sentences.
-
-    If the text contains substrings "<prd>" or "<stop>", they would lead 
-    to incorrect splitting because they are used as markers for splitting.
-
-    :param text: text to be split into sentences
-    :type text: str
-
-    :return: list of sentences
-    :rtype: list[str]
-    """
-    alphabets= "([A-Za-z])"
-    prefixes = "(Mr|St|Mrs|Ms|Dr)[.]"
-    suffixes = "(Inc|Ltd|Jr|Sr|Co)"
-    starters = "(Mr|Mrs|Ms|Dr|Prof|Capt|Cpt|Lt|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)"
-    acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
-    websites = "[.](com|net|org|io|gov|edu|me)"
-    digits = "([0-9])"
-    multiple_dots = r'\.{2,}'
-    text = " " + text + "  "
-    text = text.replace("\n"," ")
-    text = re.sub(prefixes,"\\1<prd>",text)
-    text = re.sub(websites,"<prd>\\1",text)
-    text = re.sub(digits + "[.]" + digits,"\\1<prd>\\2",text)
-    text = re.sub(multiple_dots, lambda match: "<prd>" * len(match.group(0)) + "<stop>", text)
-    if "Ph.D" in text: text = text.replace("Ph.D.","Ph<prd>D<prd>")
-    text = re.sub("\s" + alphabets + "[.] "," \\1<prd> ",text)
-    text = re.sub(acronyms+" "+starters,"\\1<stop> \\2",text)
-    text = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>\\3<prd>",text)
-    text = re.sub(alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>",text)
-    text = re.sub(" "+suffixes+"[.] "+starters," \\1<stop> \\2",text)
-    text = re.sub(" "+suffixes+"[.]"," \\1<prd>",text)
-    text = re.sub(" " + alphabets + "[.]"," \\1<prd>",text)
-    if "”" in text: text = text.replace(".”","”.")
-    if "\"" in text: text = text.replace(".\"","\".")
-    if "!" in text: text = text.replace("!\"","\"!")
-    if "?" in text: text = text.replace("?\"","\"?")
-    text = text.replace(".",".<stop>")
-    text = text.replace("?","?<stop>")
-    text = text.replace("!","!<stop>")
-    text = text.replace("<prd>",".")
-    sentences = text.split("<stop>")
-    sentences = [s.strip() for s in sentences]
-    if sentences and not sentences[-1]: sentences = sentences[:-1]
-    return sentences
-
 def is_url(x):
     return test(x, "http")
 
@@ -473,38 +392,16 @@ def get_constructor_name(x):
     return type(x).__name__
 
 
-#
-def file_prompt():
-    return prompt("choose an outpath file name")
-
-# 
-
-def debug(*args):
-    print(*args)
-    input("")
-def npath(dir, file):
-    return re.sub("/$", "", dir) + "/" + tail(file)
-
-def copy_last_downloaded_file_into_active_dir():
-    name = file_prompt()
-    file = most_recent_file()
-    active_dir = get_dir("active_dir")
-    outpath = npath(active_dir, name)
-    debug(file, outpath)
-    shutil.copy(file, outpath)
-    print("success!")
-    # announce("copied last downloaded file: $1 to $2", file, outpath)
-
 def is_dir(x):
-    return Path(x).is_dir()
+    return x and Path(x).is_dir()
 
 def get_dir(dir):
     if is_dir(dir):
         return dir
-    dir = dirdict.get(dir)
+    dir = env.dirdict.get(dir)
     if is_dir(dir):
         return dir
-    throw("not a valid directory: $1", dir)
+    panic("not a valid directory: $dir")
 
 def path(dir):
     return Path(get_dir(dir))
@@ -512,9 +409,12 @@ def path(dir):
 def most_recent_file(dir = "downloads"):
     directory = path(dir)
     files = directory.glob("*")
-    target = max(files, key=lambda f: f.stat().st_ctime)
+    target = max(files, key=lambda f: f.stat().st_mtime)
     return target
 
+
+def is_json_parsable(x):
+    return is_string(x) and test(x, "^\s*[\{\[]") and test(x, "[\}\]]\s*$")
 
 def is_jsonable(x):
     return is_array(x) or is_object(x)
@@ -523,12 +423,12 @@ def append_self(x):
     if empty(x):
         return
 
-    value = json.dumps(x, indent=4) if is_jsonable(x) else str(x)
+    value = dump_json(x) if is_jsonable(x) else str(x)
     append(sys.argv[0], value)
 
+def dump_json(x, indent = 4):
+    return json.dumps(x, indent=indent, ensure_ascii=False)
 
-
-# print("Most recent file:", most_recent_file())
 # print(copy_last_downloaded_file_into_active_dir())
 
 def empty(x):
@@ -560,6 +460,12 @@ def choose(x):
 def is_private(s):
 	return test('^[._]', tail(s))
 
+def open_url(x):
+    webbrowser.open(x)
+
+def ofile(file):
+    webbrowser.open(file)
+
 def view(file):
     webbrowser.open(file)
 
@@ -567,23 +473,34 @@ def openpdf(file = "/home/kdog3682/2024/test.pdf"):
     view(file)
 
 
-def clip(payload, outpath = 1):
+def clip(*args, outpath = 1, openIt = 0):
+    if len(args) == 0:
+        try:
+            return read_json("/home/kdog3682/2023/clip.js")
+        except Exception as e:
+            return read("clip.js")
+
+    payload = args[0]
     ref = {
         1: "/home/kdog3682/2023/clip.js",
         2: "/home/kdog3682/2023/clip2.js",
         3: "/home/kdog3682/2023/clip3.js",
     }
     file = ref[outpath]
-    write(file, stringify(payload))
+    write(file, stringify(payload), openIt = openIt)
 
-def stringify(x):
+def stringify(x, indent = 4):
     if empty(x):
-        return 
+        return ""
     if type(x) == bytes:
         return x.decode()
-    if is_primitive(x):
+    if is_primitive(x) or is_function(x):
         return str(x)
-    return json.dumps(x, indent=4)
+    try:
+        return dump_json(x, indent = indent)
+    except Exception as e:
+        return get_constructor_name(x)
+    
 
 def unique(a, b=None):
     if b:
@@ -595,45 +512,22 @@ def unique(a, b=None):
         return list(set(a))
 
 def mkdir(dir):
-    dir_path = Path(dir)
+    path = Path(dir)
     try:
-        dir_path.mkdir(parents=True, exist_ok=False)
-        print(f"Directory '{dir_path}' was created.")
+        path.mkdir(parents=True, exist_ok=False)
+        print(f"Directory '{path}' was created.")
     except FileExistsError:
-        print(f"Directory '{dir_path}' already exists.")
+        print(f"Directory '{path}' already exists.")
 
-
-def rglob(root):
-    p = Path(root)
-    results = p.rglob(key)
-    list(results)
-
-    from pathlib import Path
-
-def get_files_recursive(root, fileRE = None, dirIgnoreRE = None):
-    root_dir = Path(root)
-    files = []
-
-    def recurse(directory):
-        for path in directory.iterdir():
-            if path.is_dir():
-                if dirIgnoreRE and test(path.name, dirIgnoreRE):
-                    continue
-                recurse(path)
-            elif path.is_file():
-                if fileRE and not test(path.name, fileRE):
-                    continue
-                files.append(str(path))
-
-    recurse(root_dir)
-    return files
-
+    return str(path)
 
 
 def re_wrap(iterable, template = ''):
     ref = {
         '': '(?:$1)',
+        'start': '^(?:$1)\\b',
         'b': "\\b(?:$1)\\b",
+        'bc': "\\b($1)\\b",
     }
     template = ref.get(template, template)
     keys = list(iterable.keys() if is_object(iterable) else iterable)
@@ -649,8 +543,8 @@ def decode(x):
 def rmdir(dir):
     shutil.rmtree(Path(dir))
 
-def sub(s, r, rep, flags = 0):
-    return re.sub(r, rep, s, flags = flags)
+def sub(s, r, rep, flags = 0, count = 0):
+    return re.sub(r, rep, s, flags = flags, count = count)
 
 def join(x, delimiter = " "):
     return delimiter.join(x)
@@ -658,57 +552,25 @@ def join(x, delimiter = " "):
 
 def system_command(template, *args, **kwargs):
     from subprocess import Popen, PIPE
-    command = templater(template, *args, **kwargs)
-    command = "; ".join(split(command.strip(), "\s*\n+\s*"))
+    command = smart_dedent(templater(template, *args))
 
-    if env.GLOBAL_DEBUG_FLAG == 1:
-        blue_colon("debugging the command", command)
-    elif env.GLOBAL_DEBUG_FLAG == 2:
-        return print(command)
+    if env.GLOBAL_DEBUG_FLAG or kwargs.get("confirm"):
+        inform("""
+            this is the system_command to be executed:
+            ------------
+            $command
+            ------------
+        """)
     else:
         blue_colon("command", command)
+
     process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     data = process.communicate()
     success, error = [decode(d) for d in data]
     return { "success": success, "error": error }
 
-# clip(get_files_recursive(githubdir))
-# pprint(is_dir("/usr/local/bin"))
-
 def is_public_path(path):
     return test(path.name, "^\w")
-def get_most_recent_file(directory = dldir):
-    dir_path = Path(directory)
-    files = filter(dir_path.iterdir(), is_public_path)
-    file = max(files, key=lambda f: f.stat().st_mtime)
-    return str(file)
-
-def unzip_and_move_executable_in_progress():
-    """
-        used for downloading hugo but it didnt work
-    """
-    file = get_most_recent_file()
-    filename = tail(file)
-    key = match(filename, "[a-zA-Z]+")
-
-    print(system_command(""" 
-        cd $directory
-        tar -xvf $file 
-    """, dldir, filename))
-    unzipped_file = get_most_recent_file()
-    file_path = Path(unzipped_file)
-    contents = list(file_path.iterdir())
-    content = choose(contents)
-    content_path = str(content)
-    print(system_command("cp $content_path /usr/local/bin", content_path))
-    key = content.name
-    print(system_command(""" $key --version """, key))
-
-def c2(x):
-    clip(x, outpath = 2)
-
-# mkdir("/home/kdog3682/PYTHON/apps/SectionExecutor.py")
-
 
 def colon_dict(s):
     items = re.split("^([\w-]+): *", s.strip(), flags=re.M)
@@ -762,7 +624,8 @@ def not_none(x):
 
 def is_valid(x):
     return x == 0 or x != None
-def assertion(value, key = "exists", message = None):
+
+def assertion(value, key = "exists", message = None, anti = 1):
     ref = {
         "not_none": not_none,
         "is_valid": is_valid,
@@ -770,10 +633,15 @@ def assertion(value, key = "exists", message = None):
     }
     def parse(key):
         if is_function(key):
+            if anti:
+                return lambda x: not key(x)
             return key
         elif key.startswith(">"):
             limit = int(match(key, "> *(.*)"))
             return lambda x: x > limit
+        elif key.startswith("<"):
+            limit = int(match(key, "< *(.*)"))
+            return lambda x: x < limit
         else:
             return ref.get(key)
 
@@ -781,17 +649,6 @@ def assertion(value, key = "exists", message = None):
     if check:
         return 
     raise CustomError(message or key)
-
-
-class CustomError(Exception):
-    RED = '\033[91m'
-    RESET = '\033[0m'
-
-    def __init__(self, message):
-        self.message = message
-
-    def __str__(self):
-        return red(self.message)
 
 
 def reduce(items, fn):
@@ -831,12 +688,7 @@ def find(iterable, fn):
 
 
 def read(file):
-    byte_files = [
-        "img",
-        "jpg",
-        "svg",
-    ]
-
+    byte_files = [ "img", "jpg", "svg", ]
     e = get_extension(file)
     mode = "rb" if e in byte_files else "r"
     with open(file, mode) as f:
@@ -863,50 +715,28 @@ def indent(x, indentation = 2):
     return sub(x, "^", " " * indentation, flags = re.M)
 
 
+def remove_extension(s):
+    return re.sub("(?:\.json)?\.\w+$", "", s)
+    
 def remove_python_comments(s):
     return sub(s, "^#.+\n*", "", flags = re.M)
 
 
 def get_kwargs(s):
-    """
-        there have been multiple attempts at writing this function over the years
 
     """
+        abc = def, ghi = 123 -> 
+        abc = def ghi = 123 -> 
+    """
+
     def runner(a, b):
         return [a, to_argument(trim(b))]
-    return dict(map(partition(split(s, "(\w+) *= *")), runner))
-
-env.verify = 1
-def verify(*args, **kwargs):
-    """
-         early returns when env.verify is not active
-         
-         sometimes you want to verify something before you proceed 
-
-         2 args: (1: value, 2: message)
-         n args: (n: values)
-
-         All the values are printed out one by one
-         and they are colored blue
-    """
-    if len(args) == 2 and not kwargs and is_string(args[1]):
-        kwargs["message"] = args[1]
-        args = [args[0]]
-    if env.verify == 0:
-        return 
-    print(blue(hr(30, newline = 0)))
-    for arg in args:
-        print(arg)
-    print(blue(hr(30)))
-    if kwargs.get("message"):
-        print(chalk("message:", "blue", 1), kwargs.get("message"))
-
-# verify("foo", "a")
-
+    items = split(s, "(?:, *)?(\w+) *= *")
+    return dict(map(partition(items), runner))
 
 class blue_sandwich:
     def blue(self):
-        print(blue(hr(30, False)))
+        print(blue(hr(30)))
 
     def __enter__(self):
         self.blue()
@@ -933,17 +763,6 @@ def smart_dedent(s):
     return re.sub("^" + spaces, "", s, flags=re.M).strip()
 
 
-def write_git_ignore(dir):
-    """
-        fn_degree: 2
-        writes the .gitignore
-        todo: python or javascript gitignore
-    """
-    assert(is_dir(dir))
-
-    patterns = choose_dict_item(env.git_ignore_patterns)
-    if patterns:
-        write(".gitignore", join(patterns), dir = dir)
 
 def log_file(file):
     """
@@ -969,7 +788,7 @@ def force_write(*args, **kwargs):
         return: None
     """
 
-    content = kwargs.get("content", "howdy")
+    content = kwargs.get("content", "")
     path = Path(*args)
     if not path.parent.is_dir():
         path.parent.mkdir(parents=True, exist_ok=False)
@@ -981,6 +800,9 @@ def force_write(*args, **kwargs):
     file_log(filename)
 
 
+def file_log(file):
+    content = str(timestamp()) + " " + file
+    append("/home/kdog3682/2024/files.log", content)
 def is_private_filename(s):
 	return test('^[._]', tail(s))
 
@@ -1000,71 +822,13 @@ def breaker(n=10):
 
 
 def reverse(x):
-    if isObject(x):
-        return {b:a for a,b in x.items()}
+    if is_object(x): return {b:a for a,b in x.items()}
     return list(reversed(x))
 
 
-ignore_patterns = {
-        'python': ['__pycache__/', '*.py[cod]', '*$py.class', '.pytest_cache/', 'venv/', 'env/', '.idea/', '*.sqlite3', '*.ipynb_checkpoints'],
-        'java': ['target/', 'bin/', '*.log', '*.class', '.idea/', '*.jar', '*.war'],
-        'javascript': ["env.js", "package-lock.json", 'node_modules/', 'npm-debug.log', 'dist/', '.env', 'logs', '*.log', 'npm-debug.log*', 'yarn-debug.log*', 'yarn-error.log*'],
-        'cpp': ['*.o', '*.obj', '*.exe', '*.dll', '*.so', '*.dylib', 'bin/', 'obj/', '.vscode/'],
-        'ruby': ['*.gem', '.bundle/', 'log/', 'tmp/', 'vendor/bundle/', '.env', '*.rbc', 'capybara-*.html', '.rspec', '/db/*.sqlite3', '/db/*.sqlite3-journal', '/public/system', '/coverage/', 'spec/tmp*', '**.orig', 'rerun.txt', 'pickle-email-*.html'],
-        'go': ['bin/', 'pkg/', '*.o', '*.a', '*.so', 'dist/', 'build/', '.env', 'vendor/']
-}
 
 def choose_dict_item(ref):
-    return ref.get(choose(list(ref)))
-
-
-
-def get_git_status_and_last_modified(directories):
-    import os
-    import subprocess
-    git_info = {}
-    o = ""
-
-    for dir_path in directories:
-        if not is_git_directory(dir_path):
-            continue
-
-        o += dir_path + "\n"
-        os.chdir(dir_path)
-        result = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True)
-        status_lines = result.stdout.splitlines()
-
-        files = []
-        ref = {
-           '??': 'created',
-           'M': 'modified',
-        }
-        for line in status_lines:
-            status, file_path = line[:2].strip(), line[3:].strip()
-            if not file_path:
-                continue
-            if not is_file(file_path):
-                continue
-            status = ref.get(status, status)
-            mtime = os.path.getmtime(file_path)
-            dt = datetime.fromtimestamp(mtime)
-            expr = pluralize_unit(days_ago(dt), "days")
-            last_modified = strftime("datetime", dt)
-            last_modified += f" ({expr} ago)"
-            s = {
-                'name': tail(file_path),
-                'date': status + " " + last_modified,
-            }
-            files.append(s)
-            for k,v in s.items():
-                o += f"  {k}: {v}\n"
-            o += "\n"
-
-        o += "\n\n"
-        # git_info.append({"dir": dir_path, "contents": files})
-
-    outpath = "/home/kdog3682/2024/git-status.01-14-2024.txt"
-    write(outpath, o)
+    return choose(ref.values())
 
 def is_git_directory(dir_path):
     return Path(dir_path, ".git").is_dir()
@@ -1109,21 +873,500 @@ def pluralize_unit(n, unit):
     else:
         return f"{n} {unit}s"
 
+def get_frame_locals(degree = 1):
+    frame = inspect.currentframe()
+    for i in range(degree + 1):
+        frame = frame.f_back
+    return frame.f_locals
 
-directories = [
-"/home/kdog3682/2024/", "/home/kdog3682/2023/", "/home/kdog3682/.vim/ftplugin/", "/home/kdog3682/PYTHON/"
-]
-# get_git_status_and_last_modified(directories)
+def printf(s, degree = 1):
+    return templater(smart_dedent(s), get_frame_locals(degree)) if is_string(s) and "$" in s else s
 
-def git_push_directories(*args):
-    template = """
-        cd $1
-        git add .
-        git commit -m 'pushing directory'
-        git push
+def panic(s):
+    raise Exception(printf(s, degree = 2))
+
+def inform(s, accept_on_enter = 0, header = "inform"):
+    message = printf(s, degree = 2)
+    with blue_sandwich():
+        print(header + ":")
+        print("")
+        print(message)
+        print("")
+
+    if accept_on_enter:
+        print("press enter to confirm the response. (you must press the enterkey)")
+    else:
+        print("press anything to continue")
+
+    answer = input()
+    if accept_on_enter and answer == "":
+        return 1
+    return 0
+
+
+def ask(s):
+    print(printf(s, degree = 2))
+    return input()
+
+def tally(items):
+    counts = {}
+    for item in items:
+        counts[item] = counts.get(item, 0) + 1
+
+    return counts
+
+def get_last(x):
+    return x[-1]
+def get_local_kwargs(s, degree = 1):
     """
+        permits string programming (usually a bad idea)
+        first used in map() to see the error
+    """
+    keys = xsplit(s)
+    locals = get_frame_locals(degree)
+    return {key: locals.get(key) for key in keys}
 
-    for dir in flat(args):
-        print(system_command(template, dir))
 
-git_push_directories(directories)
+def xsplit(x, r="[,|] *| +"):
+    """
+        if the input is an array, return it
+        splits on commas and pipes and spaces
+        does not split on newlines
+        does not split on anything else
+    """
+    assertion(x, has_newlines, anti = 1)
+    return split(x, r) if is_string(x) else x
+
+
+def get_filetype(x):
+    return env.filetype_aliases.get(get_extension(x)) or panic("key: [$x] could not be found as a filetype in env.filetype_aliases")
+
+def check(*keys):
+    blue("checking keys")
+    prompt(json.dumps(get_local_kwargs(keys, degree = 2)))
+
+def press_anything_to_continue():
+    input("press anything to continue")
+
+def sort(x, f=None, reverse=0):
+    sorter = lambda x: x.get(f) if is_string(f) else int if is_number(x[0]) else str 
+    return sorted(list(x), key=f, reverse=reverse)
+
+
+def cpfile(a, b):
+    return copy_file(a, npath(head(a), add_extension(b, a)))
+
+
+def copy_file(a, b):
+    shutil.copy(str(a), str(b))
+    print(f"copied {a} to {b}")
+
+
+def remove_file(file):
+    path = Path(file)
+    print(f"removing file permanently: {path}")
+    return path.unlink()
+
+def rename_file(file, name = None):
+    name = name if name else ask("choose a new name for: $file")
+    path = Path(file)
+    return str(path.with_name(name + path.suffix))
+
+def move_file(file, dest):
+    shutil.move(str(file), str(dest))
+    print(f"moved {file} to {dest}")
+
+def trash(file):
+    move_file(file, "/home/kdog3682/TRASH/")
+
+def anti_choose(items):
+
+    for i, item in enumerate(items):
+        print(blue(i + 1), item)
+
+    message = 'anti_choose 1 based indexes: (space-delimited)'
+
+    answers = split(input().strip(), "\s+")
+    if not answers:
+        return items
+    indexes = [int(n) - 1 for n in answers]
+
+    store = []
+    for i, item in enumerate(items):
+        if i not in indexes:
+            store.append(item)
+    return store
+
+def printdir(dir):
+    pprint(listdir(dir))
+
+
+def yes(*args, **kwargs):
+    return True
+    
+def listdir(dir, *checkpoints):
+    def checkpoint(f):
+        for checkpoint in checkpoints:
+            if not checkpoint(f):
+                return 
+        return 1
+    return filter(list(Path(dir).iterdir()), checkpoint)
+
+def dash_split(s):
+    return filter(map(re.split("^-{20,}", s, flags = re.M), trim))
+
+def has_newlines(s):
+    return test(s, "\n")
+
+def split_once(s, r):
+    return match(s, f"(.*?){r}([\w\W]+)") or [s, ""]
+
+
+def dreplace(s, dict, flags=0, template=''):
+    regex = re_wrap(dict, template)
+    def parser(x):
+        return (
+            dict.get(x.group(1))
+            if x.groups()
+            else dict.get(x.group(0))
+        )
+    return sub(s, regex, parser, flags)
+
+def shellunescape(s):
+    if not is_string(s):
+        return s
+    if 'zz' not in s:
+        return s
+
+    s = dreplace(s, shellescapedict, template="zz($1)")
+    return parse_json(s)
+
+def parse_json(x):
+    if is_string(x):
+        return json.loads(x) if test(x, "^[{\[]") else x
+    return x
+
+class CD:
+
+    def __init__(self, newPath=None):
+        if not newPath:
+            newPath = os.getcwd()
+        self.newPath = os.path.expanduser(newPath)
+
+    def __enter__(self):
+        self.savedPath = os.getcwd()
+        os.chdir(self.newPath)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self.savedPath)
+
+
+def get_file_info(file):
+    path = Path(file)
+    if not path.exists():
+        return 
+    stats = path.stat()
+    size = stats.st_size
+    timestamp = stats.st_mtime
+    return {
+        "name": path.name,
+        "size": size,
+        "date": timestamp,
+        # "date": strftime("iso8601", datetime.fromtimestamp(timestamp)),
+    }
+
+
+
+def to_timestamp(date):
+    return datetime.strptime(date, "%Y-%m-%d").timestamp()
+
+# data = map(listdir(dldir), get_file_info)
+# clip(sort(data, lambda x: x.get("date")))
+# pprint(most_recent_file("/home/kdog3682/2023/"))
+
+
+def line_getter(s):
+    return s if is_array(s) else map(s.strip().split("\n"), trim)
+
+def get_files(dir, ext = None):
+    def checkpoint(path):
+        if ext:
+            return get_extension(path) == ext
+        else:
+            return path.is_file()
+    return map(listdir(dir, checkpoint), str)
+
+def findall(s, r, flags = 0):
+    return re.findall(r, s, flags = flags)
+
+
+
+def remove_chinese_accents(input_text):
+    import unicodedata
+    nfkd_form = unicodedata.normalize('NFKD', input_text)
+    only_ascii = nfkd_form.encode('ASCII', 'ignore')
+    return only_ascii.decode('ASCII')
+
+def run_tests(s, *scopes):
+    def runner(item):
+        result = eval(item, *scopes)
+        pprint({"item": item, "result": result})
+    map(line_getter(remove_comments(s)), runner)
+
+def remove_comments(s):
+    return sub(s, "^#.+\n*", "", flags = re.M)
+
+def quote(s, d = "\""):
+    return f"{d}{s}{d}"
+
+def sympify_wrapper(s):
+    if test(s, "//"):
+        s = join(map_templater(split(s, "//"), "($1)"), " / ")
+    return sub(s, "(\w)x", lambda x: x.group(1) + " * x")
+
+def replace_quotes(s, fn):
+    return sub(s, "\"(.*?)\"", lambda x: quote(fn(x.group(1))))
+
+def map_templater(items, template):
+    def fn(item):
+        return templater(template, item.strip())
+    return [fn(item) for item in items]
+
+
+# apps.py
+
+def most_recent_file_groups(dir=dldir, minutes=3):
+    base_files = Path(dir).glob("*")
+    paths = reverse(sort(base_files, lambda f: f.stat().st_mtime))
+    store = []
+    last_date = 0
+    ignore = []
+
+    for path in paths:
+        if test(path.name, '\(\d\)') or path.name in ignore:
+            continue
+        file_date = path.stat().st_mtime
+        d = abs(file_date - last_date)
+        limit = to_seconds(minutes=minutes)
+        passes = d < limit or last_date == 0
+        if passes:
+            store.append(path)
+        else:
+            return reverse(map(store, str))
+        last_date = file_date
+
+def to_seconds(
+    minutes=0, hours=0, seconds=0, days=0, weeks=0, months=0
+):
+    return (
+        seconds
+        + minutes * 60
+        + hours * 3600
+        + days * 3600 * 24
+        + months * 3600 * 24 * 30
+    )
+
+
+
+def rpw(file, fn):
+    data = read_json(file) if get_extension(file) ==  "json" else read(file)
+    value = fn(data)
+    write(file, value, ask = 1)
+
+def merge_objects_if_key_missing(objects, key = "chinese"):
+    store = []
+
+    last_object_with_key = None
+
+    for obj in objects:
+        if key in obj:
+            store.append(obj)
+            last_object_with_key = obj
+        else:
+            if last_object_with_key is not None:
+                last_object_with_key.update(obj)
+            else:
+                store.append(obj)
+
+    return store
+
+
+def dot_backup(file):
+    outpath = str(head(file)) + "." + str(tail(file))
+    copy_file(file, outpath)
+
+def walk(x, fn):
+    def walker(x, key=None, depth=0):
+        new_depth = depth + 1
+        
+        if is_array(x):
+            items = [walker(y, key, new_depth) for y in x]
+            return [item for item in items if item is not None]
+
+        if is_object_literal(x):
+            o = {}
+            for a, b in x.items():
+                new_value = walker(b, a, new_depth)
+                if new_value is not None:
+                    o[a] = new_value
+            return o if o else None
+
+        value = fn(x, key, depth)
+        return value if value is not None else x
+
+    return walker(x)
+
+def is_object_literal(x):
+    return isinstance(x, dict)
+
+def remove_javascript_comments(s):
+    return sub(s, "^ *//.*", "", flags = re.M)
+
+
+def merge(*input):
+    base = input if len(input) > 1 else input[0]
+    assert base
+    array = is_array(base[0])
+    store = [] if array else {}
+
+    for arg in base:
+        if not arg:
+            continue
+        store.extend(arg) if array else store.update(arg)
+    return store
+
+
+def splice(items, start, delete_count=None):
+    """
+    Removes elements from a list and returns the removed elements.
+
+    :param items: The list from which elements will be removed.
+    :param start: The zero-based location in the list from which to start removing elements.
+    :param delete_count: The number of elements to remove.
+    :return: A list containing the removed elements.
+    """
+    # Adjust negative start index
+    if start < 0:
+        start = max(0, start + len(items))
+
+    # Determine the end index for removal
+    if delete_count is not None:
+        end = start + delete_count
+    else:
+        end = len(items)
+
+    # Extract the elements to be removed
+    removed_elements = items[start:end]
+
+    # Remove the elements from the original list
+    items[start:end] = []
+
+    return removed_elements
+
+# items = [1, 2, 3, 4, 5, 6]
+# print(splice(items, -3))  # Output: [4, 5, 6]
+# print(splice(items, 1, 2))  # Output: [2, 3]
+# print(items)  # Output: [1, 6]
+
+def text_getter(s):
+    return read(s) if is_file(s) else s
+
+def dictify(x, regex = None):
+    s = text_getter(x).strip()
+    regexes = [
+        "^(\S+):", 
+        "^[#/]+ *(\S+)",
+    ]
+
+    if regex == None:
+        regex = find(regexes, lambda regex: test(s, regex))
+
+    items = partition(split(s, regex, flags = re.M))
+    return dict(items)
+
+def copy_files(files, dest):
+    map(files, lambda x: copy_file(x, dest))
+
+def remove_files(files):
+    map(files, remove_file)
+
+temp = [
+    "/home/kdog3682/2024-chrome-extensions/web-nanny/0.0.1/manifest.json",
+    "/home/kdog3682/2024-chrome-extensions/web-nanny/0.0.1/background.js",
+    # "*://*/*"
+    "/home/kdog3682/2024-chrome-extensions/web-nanny/0.0.2/manifest.json",
+    "/home/kdog3682/2024-chrome-extensions/web-nanny/0.0.2/background.js",
+    "/home/kdog3682/2024-chrome-extensions/web-nanny/0.0.2/options.html",
+    "/home/kdog3682/2024-chrome-extensions/web-nanny/0.0.2/options.js",
+]
+
+def file_creator(file):
+    dir = "/home/kdog3682/2024-writing/math/"
+    mkdir(dir)
+    cd(dir)
+
+    if is_file(npath(dir, file)):
+        print("the file already exists in this directory")
+        print("early return")
+
+    data = {
+        **multi_prompt("grade", "name", "topic", "desc", "prereqs"),
+        'file': file,
+    }
+    append_json("index.json", [data])
+    mkdir(dir)
+
+def multi_prompt(*args, **kwargs):
+    return {k: prompt("choose a value for: " + str(k)) for k in args}
+
+
+def cpdir(src, to):
+    shutil.copytree(src, to)
+    print(f"copying directory: {src} to {to}")
+
+def typst_manager():
+    a = "/home/kdog3682/GITHUB/typst-packages/packages/preview/"
+    package = choose(listdir(a))
+    name = tail(package)
+    version = tail(most_recent_file(package))
+    srcpath = str(Path(package, version))
+    outpath = f"/home/kdog3682/.cache/typst/packages/preview/{name}/{version}"
+    if is_dir(outpath):
+        print("outpath already exists", outpath)
+    else:
+        cpdir(srcpath, outpath)
+
+
+def get_path(x):
+    x = sub(x, "~", "/home/kdog3682")
+    if is_dir(x):
+        return x
+    print(x)
+    return 
+
+# files = filter(map(line_getter(read("/home/kdog3682/2023/clip.js")), get_path))
+# print(files)
+
+# typst_manager()
+
+
+
+
+def copy_recently_downloaded_files_to_dir():
+    dir = "/home/kdog3682/2024-typst/emoji-assets/"
+    mkdir(dir)
+    files = most_recent_file_groups()
+    map(files, lambda file: copy_file(file, npath(dir, rename_file(file))))
+
+# copy_recently_downloaded_files_to_dir()
+
+get_most_recent_file = most_recent_file
+# print(copy_file(get_most_recent_file(), "/home/kdog3682/PYTHON/credentials.json"))
+
+
+# copy_file("/home/kdog3682/2023/test.pdf", "/home/kdog3682/2023/mmgg.morning_walk.pdf")
+
+# 0
+# words = list("a _ b c")
+# clip("aa")
+# pprint(clip())

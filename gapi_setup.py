@@ -21,7 +21,7 @@ def write_creds(file, creds):
     a = '"' + str(year)
     b = '"' + str(nextYear)
     data = creds.to_json().replace(a, b)
-    write(file, creds)
+    write(file, data)
     return creds
 
 def servicer( key="classroom", reset=False):

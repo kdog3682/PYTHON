@@ -3256,7 +3256,7 @@ shellescapedict =  {
         "lp": "(",
         "exc": "!",
         "nl": "\n",
-    }
+}
 def shellescape(s):
     dict = reverse(shellescapedict)
     regex = reWrap(dict)

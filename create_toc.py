@@ -46,11 +46,24 @@ def get_toc_string(data):
     return runner(data)
 
 
-def create_toc(dir, name = None):
-    s = get_toc_string(get_toc_json(dir, default_path_ignore))
+def get_toc(dir):
+    return get_toc_string(get_toc_json(dir, default_path_ignore))
+
+def write_toc(dir, name = None):
+    s = get_toc(dir)
     if not name:
         name = match(dir, "([\w-]+)\/?$")
     write(name, s, dir = "2024", ext = "toc", log = 1)
-# 
-# create_toc("/home/kdog3682/.vim/")
-# if the directory has an associated toc ... go to it
+
+def get_directory_sub_paths(url):
+    start = Path(url)
+    store = []
+    current = start
+    terminal = rootdir
+    while str(current) != terminal and len(str(current)) > 1:
+        breaker(5)
+        if current.is_dir():
+            store.append(str(current))
+        current = current.parent
+
+    return reverse(store)

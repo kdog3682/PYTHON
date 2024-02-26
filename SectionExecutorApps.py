@@ -1,4 +1,3 @@
-
 import env
 from utils import *
 from debugger_tools import *
@@ -67,6 +66,8 @@ def download_github_repo(key, outpath = None):
 
 
 CONTROL_ITEMS = [
+    { "identifiers": ["mkfile"], "fn": "mkfile", "aliases": {"file": "mkfile"} },
+    { "identifiers": ["python"], "fn": "run_python", "aliases": {"s": "python"} },
     { "identifiers": ["bash"], "fn": "bash", "aliases": {"cmd": "bash"} },
     { "identifiers": ["mkdir"], "fn": "fs_setup", "aliases": {"dir": "mkdir"} },
     { "identifiers": ["subreddit"], "fn": "ask_reddit" },
@@ -94,14 +95,34 @@ def append_section(x):
 def fs_setup(dir):
     mkdir(dir)
 
+def mkfile(file):
+    mkdir(head(file))
+    write(file, "howdy")
+
+def remove_comments(s, key):
+    # util
+    ref = {
+        "start": "^# *",
+        "line": "^# *.*",
+        "line": "^ *# *.*\n*",
+    }
+    return sub(s, ref.get(key), "", flags = re.M)
 def bash(cmd):
-    return system_command(cmd)
+    return system_command(remove_comments(cmd, "line"))
 
 def execute_file(file):
     if "\n" in file:
         a, b = match(file, "(.+)\n+([\w\W]+)")
         text = read(a)
         code = text + "\n\n" + b
-        exec(code)
+        try:
+            exec(code)
+        except Exception as e:
+            inform("here is the code you just tried to run.")
+            raise e
+        
     elif get_extension(file) == "py":
         exec(read(file))
+
+def run_python(s):
+    exec(s)

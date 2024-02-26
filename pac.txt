@@ -225,11 +225,3 @@ from zipscript import getCodepen
 getCodepen(target = 'style.stylus')
 
 
-# 12-03-2023 
-from reddit_script import *
-download_reddit_saved_comments_as_notes()
-
-# 12-03-2023 
-from reddit_script import *
-url = "https://www.reddit.com/r/AskMen/comments/172j92/what_does_it_feel_like_to_pass_a_kidney_stone/"
-get_high_scoring_comments_from_submission(url)

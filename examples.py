@@ -817,44 +817,235 @@ ls /home/kdog3682/2024-javascript/
 datetime: 01-13-2024 07:29PM
 file: /home/kdog3682/PYTHON/githubscript2.py
 
-def get_all_paths_to_root(dir_path, root = rootdir):
-    """
-    Recursively slices the dir_path until the root is reached.
-    Returns a list of all paths from root to the provided directory.
 
-    input: /home/kdog3682/2024-writing/mmgg/
-    """
-    path = Path(dir_path)
-    root_path = str(Path(root))
-    paths = []
+------------------------------------------------------------
+subreddit: vim 
+title: Why did my colors suddenly change, and how do I fix them back?
+body:
 
-    while True:
-        parent = path.parent
-        if parent.name == "":
-            break
-        paths.append(str(path))
-        if str(parent) == root_path:
-            break
-        path = parent
+My cursor, which use to be light blue, has turned dark blue.
+My error messages, which use to be dull red, have turned bright red.
 
-    return reverse(paths)
+As far as I can recall, the only changes I did was download a few plugins.
+I deleted every line from my vimrc (completely blank) and restarted.
 
-def create_local_repo(g, dir, **kwargs):
-    dir_paths = get_all_paths_to_root(dir)
-    mkdir(dir)
-    print("choose the directory for the local repo")
-    dir = choose(dir_paths)
-    filetype = choose(defs.filetypes, )
-        write_git_ignore(dir)
-    g.createLocalRepo(dir, **kwargs)
-    
+All my configurations are gone (as expected), but the cursor is still the wrong color.
 
-dir = '/home/kdog3682/2024-writing/'
-dir = '/home/kdog3682/LOREMDIR/'
-dir = '/home/kdog3682/LOREMDIR/node_modules/foo.txt'
-dir = '/home/kdog3682/2024-javascript/'
-dir = '/home/kdog3682/2024-python/'
-dir = '/home/kdog3682/2024-javascript/organize/'
-dir = "/home/kdog3682/2024-writing/mmgg/"
+A weird thing happens with error messages.
+Sometimes, after being bright red, if I press a key like up or down, the arrow flashes to its old dull red color.
 
-main(example, dir, private = True)
+I have tried these settings in vim:
+
+    hi Cursor guifg=white guibg=green
+    highlight Cursor guifg=white guibg=black
+    highlight iCursor guifg=white guibg=red
+
+but nothing seems to take effect.
+
+Do you guys have any suggestions for what I could try?
+
+Appreciate your help very much.
+
+
+----------------------------------------------------------------------------
+datetime: 01-12-2024 07:30PM
+
+
+
+
+# git status /home/kdog3682/2023/lezer-functions.js
+# git add .
+# git rm -r __pycache__
+# git rm env.py
+# git rm -r filesystem-setup-toolkit
+# git commit -m "adding git ignore"
+# git push
+
+bash:
+# cd /home/kdog3682/2024-python
+# cd /home/kdog3682/2024-javascript
+# ls
+# git rev-parse ORIG_HEAD
+# git log --numstat -3
+
+
+
+
+----------------------------------------------------------------------------
+datetime: 01-12-2024 07:30PM
+status: works
+mkfile: /home/kdog3682/2024-writing/meimei_de_haoyun.story
+
+
+
+How would you organize these files?
+
+I have always been super messy with file and folder organization 
+
+I have a core function called gitParser.
+It reads git log, and produces json data of my git repository.
+
+Next, there are a bunch of one-off functions.
+
+function 1: findFile
+function 2: findFilesWithLessThanFiveCommits
+function 3: ...
+function 4 thru 10: ...
+
+Q1: What should the folder be called?
+    "git-parser"
+    "gitParser"
+    "git-application"
+    "git-toolkit"
+
+Q2: Should gitParser.js be renamed to main.js?
+It is the core functionality, so maybe the name main makes sense?
+
+Q3: Should each of the one-off functions be their own file?
+
+
+Q4: Semantics: What is a better name for "one-off" functions?
+
+They are not dependencies of gitParser.
+Rather, they depend on gitParser.
+
+They do not feel like "plugins."
+They do not feel like "apps".
+
+They feel like utilities.
+Should the folder therefore be called "git-utils" ?
+
+Q5: How should the folder be structured?
+
+reducing the amount of front end code.
+
+
+I have a function which parses data. It is loaded via a script. I am wondering what are the pros and cons of loading the script in the front, or rather, passing the raw data to a backend server, parsing it there, and returning the final output.
+
+
+git_toolkit
+
+index.js
+
+gitlogParser.js
+functions.js
+
+
+----------------------------------------------------------------------------
+# file: /home/kdog3682/PYTHON/playwright_webscraper.py
+
+python:
+
+
+----------------------------------------------------------------------------
+
+asdf: 1705613252 /home/kdog3682/2024-writing/jacket.blog
+# mkfile: /home/kdog3682/2024-writing/blogs/farewell_my_jacket.md
+
+# mkfile: /home/kdog3682/2024-writing/mmgg/a_morning_walk.txt
+# mkfile: /home/kdog3682/2024-writing/shsat_math/percent_more_than/gpt.json
+# mkfile: /home/kdog3682/2024-writing/shsat_math/percent_more_than/raw.txt
+
+# mkfile: /mnt/chromeos/GoogleDrive/MyDrive/foobar.py
+
+----------------------------------------------------------------------------
+
+datetime: 01-23-2024 08:51PM
+bash:
+
+pip install fuzzywuzzy python-Levenshtein prompt_toolkit
+
+
+
+----------------------------------------------------------------------------
+datetime: 01-24-2024 05:04AM
+bash:
+
+# git clone https://github.com/johannes-wolf/cetz /home/kdog3682/GITHUB/typst-packages/packages/preview/cetz/0.2.0
+# rmdir /home/kdog3682/GITHUB/typst-packages/packages/preview/cetz
+
+git clone https://github.com/typst/packages/ /home/kdog3682/typst-packages
+
+----------------------------------------------------------------------------
+datetime: 01-24-2024 07:28PM
+desc: printing from chromebook (maybe)
+bash:
+
+# sudo apt-get install cups
+# installed ... but didnt work ... 
+# curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+# https://pypi.org/project/google-api-python-client/#:~:text=Supported%20Python%20Versions,run%20tests%20against%20those%20versions.
+# reference
+
+----------------------------------------------------------------------------
+datetime: 01-29-2024 12:50PM
+desc: creating virtual env inside of the given directory
+i believe it only needs to be activated once
+when env is active, pressing python only activates in the context of the env
+
+bash:
+
+
+# /home/kdog3682/2024-python/
+# pip3 install virtualenv
+# cd ~/2024-python
+# virtualenv gapi
+# source gapi/bin/activate
+# gapi/bin/pip install google-api-python-client
+# which python3
+
+# git clone https://github.com/Khan/KAS
+
+------------------------------------------------------------
+datetime: 02-06-2024 09:35AM
+subreddit: askprogramming
+title: Is it more customary to commit one file at a time or to commit groups of files at a time?
+body:
+
+I have been working on fileA which depends on fileB and fileC.
+I have modified fileA quite a bit, and I am ready to commit.
+But in the process of these mods, I have also changed file B and C considerably as well.
+
+I guess my question is ...
+I know that fileA, as of right now, is WORKING.
+
+Id like to make a commit in such a way, that if I revert back to this commit, I know fileA is still WORKING.
+Does this mean, that I should not commit fileA by itself, but also commit it with fileB and fileC?
+
+Additionally, while working on A, B, and C, I have also made modifications to files D and E, which are not related at all.
+
+Thus, would it be incorrect to use git update, since this will also commit files D and E, when the only files that have relevant changes are A,B,C?
+
+Appreciate your advice very much on this matter.
+Thank you!
+
+------------------------------------------------------------
+datetime: 02-07-2024 08:25AM
+subreddit: askprogramming
+title: 
+body:
+
+
+
+------------------------------------------------------------
+datetime: 02-18-2024 10:27PM
+bash:
+
+
+cd /home/kdog3682/2024-javascript/txflow/
+git push --set-upstream origin main
+
+------------------------------------------------------------
+datetime: 02-23-2024 09:06AM
+subreddit: askprogramming
+title: With the advent of ai and machine learning, should students of cs still deeply learn about tokenizers and parsers?
+body:
+
+I am putting together a cs curriculum for hs students, and I am wondering whether or not to include tokenizers, parsers, and interpreters, or to rather, skip over it, and replcae it with language model stuff like https://github.com/google/sentencepiece.
+
+As much as I love parsing a math expression with a pratt parser, part of me feels this is outdated, with all of the new technologies coming out.
+
+I dont want the students to be learning "old-timer" stuff when there is much stronger technology out there.
+
+What do you guys think?

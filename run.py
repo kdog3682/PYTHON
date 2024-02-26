@@ -184,6 +184,8 @@ def PythonController(argv = sys.argv[1:]):
         return exec(ex)
 
     key = env.basepyref.get(key, key)
+    if not key:
+        return 
     fn = globals().get(key)
 
     if not fn:

@@ -1,105 +1,16 @@
-
-"""
-
-# Python App Controller
-
-Often, I find myself writing "application" type functions like copying files, moving files, finding files, asking questions on reddit, pushing to github, et cetera.
-
-Th function `python_app_controller` groups all of these app type files into a single page where they can be easily accessed.
-
-Lets take a look!
-
-``` 
-id: craigslist
-desc: scrape craigslist jobs and output to clip.js
-
-from playwright_webscraper import playwright_runner, scrape_craigslist_jobs
-playwright_runner(scrape_craigslist_jobs)
-
-------------------------------------------------------
-id: get_reddit_notes
-desc: downloads my reddit saved comments. often, will save a few comments. this will immediately download them
-
-from reddit_script import *
-download_reddit_saved_comments_as_notes()
-
-------------------------------------------------------
-
-```
-
-The above snippet comes from the file "apps.py".
-The sections are marked by the dashed lines.
-Upon run, a table of contents is generated using the id and the description.
-
-Using the table of contents, you can choose a section to python_app_controller. The code written in that section is then executed as native python.
-
-## Advantages
-
-### Organization
-The biggest advantage (in my opinion) is organization.
-If a file is listed in the table of contents, I have a pretty good idea of what it is for.
-
-Previously, I spent a lot of time looking for files and navigating around. This system of organization makes it much more wieldly.
-
-### Fast
-
-In javascript version ES6, you have to import everything at the very top.
-
-```
-import {packageManager3} from "./node-utils.js"
-import * as utils from "./utils.js"
-import * as lezerFunctions from "./lezer-functions.js"
-import * as lezerSetup from "./lezer-setup2.js"
-
-// your code
-
-```
-
-You cannot conditionally import code.
-Everything must be loaded at the top.
-
-Whats the result of this?
-
-**Stuff can be slow!**
-
-
-Take a look again at the below section.
-
-``` 
-id: craigslist
-desc: scrape craigslist jobs and output to clip.js
-
-from playwright_webscraper import playwright_runner, scrape_craigslist_jobs
-playwright_runner(scrape_craigslist_jobs)
-
-```
-
-There is only one import present: importing `playwright_webscraper`, and we subsequently have fast python_app_controller times.
-
-
-
-In my opinion, coding is often about gathering data, running processes, executing tasks, and in many times, doing multiples of these at the same time.
-
-
-
-
-"""
-
-
-
 from utils import *
+import time
 
-def dash_split(s):
-    return filter(map(re.split("^-{20,}", s, flags = re.M), trim))
-
-def has_newlines(s):
-    return test(s, "\n")
-
-def split_once(s, r):
-    return match(s, f"(.*?){r}([\w\W]+)")
-
-def colon_dict(s):
+def implicit_code_colon_dict(s):
+    """
+        like colon dict, but if the "code" key is not present,
+        the code key is implicitly added in by splitting the last item
+    """
     items = map(filter(re.split("^(\S+):", s, flags = re.M)), trim)
+
+    if "code" in items:
+        return dict(partition(items))
+
     a,b = split_once(items[-1], "\n+")
     items.pop()
     items.append(a)
@@ -108,31 +19,85 @@ def colon_dict(s):
     return dict(partition(items))
     
 def python_app_controller():
-    id = "" if len(sys.argv) == 1 else sys.argv[1]
+    id = None
     print("""
         Welcome to run_apps
         each app shown below is registered in the files: apps.py
-
-        when no id is given, you will be asked to choose an id.
-        each id is paired with a description
-
-        have fun!
     """)
 
     s = read("/home/kdog3682/PYTHON/apps.py")
+
+    vim = {} if len(sys.argv) == 1 else shellunescape(get_last(sys.argv))
     base = dash_split(s)
-    items = map(dash_split(s), colon_dict)
+    items = map(dash_split(s), implicit_code_colon_dict)
     if id:
         item = find(items, lambda x: x.get("id") == id)
     else:
+        check = lambda x: not x.get("status", "").startswith("not")
+        items = filter(items, check)
         for i, item in enumerate(items):
             print(i + 1, item.get("id"), blue(item.get("desc")))
 
-        answer = int(input("\nchoose 1 based indexes\n")) - 1
+        answer = int(input("\nchoose an answer in 1-based indexes\n")) - 1
         item = items[answer]
+
     if item:
-        print(item)
-        exec(item.get("code"))
+        code = templater(item.get('code'), vim)
+        exec(code)
+
+
+
+def fix_necessary_dollar_inputs(s):
+    return s
+    r = "\$(\w+(?:\(.*?\)?)"
+    matches = unique(re.findall(r, s))
+
+    lib = {
+        get_unlisted_git_directories
+    }
+    def replacer(x):
+        m = x.group(1)
+        if m in lib:
+            display(lib[m](), m)
+
+    def display(a, b):
+        print("base key", b)
+        answer = choose(a)
+        return answer
+
+    return sub(s, r, replacer)
+
+
+
+def copy_file_to_drive(file, outpath = "", dir = ""):
+    return base_copy_file(file, npath(drivedir + dir, outpath))
+
+def get_unlisted_git_directories():
+    return listdir(rootdir, lambda x: x.is_dir() and not test(x.name, "sample|^\.|^[A-Z]+$") and not is_dir(Path(x, ".git")))
+
+def compile_typst(typst_file, outpath = None, data = None):
+    if not outpath: outpath = "/home/kdog3682/2024-typst/test.pdf"
+    if data:
+        write("/home/kdog3682/2024/temp.json", data)
+        print("sleeping for 1 second")
+        time.sleep(1)
+
+    with CD("/home/kdog3682/2024-typst/src/"):
+        print("compiling typst")
+        system_command(f"typst compile {typst_file} {outpath} --root /")
+        open_url(outpath)
+
+
+def cleanup_empty_viminfo_files():
+    base = "/home/kdog3682/.viminf"
+    store = []
+    for letter in alphabet:
+        file = f"{base}{letter}.tmp"
+        info = get_file_info(file)
+        if info and info.get("size") < 10:
+            remove_file(file)
+            store.append(info)
+    return store
 
 if __name__ == "__main__":
     python_app_controller()
